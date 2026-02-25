@@ -1,23 +1,20 @@
-## Proyek Tugas Besar Cloud Computing Kelompok 5 Steam
+## Cloud App - STEAM 
 
-### Anggota Kelompok
-1. Nama: Incha Raghil
-   
-   NIM: 10231043
+### Team Member
 
-   Role: [Role Anggota 1]
-2. Nama: Irfan Zaki Riyanto
+| Nama | NIM | Peran |
+| :--- | :--- | :--- |
+| Irfan Zaki Riyanto  | 10231045 | Lead Backend |
+| Incha Raghil | 10231043 | Lead Frontend |
+| Jonathan Cristopher Jetro | 10231047 | Lead DevOps|
+| Jonathan Joseph Yudita Tampubolon | 10231048 | Lead Lead QA & Docs |
 
-   NIM: 10231045
-
-   Role: [Role Anggota 2]
-3. Nama: Jonathan Cristopher Jetro
-
-   NIM: 10231047
-
-   Role: [Role Anggota 3]
-4. Nama: Jonathan Joseph Yudita Tampubolon
-
-   NIM: 10231048
-
-   Role: [Role Anggota 4]
+### Tech Stack
+| Teknologi | Fungsi |
+| :--- | :--- | :--- |
+| FastAPI | Backend REST API |
+| React | Frontend SPA |
+| PostgreSQL | Database |
+| Docker | Containerization |
+| GitHub Actions | GitHub Actions |
+| Railway/Render | Cloud Deployment |
