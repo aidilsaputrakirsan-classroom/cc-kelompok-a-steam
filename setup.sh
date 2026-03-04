@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# STEAM Project "Inti Rupa" Setup Script
-# This script sets up the development environment for the STEAM project
+# Inti Rupa Setup Script
+# This script sets up the development environment for the Inti Rupa project
 
 set -e  # Exit on error
 
-echo "🚀 Starting STEAM Project Setup..."
+echo "🚀 Starting Inti Rupa Setup..."
 echo ""
 
 # Colors for output
@@ -27,20 +27,20 @@ print_error() {
     echo -e "${RED}✗ $1${NC}"
 }
 
-# Check if .env file exists
+# Check if .env file exists in backend
 echo "📝 Checking environment configuration..."
-if [ ! -f .env ]; then
-    print_warning ".env file not found. Copying from .env.example..."
-    if [ -f .env.example ]; then
-        cp .env.example .env
-        print_success ".env file created from .env.example"
-        print_warning "Please update .env file with your actual configuration!"
+if [ ! -f backend/.env ]; then
+    print_warning ".env file not found in backend/. Copying from .env.example..."
+    if [ -f backend/.env.example ]; then
+        cp backend/.env.example backend/.env
+        print_success "backend/.env file created from .env.example"
+        print_warning "Please update backend/.env file with your PostgreSQL password!"
     else
-        print_error ".env.example not found!"
+        print_error "backend/.env.example not found!"
         exit 1
     fi
 else
-    print_success ".env file exists"
+    print_success "backend/.env file exists"
 fi
 
 echo ""
@@ -96,7 +96,7 @@ cd frontend
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
-    print_error "Node.js is not installed. Please install Node.js 20.19+ or 22.12+"
+    print_error "Node.js is not installed. Please install Node.js 18+ or 20+"
     exit 1
 fi
 
@@ -124,22 +124,28 @@ fi
 cd ..
 echo ""
 
-# Check Docker
-echo "🐳 Checking Docker..."
-if command -v docker &> /dev/null; then
-    DOCKER_VERSION=$(docker --version)
-    print_success "Docker found: $DOCKER_VERSION"
+# Check PostgreSQL
+echo "� Checking PostgreSQL..."
+if command -v psql &> /dev/null; then
+    PSQL_VERSION=$(psql --version)
+    print_success "PostgreSQL found: $PSQL_VERSION"
 else
-    print_warning "Docker is not installed. Docker is optional but recommended."
+    print_warning "PostgreSQL command-line tools not found in PATH."
+    print_warning "Please make sure PostgreSQL is installed and running."
 fi
 
 echo ""
 echo "✅ Setup Complete!"
 echo ""
 echo "📋 Next Steps:"
-echo "   1. Update .env file with your configuration"
-echo "   2. Make sure PostgreSQL is running"
+echo "   1. Update backend/.env with your PostgreSQL password"
+echo "   2. Create database: psql -U postgres -c 'CREATE DATABASE cloudapp;'"
 echo "   3. Start Backend: cd backend && source venv/bin/activate && uvicorn main:app --reload"
 echo "   4. Start Frontend: cd frontend && npm run dev"
+echo ""
+echo "📚 Access:"
+echo "   - API: http://localhost:8000"
+echo "   - API Docs: http://localhost:8000/docs"
+echo "   - Frontend: http://localhost:5173"
 echo ""
 echo "🎉 Happy Coding!"
