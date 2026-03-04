@@ -66,6 +66,40 @@ def list_items(
     return crud.get_items(db=db, skip=skip, limit=limit, search=search)
 
 
+@app.get("/items/stats")
+def get_items_stats(db: Session = Depends(get_db)):
+    """
+    Statistik items:
+    - **total_items**: Total jumlah item
+    - **total_value**: Total nilai (sum of price × quantity)
+    - **most_expensive**: Item termahal
+    - **cheapest**: Item termurah
+    """
+    from sqlalchemy import func
+    from models import Item
+
+    total_items = db.query(func.count(Item.id)).scalar()
+
+    total_value = db.query(func.sum(Item.price * Item.quantity)).scalar() or 0
+
+    most_expensive = db.query(Item).order_by(Item.price.desc()).first()
+    cheapest = db.query(Item).order_by(Item.price.asc()).first()
+
+    return {
+        "total_items": total_items,
+        "total_value": round(float(total_value), 2),
+        "most_expensive": {
+            "id": most_expensive.id,
+            "name": most_expensive.name,
+            "price": most_expensive.price
+        } if most_expensive else None,
+        "cheapest": {
+            "id": cheapest.id,
+            "name": cheapest.name,
+            "price": cheapest.price
+        } if cheapest else None,
+    }
+
 @app.get("/items/{item_id}", response_model=ItemResponse)
 def get_item(item_id: int, db: Session = Depends(get_db)):
     """Ambil satu item berdasarkan ID."""
