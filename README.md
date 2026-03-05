@@ -91,3 +91,57 @@ Sistem **Inti Rupa** menggunakan arsitektur **client-server** berbasis cloud. Fr
 | 9-11 | CI/CD Pipeline | ⬜ |
 | 12-14 | Microservices | ⬜ |
 | 15-16 | Final & UAS | ⬜ |
+
+
+## 🧪 Hasil Pengujian API 
+
+Berikut adalah detail skenario pengujian yang telah dilakukan
+
+### 1. POST /items — Inisialisasi Data
+![POST Items](docs/image.png)
+Tahap awal dilakukan dengan menambahkan 3 item ke dalam database untuk menguji fitur *Create*. Salah satu contoh data yang dimasukkan adalah:
+* **Name**: "Laptop" (Wajib, 1-100 karakter)
+* **Price**: 15.000.000 (Wajib, > 0)
+* **Description**: "Laptop untuk cloud computing" (Opsional)
+* **Quantity**: 5 (Default: 0)
+
+### 2. GET /items — Verifikasi List Data
+![GET All Items](docs/image-1.png)
+Melakukan query `GET` untuk menarik seluruh data. Hasil menunjukkan bahwa item-item yang telah didaftarkan berhasil tersimpan secara persisten ke dalam database PostgreSQL dan ditampilkan dalam format JSON dengan total item yang sesuai.
+
+### 3. GET /items/{id} — Pencarian Spesifik
+![GET Item By ID](docs/image-2.png)
+Menguji pengambilan data item tunggal menggunakan path parameter `id`. Pada pengujian ini, memanggil ID `4` berhasil mengembalikan data item "Laptop" secara akurat sesuai dengan record di database.
+
+### 4. GET /items/stats — Analisis Statistik
+![GET Stats](docs/image-8.png)
+Menguji endpoint ringkasan untuk melihat performa inventaris. Fungsi ini mengembalikan:
+* `total_items`: Menghitung kuantitas unik item di database.
+* `total_value`: Akumulasi nilai aset (Price × Quantity).
+* `most_expensive`: Identifikasi item dengan harga tertinggi.
+* `cheapest`: Identifikasi item dengan harga terendah.
+
+### 5. PUT /items/{id} — Pembaruan Data (Update)
+![PUT Update Item](docs/image-3.png)
+Melakukan pengujian perubahan data pada item ID `4`. Skenario yang dijalankan adalah menurunkan harga Laptop dari **15.000.000** menjadi **14.000.000**. Sistem berhasil merespon dengan status `200 OK`.
+
+### 6. GET /items/{id} — Verifikasi Pasca-Update
+![Verify Update](docs/image-4.png)
+Melakukan pengecekan ulang pada ID `4` untuk memastikan perubahan bersifat permanen. Gambar menunjukkan database telah sukses memperbarui field `price` menjadi **14.000.000**.
+
+### 7. GET /items (Search) — Filter & Query Parameter
+![Search Item](docs/image-5.png)
+Menguji fitur pencarian menggunakan query parameter `?search=laptop`. Sistem berhasil melakukan filter dan hanya menampilkan item yang relevan dengan kata kunci tersebut.
+
+### 8. DELETE /items/{id} — Penghapusan Data
+![DELETE Item](docs/image-6.png)
+Melaku  kan penghapusan data item "Laptop" (ID `4`). Proses ini menghasilkan respon **204 No Content**, yang berarti permintaan berhasil diproses dan data telah dihapus dari server.
+
+### 9. GET /items/{id} — Uji Validasi 404
+![GET 404 Not Found](docs/image-7.png)
+Sebagai tahap akhir QA, dilakukan pemanggilan kembali terhadap ID `4` yang sudah dihapus. Sistem dengan benar mengembalikan status **404 Not Found**, membuktikan bahwa proses penghapusan data telah sinkron antara API dan Database.
+
+---
+
+## Kesimpulan 
+Berdasarkan serangkaian tes di atas, seluruh fungsionalitas **Backend REST API** pada Modul 2 dinyatakan **Stabil** dan layak untuk dilanjutkan ke tahap integrasi Frontend pada minggu berikutnya.
