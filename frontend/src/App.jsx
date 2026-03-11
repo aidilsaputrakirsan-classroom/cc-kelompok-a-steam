@@ -4,7 +4,9 @@ import SearchBar from "./components/SearchBar"
 import ItemForm from "./components/ItemForm"
 import ItemList from "./components/ItemList"
 import Sorting from "./components/Sorting"
+import Toast from "./components/Toast"
 import { fetchItems, createItem, updateItem, deleteItem, checkHealth } from "./services/api"
+import { useToast } from "./hooks/useToast"
 
 function App() {
   // ==================== STATE ====================
@@ -15,6 +17,9 @@ function App() {
   const [editingItem, setEditingItem] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("")
+  
+  // Toast notification hook
+  const { toast, showToast, hideToast } = useToast()
 
   // ==================== LOAD DATA ====================
   const loadItems = useCallback(async (search = "") => {
@@ -41,16 +46,22 @@ function App() {
   // ==================== HANDLERS ====================
 
   const handleSubmit = async (itemData, editId) => {
-    if (editId) {
-      // Mode edit
-      await updateItem(editId, itemData)
-      setEditingItem(null)
-    } else {
-      // Mode create
-      await createItem(itemData)
+    try {
+      if (editId) {
+        // Mode edit
+        await updateItem(editId, itemData)
+        setEditingItem(null)
+        showToast("✅ Item berhasil diupdate!", "success")
+      } else {
+        // Mode create
+        await createItem(itemData)
+        showToast("✅ Item berhasil ditambahkan!", "success")
+      }
+      // Reload daftar items
+      loadItems(searchQuery)
+    } catch (err) {
+      showToast(`❌ Gagal menyimpan item: ${err.message}`, "error")
     }
-    // Reload daftar items
-    loadItems(searchQuery)
   }
 
   const handleEdit = (item) => {
@@ -65,9 +76,10 @@ function App() {
 
     try {
       await deleteItem(id)
+      showToast(`🗑️ "${item?.name}" berhasil dihapus!`, "success")
       loadItems(searchQuery)
     } catch (err) {
-      alert("Gagal menghapus: " + err.message)
+      showToast(`❌ Gagal menghapus: ${err.message}`, "error")
     }
   }
 
@@ -122,6 +134,15 @@ function App() {
           loading={loading}
         />
       </div>
+      
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   )
 }

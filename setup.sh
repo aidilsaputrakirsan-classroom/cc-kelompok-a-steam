@@ -94,6 +94,21 @@ echo ""
 echo "⚛️  Setting up Frontend (React + Vite)..."
 cd frontend
 
+# Check if .env file exists in frontend
+echo "📝 Checking frontend environment configuration..."
+if [ ! -f .env ]; then
+    print_warning ".env file not found in frontend/. Copying from .env.example..."
+    if [ -f .env.example ]; then
+        cp .env.example .env
+        print_success "frontend/.env file created from .env.example"
+    else
+        print_error "frontend/.env.example not found!"
+        exit 1
+    fi
+else
+    print_success "frontend/.env file exists"
+fi
+
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
     print_error "Node.js is not installed. Please install Node.js 18+ or 20+"
