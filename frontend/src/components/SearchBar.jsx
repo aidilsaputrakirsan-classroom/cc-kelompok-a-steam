@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 function SearchBar({ onSearch }) {
   const [query, setQuery] = useState("")
@@ -11,6 +11,11 @@ function SearchBar({ onSearch }) {
   const handleClear = () => {
     setQuery("")
     onSearch("")
+  }
+
+  const sortByName = () => {
+    const sorted= [...items].sort((a, b) => a.name.localeCompare(b.name));
+    setItems(sorted);
   }
 
   return (

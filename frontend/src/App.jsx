@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Header from "./components/Header"
 import SearchBar from "./components/SearchBar"
 import ItemForm from "./components/ItemForm"
 import ItemList from "./components/ItemList"
+import Sorting from "./components/Sorting"
 import { fetchItems, createItem, updateItem, deleteItem, checkHealth } from "./services/api"
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
   const [isConnected, setIsConnected] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState("")
 
   // ==================== LOAD DATA ====================
   const loadItems = useCallback(async (search = "") => {
@@ -74,9 +76,32 @@ function App() {
     loadItems(query)
   }
 
+  const handleSortChange = (value) => {
+    setSortBy(value)
+  }
+
   const handleCancelEdit = () => {
     setEditingItem(null)
   }
+
+  const sortedItems = useMemo(() => {
+    if (!sortBy) return items
+
+    const sorted = [...items]
+    sorted.sort((a, b) => {
+      if (sortBy === "name") {
+        return a.name.localeCompare(b.name)
+      }
+      if (sortBy === "price") {
+        return (a.price ?? 0) - (b.price ?? 0)
+      }
+      if (sortBy === "created_at") {
+        return new Date(b.created_at) - new Date(a.created_at)
+      }
+      return 0
+    })
+    return sorted
+  }, [items, sortBy])
 
   // ==================== RENDER ====================
   return (
@@ -89,8 +114,9 @@ function App() {
           onCancelEdit={handleCancelEdit}
         />
         <SearchBar onSearch={handleSearch} />
+        <Sorting sortBy={sortBy} onSortChange={handleSortChange} />
         <ItemList
-          items={items}
+          items={sortedItems}
           onEdit={handleEdit}
           onDelete={handleDelete}
           loading={loading}
