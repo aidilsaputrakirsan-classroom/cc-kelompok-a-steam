@@ -8,7 +8,7 @@ from database import engine, get_db
 from models import Base, User
 from schemas import (
     ItemCreate, ItemUpdate, ItemResponse, ItemListResponse,
-    UserCreate, UserResponse, LoginRequest, TokenResponse,
+    UserCreate, UserResponse, UserLogin, TokenResponse,
 )
 from auth import create_access_token, get_current_user
 import crud
@@ -62,7 +62,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @app.post("/auth/login", response_model=TokenResponse)
-def login(login_data: LoginRequest, db: Session = Depends(get_db)):
+def login(login_data: UserLogin, db: Session = Depends(get_db)):
     """
     Login dan dapatkan JWT token.
     

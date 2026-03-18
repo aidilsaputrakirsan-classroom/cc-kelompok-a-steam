@@ -58,6 +58,12 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=8, examples=["password123"])
 
 
+class UserLogin(BaseModel):
+    """Schema untuk login request."""
+    email: str = Field(..., examples=["user@student.itk.ac.id"])
+    password: str = Field(..., examples=["password123"])
+
+
 class UserResponse(BaseModel):
     """Schema untuk response user (tanpa password)."""
     id: int
@@ -68,12 +74,6 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-class LoginRequest(BaseModel):
-    """Schema untuk login request."""
-    email: str = Field(..., examples=["user@student.itk.ac.id"])
-    password: str = Field(..., examples=["password123"])
 
 
 class TokenResponse(BaseModel):
