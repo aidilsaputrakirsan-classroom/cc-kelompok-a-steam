@@ -1,8 +1,14 @@
 import ItemCard from "./ItemCard"
+import Spinner from "./Spinner"
 
-function ItemList({ items, onEdit, onDelete, loading }) {
+function ItemList({ items, onEdit, onDelete, loading, deletingItems }) {
   if (loading) {
-    return <p style={styles.message}>⏳ Memuat data...</p>
+    return (
+      <div style={styles.loading}>
+        <Spinner size={50} />
+        <p style={styles.loadingText}>Memuat data...</p>
+      </div>
+    )
   }
 
   if (items.length === 0) {
@@ -25,6 +31,7 @@ function ItemList({ items, onEdit, onDelete, loading }) {
           item={item}
           onEdit={onEdit}
           onDelete={onDelete}
+          isDeleting={deletingItems.has(item.id)}
         />
       ))}
     </div>
@@ -63,6 +70,20 @@ const styles = {
     fontSize: "0.9rem",
     color: "#888",
     margin: 0,
+  },
+  loading: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "3rem",
+    backgroundColor: "#f8f9fa",
+    borderRadius: "12px",
+  },
+  loadingText: {
+    marginTop: "1rem",
+    color: "#666",
+    fontSize: "1rem",
   },
 }
 

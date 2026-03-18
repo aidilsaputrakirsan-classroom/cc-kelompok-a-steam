@@ -48,7 +48,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def decode_token(token: str) -> dict:
+def decode_access_token(token: str) -> dict:
     """Decode dan verifikasi JWT token."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -71,7 +71,7 @@ def get_current_user(
     Dependency injection: ambil current user dari JWT token.
     Gunakan di endpoint yang butuh autentikasi.
     """
-    payload = decode_token(credentials.credentials)
+    payload = decode_access_token(credentials.credentials)
     sub = payload.get("sub")
     user_id: int = int(sub) if sub is not None else None
 

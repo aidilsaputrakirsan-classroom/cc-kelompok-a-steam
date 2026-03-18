@@ -1,4 +1,6 @@
-function ItemCard({ item, onEdit, onDelete }) {
+import Spinner from "./Spinner"
+
+function ItemCard({ item, onEdit, onDelete, isDeleting }) {
   const formatRupiah = (num) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -35,11 +37,18 @@ function ItemCard({ item, onEdit, onDelete }) {
       </div>
 
       <div style={styles.actions}>
-        <button onClick={() => onEdit(item)} style={styles.btnEdit}>
+        <button onClick={() => onEdit(item)} style={styles.btnEdit} disabled={isDeleting}>
           ✏️ Edit
         </button>
-        <button onClick={() => onDelete(item.id)} style={styles.btnDelete}>
-          🗑️ Hapus
+        <button onClick={() => onDelete(item.id)} style={{ ...styles.btnDelete, opacity: isDeleting ? 0.7 : 1 }} disabled={isDeleting}>
+          {isDeleting ? (
+            <>
+              <Spinner size={16} color="white" />
+              <span style={{ marginLeft: '0.25rem' }}>Menghapus...</span>
+            </>
+          ) : (
+            "🗑️ Hapus"
+          )}
         </button>
       </div>
     </div>

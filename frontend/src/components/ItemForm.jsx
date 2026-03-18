@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react"
+import Spinner from "./Spinner"
 
-function ItemForm({ onSubmit, editingItem, onCancelEdit }) {
+function ItemForm({ onSubmit, editingItem, onCancelEdit, showToast }) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     price: "",
     quantity: "0",
   })
-  const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Jika editingItem berubah, isi form dengan datanya
   useEffect(() => {
@@ -21,32 +22,26 @@ function ItemForm({ onSubmit, editingItem, onCancelEdit }) {
     } else {
       setFormData({ name: "", description: "", price: "", quantity: "0" })
     }
-    setError("")
   }, [editingItem])
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    let processedValue = value
+    if (name === 'price') {
+      // Replace comma with dot for decimal
+      processedValue = value.replace(',', '.')
+    }
+    setFormData((prev) => ({ ...prev, [name]: processedValue }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError("")
-
-    // Validasi
-    if (!formData.name.trim()) {
-      setError("Nama item wajib diisi")
-      return
-    }
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      setError("Harga harus lebih dari 0")
-      return
-    }
+    setIsSubmitting(true)
 
     const itemData = {
       name: formData.name.trim(),
       description: formData.description.trim() || null,
-      price: parseFloat(formData.price),
+      price: parseFloat(formData.price) || 0,
       quantity: parseInt(formData.quantity) || 0,
     }
 
@@ -55,7 +50,9 @@ function ItemForm({ onSubmit, editingItem, onCancelEdit }) {
       // Reset form setelah berhasil
       setFormData({ name: "", description: "", price: "", quantity: "0" })
     } catch (err) {
-      setError(err.message)
+      showToast("Error: " + err.message, "error")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -64,8 +61,6 @@ function ItemForm({ onSubmit, editingItem, onCancelEdit }) {
       <h2 style={styles.title}>
         {editingItem ? "✏️ Edit Item" : "➕ Tambah Item Baru"}
       </h2>
-
-      {error && <div style={styles.error}>{error}</div>}
 
       <form onSubmit={handleSubmit} style={styles.form}>
         <div style={styles.row}>
@@ -114,6 +109,7 @@ function ItemForm({ onSubmit, editingItem, onCancelEdit }) {
               name="quantity"
               value={formData.quantity}
               onChange={handleChange}
+              placeholder="Contoh: 10"
               min="0"
               style={styles.input}
             />
@@ -121,11 +117,20 @@ function ItemForm({ onSubmit, editingItem, onCancelEdit }) {
         </div>
 
         <div style={styles.actions}>
-          <button type="submit" style={styles.btnSubmit}>
-            {editingItem ? "💾 Update Item" : "➕ Tambah Item"}
+          <button type="submit" style={{ ...styles.btnSubmit, opacity: isSubmitting ? 0.7 : 1 }} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Spinner size={20} color="white" />
+                <span style={{ marginLeft: '0.5rem' }}>
+                  {editingItem ? "Menyimpan..." : "Menambah..."}
+                </span>
+              </>
+            ) : (
+              editingItem ? "💾 Update Item" : "➕ Tambah Item"
+            )}
           </button>
           {editingItem && (
-            <button type="button" onClick={onCancelEdit} style={styles.btnCancel}>
+            <button type="button" onClick={onCancelEdit} style={styles.btnCancel} disabled={isSubmitting}>
               ✕ Batal Edit
             </button>
           )}
