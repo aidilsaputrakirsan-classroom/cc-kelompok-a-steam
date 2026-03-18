@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, EmailStr
 from typing import Optional
 from datetime import datetime
 
@@ -21,7 +21,7 @@ class ItemCreate(ItemBase):
 # === UPDATE SCHEMA (untuk PUT request) ===
 class ItemUpdate(BaseModel):
     """
-    Schema untuk update item. Semua field optional 
+    Schema untuk update item. Semua field optional
     karena user mungkin hanya ingin update sebagian field.
     """
     name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -47,21 +47,57 @@ class ItemListResponse(BaseModel):
     total: int
     items: list[ItemResponse]
 
+
 # ============================================================
 # AUTH SCHEMAS
 # ============================================================
 
 class UserCreate(BaseModel):
     """Schema untuk registrasi user baru."""
-    email: str = Field(..., examples=["user@student.itk.ac.id"])
-    name: str = Field(..., min_length=2, max_length=100, examples=["Aidil Saputra"])
-    password: str = Field(..., min_length=8, examples=["password123"])
+    email: EmailStr = Field(
+        ...,
+        examples=["user@student.itk.ac.id"],
+        description="Alamat email yang valid (contoh: nama@domain.com)"
+    )
+    name: str = Field(
+        ...,
+        min_length=2,
+        max_length=100,
+        examples=["Aidil Saputra"],
+        description="Nama lengkap (2-100 karakter)"
+    )
+    password: str = Field(
+        ...,
+        min_length=8,
+        examples=["Password123"],
+        description="Password minimal 8 karakter, mengandung huruf besar, huruf kecil, dan angka"
+    )
+
+    @field_validator("password")
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        """Validasi kekuatan password menggunakan regex check."""
+        errors = []
+        if not any(c.isupper() for c in v):
+            errors.append("minimal 1 huruf kapital (A-Z)")
+        if not any(c.islower() for c in v):
+            errors.append("minimal 1 huruf kecil (a-z)")
+        if not any(c.isdigit() for c in v):
+            errors.append("minimal 1 angka (0-9)")
+        if len(v) < 8:
+            errors.append("minimal 8 karakter")
+        if errors:
+            raise ValueError(
+                f"Password tidak memenuhi syarat: {', '.join(errors)}. "
+                "Contoh password yang valid: 'Password123'"
+            )
+        return v
 
 
-class UserLogin(BaseModel):
+class LoginRequest(BaseModel):
     """Schema untuk login request."""
-    email: str = Field(..., examples=["user@student.itk.ac.id"])
-    password: str = Field(..., examples=["password123"])
+    email: EmailStr = Field(..., examples=["user@student.itk.ac.id"])
+    password: str = Field(..., examples=["Password123"])
 
 
 class UserResponse(BaseModel):

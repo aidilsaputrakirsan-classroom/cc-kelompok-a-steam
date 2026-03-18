@@ -10,7 +10,7 @@ from schemas import ItemCreate, ItemUpdate, UserCreate
 from auth import hash_password, verify_password
 
 from models import Item, User
-from schemas import ItemCreate, ItemUpdate, UserCreate, UserLogin
+from schemas import ItemCreate, ItemUpdate, UserCreate
 
 
 # === ITEM CRUD ===

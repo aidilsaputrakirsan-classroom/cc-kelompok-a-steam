@@ -56,7 +56,7 @@ def decode_access_token(token: str) -> dict:
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token tidak valid atau sudah expired",
+            detail="Token autentikasi tidak valid atau telah kedaluwarsa. Silakan login ulang untuk mendapatkan token baru.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -75,10 +75,10 @@ def get_current_user(
     sub = payload.get("sub")
     user_id: int = int(sub) if sub is not None else None
 
-    if user_id is None:
+    if sub is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token tidak valid",
+            detail="Token tidak mengandung identitas pengguna yang valid. Silakan login ulang.",
         )
 
     user = db.query(User).filter(User.id == user_id).first()
@@ -86,13 +86,13 @@ def get_current_user(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User tidak ditemukan",
+            detail="Pengguna yang terkait dengan token ini tidak ditemukan. Token mungkin sudah tidak berlaku.",
         )
 
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akun tidak aktif",
+            detail="Akun Anda telah dinonaktifkan. Silakan hubungi administrator untuk informasi lebih lanjut.",
         )
 
     return user
