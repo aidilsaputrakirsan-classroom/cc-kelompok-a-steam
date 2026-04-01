@@ -11,7 +11,10 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL tidak ditemukan di .env!")
+    raise ValueError(
+        "DATABASE_URL tidak ditemukan di .env!\n"
+        "Contoh format: postgresql+psycopg2://user:password@localhost:5432/intirupa"
+    )
 
 # Buat engine (koneksi ke database)
 engine = create_engine(DATABASE_URL)
