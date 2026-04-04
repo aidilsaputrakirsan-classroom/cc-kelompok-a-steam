@@ -7,7 +7,6 @@ const MODELS = [
   { id: "runwayml/stable-diffusion-v1-5", label: "Stable Diffusion 1.5", desc: "Umum, cepat" },
   { id: "stabilityai/stable-diffusion-2-1", label: "Stable Diffusion 2.1", desc: "Kualitas tinggi" },
   { id: "black-forest-labs/FLUX.1-schnell", label: "FLUX.1 Schnell ⚡", desc: "Terbaik & cepat" },
-  { id: "black-forest-labs/FLUX.1-dev", label: "FLUX.1 Dev 🏆", desc: "Kualitas tertinggi" },
 ]
 
 const SIZE_OPTIONS = [512, 768, 1024]

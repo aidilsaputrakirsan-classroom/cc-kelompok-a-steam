@@ -128,7 +128,6 @@ AVAILABLE_MODELS = [
     "runwayml/stable-diffusion-v1-5",
     "stabilityai/stable-diffusion-2-1",
     "black-forest-labs/FLUX.1-schnell",
-    "black-forest-labs/FLUX.1-dev",
 ]
 
 class ImageGenerateRequest(BaseModel):
