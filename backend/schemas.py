@@ -117,3 +117,25 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+# ============================================================
+# IMAGE GENERATION SCHEMAS
+# ============================================================
+
+class ImageGenerateRequest(BaseModel):
+    """Schema untuk request generate gambar dari teks prompt."""
+    prompt: str = Field(
+        ...,
+        min_length=3,
+        max_length=500,
+        examples=["a futuristic city at sunset, digital art"],
+        description="Deskripsi gambar yang ingin di-generate (bahasa Inggris lebih baik)"
+    )
+
+
+class ImageGenerateResponse(BaseModel):
+    """Schema untuk response hasil generate gambar."""
+    image_base64: str
+    prompt: str
+    model: str

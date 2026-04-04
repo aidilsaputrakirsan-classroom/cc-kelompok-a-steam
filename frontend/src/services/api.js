@@ -127,3 +127,15 @@ export async function checkHealth() {
     return false
   }
 }
+
+export async function generateImage(prompt) {
+  const response = await fetch(`${API_URL}/generate/image`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ prompt }),
+  })
+  return handleResponse(response)
+}

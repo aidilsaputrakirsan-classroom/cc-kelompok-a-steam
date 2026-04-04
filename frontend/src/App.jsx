@@ -5,6 +5,7 @@ import ItemForm from "./components/ItemForm"
 import ItemList from "./components/ItemList"
 import LoginPage from "./components/LoginPage"
 import Toast from "./components/Toast"
+import ImageGeneratorPage from "./components/ImageGeneratorPage"
 import { useToast } from "./hooks/useToast"
 import {
   fetchItems, createItem, updateItem, deleteItem,
@@ -20,6 +21,7 @@ function App() {
   const { toast, showToast, hideToast } = useToast()
 
   // ==================== APP STATE ====================
+  const [activeTab, setActiveTab] = useState("inventory") // "inventory" | "ai-generator"
   const [items, setItems] = useState([])
   const [totalItems, setTotalItems] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -158,20 +160,48 @@ function App() {
           user={user}
           onLogout={handleLogout}
         />
-        <ItemForm
-          onSubmit={handleSubmit}
-          editingItem={editingItem}
-          onCancelEdit={() => setEditingItem(null)}
-          showToast={showToast}
-        />
-        <SearchBar onSearch={handleSearch} />
-        <ItemList
-          items={items}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          loading={loading}
-          deletingItems={deletingItems}
-        />
+
+        {/* Tab Navigation */}
+        <div style={styles.tabNav}>
+          <button
+            id="tab-inventory"
+            style={{ ...styles.tabBtn, ...(activeTab === "inventory" ? styles.tabBtnActive : {}) }}
+            onClick={() => setActiveTab("inventory")}
+          >
+            📦 Inventaris
+          </button>
+          <button
+            id="tab-ai-generator"
+            style={{ ...styles.tabBtn, ...(activeTab === "ai-generator" ? styles.tabBtnActive : {}) }}
+            onClick={() => setActiveTab("ai-generator")}
+          >
+            🎨 AI Generator
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "inventory" && (
+          <>
+            <ItemForm
+              onSubmit={handleSubmit}
+              editingItem={editingItem}
+              onCancelEdit={() => setEditingItem(null)}
+              showToast={showToast}
+            />
+            <SearchBar onSearch={handleSearch} />
+            <ItemList
+              items={items}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              loading={loading}
+              deletingItems={deletingItems}
+            />
+          </>
+        )}
+
+        {activeTab === "ai-generator" && (
+          <ImageGeneratorPage showToast={showToast} />
+        )}
       </div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
@@ -186,6 +216,32 @@ const styles = {
     fontFamily: "'Segoe UI', Arial, sans-serif",
   },
   container: { maxWidth: "900px", margin: "0 auto" },
+  tabNav: {
+    display: "flex",
+    gap: "0.5rem",
+    marginBottom: "1.5rem",
+    backgroundColor: "white",
+    padding: "0.5rem",
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+  },
+  tabBtn: {
+    flex: 1,
+    padding: "0.7rem 1rem",
+    border: "none",
+    borderRadius: "8px",
+    backgroundColor: "transparent",
+    color: "#888",
+    fontWeight: "bold",
+    fontSize: "0.95rem",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  },
+  tabBtnActive: {
+    background: "linear-gradient(135deg, #1F4E79, #2E75B6)",
+    color: "white",
+    boxShadow: "0 2px 8px rgba(31,78,121,0.3)",
+  },
 }
 
 export default App

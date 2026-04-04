@@ -3,10 +3,10 @@ function Header({ totalItems, isConnected, user, onLogout }) {
     <header style={styles.header}>
       <div style={styles.left}>
         <div style={styles.logo}>
-          <span style={styles.icon}>☁️</span>
+          <span style={styles.icon}>✨</span>
           <div>
-            <h1 style={styles.title}>Cloud App</h1>
-            <p style={styles.subtitle}>Komputasi Awan — SI ITK</p>
+            <h1 style={styles.title}>Inti Rupa</h1>
+            <p style={styles.subtitle}>AI Platform — Komputasi Awan ITK</p>
           </div>
         </div>
       </div>

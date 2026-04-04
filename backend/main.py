@@ -9,10 +9,13 @@ from models import Base, User
 from schemas import (
     ItemCreate, ItemUpdate, ItemResponse, ItemListResponse,
     UserCreate, UserResponse, LoginRequest, TokenResponse,
+    ImageGenerateRequest, ImageGenerateResponse,
 )
 from sqlalchemy import func
 from auth import create_access_token, get_current_user
 import crud
+import httpx
+import base64
 
 load_dotenv()
 
@@ -219,4 +222,65 @@ def team_info():
             {"name": "Jonathan Cristopher Jetro", "nim": "10231047", "role": "Lead DevOps"},
             {"name": "Jonathan Joseph Yudita Tampubolon", "nim": "10231048", "role": "Lead QA & Docs"},
         ]
+    }
+
+
+# ==================== AI IMAGE GENERATOR ====================
+
+HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+HF_MODEL_NAME = "stabilityai/stable-diffusion-xl-base-1.0"
+
+
+@app.post("/generate/image", response_model=ImageGenerateResponse)
+async def generate_image(
+    request: ImageGenerateRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Generate gambar dari teks prompt menggunakan Hugging Face AI.
+
+    - **prompt**: Deskripsi gambar dalam bahasa Inggris (lebih akurat)
+    - Response: gambar dalam format base64 string
+
+    **Membutuhkan autentikasi.**
+    """
+    hf_api_key = os.getenv("HUGGINGFACE_API_KEY")
+    if not hf_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Hugging Face API Key belum dikonfigurasi. Tambahkan HUGGINGFACE_API_KEY di file .env"
+        )
+
+    headers = {
+        "Authorization": f"Bearer {hf_api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {"inputs": request.prompt}
+
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        try:
+            response = await client.post(HF_API_URL, headers=headers, json=payload)
+        except httpx.TimeoutException:
+            raise HTTPException(
+                status_code=504,
+                detail="Request ke Hugging Face timeout. Model mungkin sedang cold start, coba beberapa saat lagi."
+            )
+
+    if response.status_code == 503:
+        raise HTTPException(
+            status_code=503,
+            detail="Model AI sedang loading (cold start). Tunggu 20-30 detik lalu coba lagi."
+        )
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Hugging Face API error ({response.status_code}): {response.text[:200]}"
+        )
+
+    image_base64 = base64.b64encode(response.content).decode("utf-8")
+
+    return {
+        "image_base64": image_base64,
+        "prompt": request.prompt,
+        "model": HF_MODEL_NAME,
     }
