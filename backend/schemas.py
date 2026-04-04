@@ -123,15 +123,40 @@ class TokenResponse(BaseModel):
 # IMAGE GENERATION SCHEMAS
 # ============================================================
 
+AVAILABLE_MODELS = [
+    "stabilityai/stable-diffusion-xl-base-1.0",
+    "runwayml/stable-diffusion-v1-5",
+    "stabilityai/stable-diffusion-2-1",
+    "black-forest-labs/FLUX.1-schnell",
+    "black-forest-labs/FLUX.1-dev",
+]
+
 class ImageGenerateRequest(BaseModel):
     """Schema untuk request generate gambar dari teks prompt."""
     prompt: str = Field(
-        ...,
-        min_length=3,
-        max_length=500,
+        ..., min_length=3, max_length=500,
         examples=["a futuristic city at sunset, digital art"],
-        description="Deskripsi gambar yang ingin di-generate (bahasa Inggris lebih baik)"
+        description="Deskripsi gambar yang ingin di-generate"
     )
+    model: str = Field(
+        default="stabilityai/stable-diffusion-xl-base-1.0",
+        description="Model Hugging Face yang digunakan"
+    )
+    negative_prompt: Optional[str] = Field(
+        default=None, max_length=300,
+        description="Hal yang TIDAK diinginkan dalam gambar"
+    )
+    guidance_scale: float = Field(
+        default=7.5, ge=1.0, le=20.0,
+        description="CFG Scale: seberapa ketat AI mengikuti prompt (1-20)"
+    )
+    num_inference_steps: int = Field(
+        default=30, ge=10, le=100,
+        description="Jumlah langkah denoising (10-100, lebih banyak = lebih detail)"
+    )
+    width: int = Field(default=1024, description="Lebar gambar (px)")
+    height: int = Field(default=1024, description="Tinggi gambar (px)")
+    seed: Optional[int] = Field(default=None, description="Seed untuk hasil yang reproducible")
 
 
 class ImageGenerateResponse(BaseModel):

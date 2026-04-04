@@ -9,7 +9,7 @@ from models import Base, User
 from schemas import (
     ItemCreate, ItemUpdate, ItemResponse, ItemListResponse,
     UserCreate, UserResponse, LoginRequest, TokenResponse,
-    ImageGenerateRequest, ImageGenerateResponse,
+    ImageGenerateRequest, ImageGenerateResponse, AVAILABLE_MODELS,
 )
 from sqlalchemy import func
 from auth import create_access_token, get_current_user
@@ -227,8 +227,13 @@ def team_info():
 
 # ==================== AI IMAGE GENERATOR ====================
 
-HF_API_URL = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
-HF_MODEL_NAME = "stabilityai/stable-diffusion-xl-base-1.0"
+HF_BASE_URL = "https://router.huggingface.co/hf-inference/models"
+
+
+@app.get("/generate/models")
+def get_available_models(current_user: User = Depends(get_current_user)):
+    """Daftar model AI yang tersedia. **Membutuhkan autentikasi.**"""
+    return {"models": AVAILABLE_MODELS}
 
 
 @app.post("/generate/image", response_model=ImageGenerateResponse)
@@ -240,10 +245,20 @@ async def generate_image(
     Generate gambar dari teks prompt menggunakan Hugging Face AI.
 
     - **prompt**: Deskripsi gambar dalam bahasa Inggris (lebih akurat)
-    - Response: gambar dalam format base64 string
+    - **model**: Model AI yang digunakan
+    - **guidance_scale**: CFG Scale (1-20, default 7.5)
+    - **num_inference_steps**: Jumlah steps (10-100, default 30)
+    - **negative_prompt**: Hal yang tidak diinginkan dalam gambar
+    - **seed**: Seed untuk hasil reproducible (opsional)
 
     **Membutuhkan autentikasi.**
     """
+    if request.model not in AVAILABLE_MODELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model '{request.model}' tidak tersedia. Pilih dari: {', '.join(AVAILABLE_MODELS)}"
+        )
+
     hf_api_key = os.getenv("HUGGINGFACE_API_KEY")
     if not hf_api_key:
         raise HTTPException(
@@ -251,15 +266,31 @@ async def generate_image(
             detail="Hugging Face API Key belum dikonfigurasi. Tambahkan HUGGINGFACE_API_KEY di file .env"
         )
 
+    hf_url = f"{HF_BASE_URL}/{request.model}"
     headers = {
         "Authorization": f"Bearer {hf_api_key}",
         "Content-Type": "application/json",
     }
-    payload = {"inputs": request.prompt}
+
+    # Build parameters — hanya kirim yang tidak None/default
+    parameters = {
+        "guidance_scale": request.guidance_scale,
+        "num_inference_steps": request.num_inference_steps,
+    }
+    if request.negative_prompt:
+        parameters["negative_prompt"] = request.negative_prompt
+    if request.seed is not None:
+        parameters["seed"] = request.seed
+    # Width & height hanya untuk model yang mendukung (SDXL, SD 2.1, dst)
+    if "flux" not in request.model.lower():
+        parameters["width"] = request.width
+        parameters["height"] = request.height
+
+    payload = {"inputs": request.prompt, "parameters": parameters}
 
     async with httpx.AsyncClient(timeout=120.0) as client:
         try:
-            response = await client.post(HF_API_URL, headers=headers, json=payload)
+            response = await client.post(hf_url, headers=headers, json=payload)
         except httpx.TimeoutException:
             raise HTTPException(
                 status_code=504,
@@ -274,7 +305,7 @@ async def generate_image(
     if response.status_code != 200:
         raise HTTPException(
             status_code=502,
-            detail=f"Hugging Face API error ({response.status_code}): {response.text[:200]}"
+            detail=f"Hugging Face API error ({response.status_code}): {response.text[:300]}"
         )
 
     image_base64 = base64.b64encode(response.content).decode("utf-8")
@@ -282,5 +313,5 @@ async def generate_image(
     return {
         "image_base64": image_base64,
         "prompt": request.prompt,
-        "model": HF_MODEL_NAME,
-    }
+        "model": request.model,
+    }

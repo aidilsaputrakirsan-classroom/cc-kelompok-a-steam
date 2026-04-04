@@ -128,14 +128,14 @@ export async function checkHealth() {
   }
 }
 
-export async function generateImage(prompt) {
+export async function generateImage(params) {
   const response = await fetch(`${API_URL}/generate/image`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...authHeaders(),
     },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify(params),
   })
   return handleResponse(response)
 }
