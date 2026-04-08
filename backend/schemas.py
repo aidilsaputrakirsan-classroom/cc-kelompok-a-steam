@@ -124,10 +124,16 @@ class TokenResponse(BaseModel):
 # ============================================================
 
 AVAILABLE_MODELS = [
+    # Base models
     "stabilityai/stable-diffusion-xl-base-1.0",
     "runwayml/stable-diffusion-v1-5",
     "stabilityai/stable-diffusion-2-1",
+    # FLUX
     "black-forest-labs/FLUX.1-schnell",
+    # Fine-tuned / LoRA-merged models
+    "Lykon/dreamshaper-8",
+    "SG161222/Realistic_Vision_V6.0_B1_noVAE",
+    "prompthero/openjourney-v4",
 ]
 
 class ImageGenerateRequest(BaseModel):
