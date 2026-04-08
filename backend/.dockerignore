@@ -21,6 +21,7 @@ __pycache__/
 # Docker
 Dockerfile
 .dockerignore
+.env.docker
 
 # Testing
 tests/
