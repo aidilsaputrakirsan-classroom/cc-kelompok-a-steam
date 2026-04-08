@@ -3,8 +3,12 @@ import Spinner from "./Spinner"
 import { generateImage } from "../services/api"
 
 const MODELS = [
-  { id: "black-forest-labs/FLUX.1-schnell", label: "FLUX.1 Schnell ⚡", desc: "Terbaik & cepat (Aman)" },
-  { id: "stabilityai/stable-diffusion-3.5-large", label: "Stable Diffusion 3.5", desc: "Kualitas tinggi" },
+  { id: "stabilityai/stable-diffusion-xl-base-1.0", label: "Stable Diffusion XL", desc: "Detail tinggi, serbaguna" },
+  { id: "stabilityai/sdxl-turbo", label: "SDXL Turbo ⚡", desc: "Super cepat (4 steps)" },
+  { id: "runwayml/stable-diffusion-v1-5", label: "Stable Diffusion 1.5", desc: "Umum, cepat" },
+  { id: "stabilityai/stable-diffusion-2-1", label: "Stable Diffusion 2.1", desc: "Kualitas tinggi" },
+  { id: "black-forest-labs/FLUX.1-schnell", label: "FLUX.1 Schnell ⚡", desc: "Terbaik & cepat" },
+  { id: "black-forest-labs/FLUX.1-dev", label: "FLUX.1 Dev 🏆", desc: "Kualitas tertinggi" },
 ]
 
 const SIZE_OPTIONS = [512, 768, 1024]

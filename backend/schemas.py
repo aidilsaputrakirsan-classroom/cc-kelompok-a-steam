@@ -124,11 +124,12 @@ class TokenResponse(BaseModel):
 # ============================================================
 
 AVAILABLE_MODELS = [
-    "black-forest-labs/FLUX.1-schnell",
-    "stabilityai/stable-diffusion-3.5-large",
     "stabilityai/stable-diffusion-xl-base-1.0",
+    "stabilityai/sdxl-turbo",
     "runwayml/stable-diffusion-v1-5",
-    "stabilityai/stable-diffusion-2-1"
+    "stabilityai/stable-diffusion-2-1",
+    "black-forest-labs/FLUX.1-schnell",
+    "black-forest-labs/FLUX.1-dev",
 ]
 
 class ImageGenerateRequest(BaseModel):

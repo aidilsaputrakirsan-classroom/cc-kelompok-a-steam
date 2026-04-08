@@ -16,6 +16,8 @@ from auth import create_access_token, get_current_user
 import crud
 import httpx
 import base64
+import io
+from huggingface_hub import AsyncInferenceClient
 
 load_dotenv()
 
@@ -223,9 +225,7 @@ def team_info():
             {"name": "Jonathan Joseph Yudita Tampubolon", "nim": "10231048", "role": "Lead QA & Docs"},
         ]
     }
-
-
-# ==================== AI IMAGE GENERATOR ====================
+# ==================== AI IMAGE GENERATOR ====================
 
 HF_BASE_URL = "https://router.huggingface.co/hf-inference/models"
 
@@ -243,20 +243,14 @@ async def generate_image(
 ):
     """
     Generate gambar dari teks prompt menggunakan Hugging Face AI.
-
-    - **prompt**: Deskripsi gambar dalam bahasa Inggris (lebih akurat)
-    - **model**: Model AI yang digunakan
-    - **guidance_scale**: CFG Scale (1-20, default 7.5)
-    - **num_inference_steps**: Jumlah steps (10-100, default 30)
-    - **negative_prompt**: Hal yang tidak diinginkan dalam gambar
-    - **seed**: Seed untuk hasil reproducible (opsional)
-
+    Menggunakan AsyncInferenceClient dengan provider='auto' untuk
+    akses ke lebih banyak model melalui routing otomatis.
     **Membutuhkan autentikasi.**
     """
     if request.model not in AVAILABLE_MODELS:
         raise HTTPException(
             status_code=400,
-            detail=f"Model '{request.model}' tidak tersedia. Pilih dari: {', '.join(AVAILABLE_MODELS)}"
+            detail=f"Model '{request.model}' tidak tersedia."
         )
 
     hf_api_key = os.getenv("HUGGINGFACE_API_KEY")
@@ -266,52 +260,60 @@ async def generate_image(
             detail="Hugging Face API Key belum dikonfigurasi. Tambahkan HUGGINGFACE_API_KEY di file .env"
         )
 
-    hf_url = f"{HF_BASE_URL}/{request.model}"
-    headers = {
-        "Authorization": f"Bearer {hf_api_key}",
-        "Content-Type": "application/json",
-    }
+    try:
+        client = AsyncInferenceClient(
+            api_key=hf_api_key,
+            provider="auto",  # Auto-routing ke provider terbaik yang tersedia
+        )
 
-    # Build parameters — hanya kirim yang tidak None/default
-    parameters = {
-        "guidance_scale": request.guidance_scale,
-        "num_inference_steps": request.num_inference_steps,
-    }
-    if request.negative_prompt:
-        parameters["negative_prompt"] = request.negative_prompt
-    if request.seed is not None:
-        parameters["seed"] = request.seed
-    # Width & height hanya untuk model yang mendukung (SDXL, SD 2.1, dst)
-    if "flux" not in request.model.lower():
-        parameters["width"] = request.width
-        parameters["height"] = request.height
+        kwargs = {
+            "prompt": request.prompt,
+            "model": request.model,
+            "guidance_scale": request.guidance_scale,
+            "num_inference_steps": request.num_inference_steps,
+        }
 
-    payload = {"inputs": request.prompt, "parameters": parameters}
+        if request.negative_prompt:
+            kwargs["negative_prompt"] = request.negative_prompt
+        if request.seed is not None:
+            kwargs["seed"] = request.seed
+        # Width & height tidak didukung oleh semua model (misal FLUX)
+        if "flux" not in request.model.lower() and "turbo" not in request.model.lower():
+            kwargs["width"] = request.width
+            kwargs["height"] = request.height
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        try:
-            response = await client.post(hf_url, headers=headers, json=payload)
-        except httpx.TimeoutException:
+        image = await client.text_to_image(**kwargs)
+
+        # Konversi PIL Image ke base64
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    except Exception as e:
+        error_str = str(e)
+        if "402" in error_str or "payment" in error_str.lower() or "billing" in error_str.lower():
+            raise HTTPException(
+                status_code=402,
+                detail="Model ini membutuhkan kredit berbayar di Hugging Face. Pilih model lain."
+            )
+        if "503" in error_str or "loading" in error_str.lower():
+            raise HTTPException(
+                status_code=503,
+                detail="Model sedang loading (cold start). Tunggu 20-30 detik lalu coba lagi."
+            )
+        if "timeout" in error_str.lower():
             raise HTTPException(
                 status_code=504,
-                detail="Request ke Hugging Face timeout. Model mungkin sedang cold start, coba beberapa saat lagi."
+                detail="Request timeout. Model mungkin sedang sibuk, coba beberapa saat lagi."
             )
-
-    if response.status_code == 503:
-        raise HTTPException(
-            status_code=503,
-            detail="Model AI sedang loading (cold start). Tunggu 20-30 detik lalu coba lagi."
-        )
-    if response.status_code != 200:
         raise HTTPException(
             status_code=502,
-            detail=f"Hugging Face API error ({response.status_code}): {response.text[:300]}"
+            detail=f"Error dari Hugging Face: {error_str[:300]}"
         )
-
-    image_base64 = base64.b64encode(response.content).decode("utf-8")
 
     return {
         "image_base64": image_base64,
         "prompt": request.prompt,
         "model": request.model,
-    }
+    }
+
