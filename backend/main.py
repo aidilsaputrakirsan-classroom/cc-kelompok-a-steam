@@ -3,7 +3,7 @@ import io
 import base64
 import time
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -19,6 +19,7 @@ from schemas import (
 from auth import create_access_token, get_current_user
 import crud
 from huggingface_hub import AsyncInferenceClient
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -230,6 +231,149 @@ async def generate_image(
         "model": request.model,
     }
 
+
+# ==================== AI SUMMARIZER ====================
+
+@app.post("/generate/summarize")
+async def generate_summary(
+    request: SummarizeRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Rangkum teks menggunakan Google Gemini API.
+    **Membutuhkan autentikasi.**
+    """
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Gemini API Key belum dikonfigurasi."
+        )
+
+    start_time = time.time()
+    
+    try:
+        genai.configure(api_key=gemini_api_key)
+        model = genai.GenerativeModel("gemini-2.5-flash")
+        
+        prompt = f"Tolong rangkum bahasa Indonesia dari teks atau tautan berikut secara ringkas namun Informatif:\n\n{request.source_content}"
+        
+        response = await model.generate_content_async(prompt)
+        summary_text = response.text
+        
+        processing_time = round(time.time() - start_time, 2)
+        
+        # Simpan ke history
+        crud.create_summarization(
+            db=db,
+            user_id=current_user.id,
+            source_type=request.source_type,
+            source_content=request.source_content,
+            summary_text=summary_text,
+            model_name="gemini-2.5-flash",
+            processing_time=processing_time,
+            original_length=len(request.source_content),
+            summary_length=len(summary_text),
+            compression_ratio=len(summary_text) / max(len(request.source_content), 1),
+            status="completed"
+        )
+        crud.increment_api_used(db=db, user_id=current_user.id)
+        
+    except Exception as e:
+        # Simpan kegagalan
+        crud.create_summarization(
+            db=db,
+            user_id=current_user.id,
+            source_type=request.source_type,
+            source_content=request.source_content,
+            summary_text="failed",
+            model_name="gemini-2.5-flash",
+            processing_time=round(time.time() - start_time, 2),
+            status="failed",
+            error_message=str(e)[:300]
+        )
+        raise HTTPException(status_code=502, detail=f"Gemini API error: {str(e)[:300]}")
+        
+    return {
+        "summary": summary_text,
+        "source": request.source_content,
+        "model": "gemini-2.5-flash"
+    }
+
+# ==================== AI IMAGE CAPTION ====================
+
+@app.post("/generate/caption")
+async def generate_caption(
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Deskripsikan atau ekstrak teks dari gambar menggunakan Google Gemini API.
+    **Membutuhkan autentikasi.**
+    """
+    
+    if image.content_type not in ["image/jpeg", "image/png", "image/webp"]:
+        raise HTTPException(status_code=400, detail="Format gambar harus JPEG, PNG, atau WEBP")
+        
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Gemini API Key belum dikonfigurasi."
+        )
+
+    start_time = time.time()
+    
+    try:
+        image_bytes = await image.read()
+        
+        # Konversi ke PIL Image karena Gemini meminta format yang dikenali
+        from PIL import Image
+        pil_image = Image.open(io.BytesIO(image_bytes))
+        
+        genai.configure(api_key=gemini_api_key)
+        model = genai.GenerativeModel("gemini-2.5-flash")
+        
+        prompt = "Tolong berikan deskripsi yang akurat dalam bahasa Indonesia mengenai apa yang ada pada gambar ini. Jika ada teks pada gambar, tolong ekstrak teksnya sekalian (OCR)."
+        
+        # Coba generate
+        response = await model.generate_content_async([prompt, pil_image])
+        caption_text = response.text
+        
+        processing_time = round(time.time() - start_time, 2)
+        
+        # Simpan History
+        crud.create_image_caption(
+            db=db,
+            user_id=current_user.id,
+            image_url=f"uploaded_{image.filename}_{int(time.time())}",
+            caption_text=caption_text,
+            model_name="gemini-2.5-flash",
+            processing_time=processing_time,
+            status="completed"
+        )
+        crud.increment_api_used(db=db, user_id=current_user.id)
+        
+    except Exception as e:
+        crud.create_image_caption(
+            db=db,
+            user_id=current_user.id,
+            image_url=image.filename,
+            caption_text="failed",
+            model_name="gemini-2.5-flash",
+            processing_time=round(time.time() - start_time, 2),
+            status="failed",
+            error_message=str(e)[:300]
+        )
+        raise HTTPException(status_code=502, detail=f"Gemini API error: {str(e)[:300]}")
+        
+    return {
+        "caption": caption_text,
+        "filename": image.filename,
+        "model": "gemini-1.5-flash"
+    }
 
 # ==================== HISTORY: IMAGE GENERATIONS ====================
 

@@ -134,6 +134,7 @@ def create_summarization(
     summary_length: int = None,
     compression_ratio: float = None,
     status: str = "completed",
+    error_message: str = None,
 ) -> TextSummarization:
     """Simpan riwayat summarisasi ke database."""
     record = TextSummarization(
@@ -146,6 +147,7 @@ def create_summarization(
         summary_length=summary_length,
         compression_ratio=compression_ratio,
         status=status,
+        error_message=error_message,
         processing_time=processing_time,
     )
     db.add(record)
@@ -182,6 +184,7 @@ def create_image_caption(
     processing_time: float,
     confidence_score: float = None,
     status: str = "completed",
+    error_message: str = None,
 ) -> ImageCaption:
     """Simpan riwayat caption gambar ke database."""
     record = ImageCaption(
@@ -191,6 +194,7 @@ def create_image_caption(
         model_name=model_name,
         confidence_score=confidence_score,
         status=status,
+        error_message=error_message,
         processing_time=processing_time,
     )
     db.add(record)
