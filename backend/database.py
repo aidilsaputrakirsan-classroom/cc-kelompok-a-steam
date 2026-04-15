@@ -30,10 +30,13 @@ Base = declarative_base()
 def get_db():
     """
     Dependency injection untuk FastAPI.
-    Membuka session saat request masuk, menutup saat selesai.
+    Membuka session saat request masuk, rollback jika exception, menutup saat selesai.
     """
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

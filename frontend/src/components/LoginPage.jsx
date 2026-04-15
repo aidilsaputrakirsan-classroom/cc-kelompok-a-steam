@@ -4,9 +4,10 @@ import Spinner from "./Spinner"
 function LoginPage({ onLogin, onRegister, showToast }) {
   const [isRegister, setIsRegister] = useState(false)
   const [formData, setFormData] = useState({
+    username: "",
     email: "",
     password: "",
-    name: "",
+    full_name: "",
   })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -22,8 +23,13 @@ function LoginPage({ onLogin, onRegister, showToast }) {
 
     try {
       if (isRegister) {
-        if (!formData.name.trim()) {
-          showToast("Nama wajib diisi", "error")
+        if (!formData.full_name.trim()) {
+          showToast("Nama lengkap wajib diisi", "error")
+          setLoading(false)
+          return
+        }
+        if (!formData.username.trim()) {
+          showToast("Username wajib diisi", "error")
           setLoading(false)
           return
         }
@@ -71,10 +77,24 @@ function LoginPage({ onLogin, onRegister, showToast }) {
               <label style={styles.label}>Nama Lengkap</label>
               <input
                 type="text"
-                name="name"
-                value={formData.name}
+                name="full_name"
+                value={formData.full_name}
                 onChange={handleChange}
                 placeholder="Nama Lengkap"
+                style={styles.input}
+              />
+            </div>
+          )}
+
+          {isRegister && (
+            <div style={styles.field}>
+              <label style={styles.label}>Username</label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="username_tanpa_spasi"
                 style={styles.input}
               />
             </div>

@@ -196,17 +196,20 @@ async def generate_image(
     except Exception as e:
         error_str = str(e)
 
-        # Simpan riwayat gagal ke database
-        crud.create_image_generation(
-            db=db,
-            user_id=current_user.id,
-            prompt=request.prompt,
-            image_url="",
-            model_name=request.model,
-            generation_time=round(time.time() - start_time, 2),
-            status="failed",
-            error_message=error_str[:300],
-        )
+        # Simpan riwayat gagal ke database (jangan biarkan kegagalan logging menyembunyikan error asli)
+        try:
+            crud.create_image_generation(
+                db=db,
+                user_id=current_user.id,
+                prompt=request.prompt,
+                image_url="failed",
+                model_name=request.model,
+                generation_time=round(time.time() - start_time, 2),
+                status="failed",
+                error_message=error_str[:300],
+            )
+        except Exception:
+            pass  # Abaikan error logging DB — jangan sampai menutupi error asli
 
         if "402" in error_str or "payment" in error_str.lower():
             raise HTTPException(status_code=402, detail="Model ini membutuhkan kredit berbayar.")
@@ -214,6 +217,8 @@ async def generate_image(
             raise HTTPException(status_code=503, detail="Model sedang loading. Tunggu 20-30 detik lalu coba lagi.")
         if "timeout" in error_str.lower():
             raise HTTPException(status_code=504, detail="Request timeout. Coba beberapa saat lagi.")
+        if "429" in error_str or "rate" in error_str.lower():
+            raise HTTPException(status_code=429, detail="Terlalu banyak request ke Hugging Face. Tunggu beberapa menit lalu coba lagi.")
         raise HTTPException(
             status_code=502,
             detail=f"Hugging Face API error: {error_str[:300]}"

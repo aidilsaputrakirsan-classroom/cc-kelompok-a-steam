@@ -19,7 +19,7 @@ class UserCreate(BaseModel):
     email: EmailStr = Field(
         ...,
         examples=["user@student.itk.ac.id"],
-        description="Alamat email yang valid"
+        description="Alamat email yang valid (contoh: nama@domain.com)"
     )
     full_name: str = Field(
         ...,
@@ -38,7 +38,7 @@ class UserCreate(BaseModel):
     @field_validator("password")
     @classmethod
     def password_strength(cls, v: str) -> str:
-        """Validasi kekuatan password."""
+        """Validasi kekuatan password menggunakan regex check."""
         errors = []
         if not any(c.isupper() for c in v):
             errors.append("minimal 1 huruf kapital (A-Z)")
