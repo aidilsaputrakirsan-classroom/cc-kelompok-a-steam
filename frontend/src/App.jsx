@@ -3,11 +3,20 @@ import Header from "./components/Header"
 import LoginPage from "./components/LoginPage"
 import Toast from "./components/Toast"
 import ImageGeneratorPage from "./components/ImageGeneratorPage"
-import AiSummarizePage from "./components/AiSummarizePage" 
+import AiSummarizePage from "./components/AiSummarizePage"
 import { useToast } from "./hooks/useToast"
 import {
-  fetchItems, createItem, updateItem, deleteItem,
-  checkHealth, login, register, getMe, setToken, clearToken, getToken,
+  fetchItems,
+  createItem,
+  updateItem,
+  deleteItem,
+  checkHealth,
+  login,
+  register,
+  getMe,
+  setToken,
+  clearToken,
+  getToken,
 } from "./services/api"
 
 function App() {
@@ -54,7 +63,7 @@ function App() {
     const token = getToken()
     if (token && !isAuthenticated) {
       getMe()
-        .then(userData => {
+        .then((userData) => {
           setUser(userData)
           setIsAuthenticated(true)
         })
@@ -71,15 +80,13 @@ function App() {
   }, [isAuthenticated, loadItems])
 
   // ==================== AUTH HANDLERS ====================
-
   const handleLogin = async (email, password) => {
     try {
-      const data = await login(email, password)
-      // Setelah login, ambil data user
+      await login(email, password)
       const userData = await getMe()
       setUser(userData)
       setIsAuthenticated(true)
-      setActiveTab("ai-generator") 
+      setActiveTab("ai-generator")
       showToast("Login berhasil! Selamat datang kembali!", "success")
     } catch (err) {
       showToast("Login gagal: " + err.message, "error")
@@ -87,7 +94,6 @@ function App() {
   }
 
   const handleRegister = async (userData) => {
-    // Register lalu otomatis login
     await register(userData)
     await handleLogin(userData.email, userData.password)
     showToast("Registrasi berhasil! Selamat datang!", "success")
@@ -104,7 +110,6 @@ function App() {
   }
 
   // ==================== ITEM HANDLERS ====================
-
   const handleSubmit = async (itemData, editId) => {
     try {
       if (editId) {
@@ -130,7 +135,7 @@ function App() {
   const handleDelete = async (id) => {
     const item = items.find((i) => i.id === id)
     if (!window.confirm(`Yakin ingin menghapus "${item?.name}"?`)) return
-    setDeletingItems(prev => new Set(prev).add(id))
+    setDeletingItems((prev) => new Set(prev).add(id))
     try {
       await deleteItem(id)
       showToast("Item berhasil dihapus!", "success")
@@ -139,7 +144,7 @@ function App() {
       if (err.message === "UNAUTHORIZED") handleLogout()
       else showToast("Gagal menghapus: " + err.message, "error")
     } finally {
-      setDeletingItems(prev => {
+      setDeletingItems((prev) => {
         const newSet = new Set(prev)
         newSet.delete(id)
         return newSet
@@ -153,8 +158,6 @@ function App() {
   }
 
   // ==================== RENDER ====================
-
-  // Jika belum login, tampilkan login page
   if (!isAuthenticated) {
     return (
       <>
@@ -164,7 +167,6 @@ function App() {
     )
   }
 
-  // Jika sudah login, tampilkan main app
   return (
     <div style={styles.app}>
       <div style={styles.container}>
@@ -175,32 +177,19 @@ function App() {
           onLogout={handleLogout}
         />
 
-        {/* Tab Navigation */}
-        <div style={styles.tabNav}>
-          <button
-            id="tab-ai-generator"
-            style={{ ...styles.tabBtn, ...(activeTab === "ai-generator" ? styles.tabBtnActive : {}) }}
-            onClick={() => setActiveTab("ai-generator")}
-          >
-            🎨 AI Generator
-          </button>
-          <button
-            onClick={() => setActiveTab("ai-summarize")}
-            style={{
-              ...styles.tabBtn,
-              ...(activeTab === "ai-summarize" ? styles.tabBtnActive : {}),
-            }}
-          >
-            📝 AI Summarize
-          </button>
-        </div>
-
-        {/* Tab Content */}
         {activeTab === "ai-generator" && (
-          <ImageGeneratorPage showToast={showToast} />
+          <ImageGeneratorPage
+            showToast={showToast}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+          />
         )}
         {activeTab === "ai-summarize" && (
-          <AiSummarizePage showToast={showToast} />
+          <AiSummarizePage
+            showToast={showToast}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+          />
         )}
       </div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
@@ -211,11 +200,20 @@ function App() {
 const styles = {
   app: {
     minHeight: "100vh",
-    backgroundColor: "#f0f2f5",
+    background:
+      "radial-gradient(circle at top left, rgba(136, 115, 255, 0.16), transparent 24%), radial-gradient(circle at bottom right, rgba(255, 184, 130, 0.18), transparent 24%), #060913",
     padding: "2rem",
-    fontFamily: "'Segoe UI', Arial, sans-serif",
+    fontFamily: "'SF Pro Display', 'SF Pro', system-ui, sans-serif",
+    color: "#edf2ff",
   },
-  container: { maxWidth: "900px", margin: "0 auto" },
+  container: {
+    width: "100%",
+    maxWidth: "1600px",
+    margin: "0 auto",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1.5rem",
+  },
   tabNav: {
     display: "flex",
     gap: "0.75rem",
@@ -223,16 +221,17 @@ const styles = {
     marginBottom: "1.5rem",
   },
   tabBtn: {
-    background: "#fff",
-    border: "1px solid #d1d5db",
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: "999px",
     padding: "0.8rem 1.2rem",
+    color: "#e8edf8",
     cursor: "pointer",
   },
   tabBtnActive: {
-    backgroundColor: "#2563eb",
-    color: "#fff",
-    borderColor: "#2563eb",
+    backgroundColor: "#ffb57f",
+    color: "#0f172a",
+    borderColor: "#ffb57f",
   },
 }
 

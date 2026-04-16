@@ -9,13 +9,12 @@ const MODELS = [
 
 const SIZE_OPTIONS = [512, 768, 1024]
 
-function ImageGeneratorPage({ showToast }) {
+function ImageGeneratorPage({ showToast, activeTab, onSelectTab }) {
   const [prompt, setPrompt] = useState("")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
-  // Advanced settings state
   const [selectedModel, setSelectedModel] = useState(MODELS[0].id)
   const [negativePrompt, setNegativePrompt] = useState("")
   const [guidanceScale, setGuidanceScale] = useState(7.5)
@@ -43,7 +42,7 @@ function ImageGeneratorPage({ showToast }) {
         negative_prompt: negativePrompt.trim() || null,
         width: isFlux ? 1024 : width,
         height: isFlux ? 1024 : height,
-        seed: seed !== "" ? parseInt(seed) : null,
+        seed: seed !== "" ? parseInt(seed, 10) : null,
       }
       const data = await generateImage(params)
       setResult(data)
@@ -63,301 +62,668 @@ function ImageGeneratorPage({ showToast }) {
     link.click()
   }
 
-  const handleReset = () => { setResult(null); setPrompt("") }
+  const handleReset = () => {
+    setResult(null)
+    setPrompt("")
+    setNegativePrompt("")
+    setSeed("")
+  }
 
   const randomSeed = () => setSeed(Math.floor(Math.random() * 2147483647).toString())
 
   return (
-    <div style={styles.container}>
-      {/* Hero */}
-      <div style={styles.heroSection}>
-        <div style={styles.heroIcon}>🎨</div>
-        <h2 style={styles.heroTitle}>AI Image Generator</h2>
-        <p style={styles.heroSubtitle}>Deskripsikan gambar impian Anda, dan biarkan AI mewujudkannya.</p>
+    <div style={styles.pageWrapper}>
+      <div style={styles.hero}>
+        <div style={styles.heroTextBlock}>
+          <p style={styles.kicker}>Dream in Pixels.</p>
+          <h2 style={styles.heroTitle}>Transform thoughts into ethereal visuals.</h2>
+          <p style={styles.heroText}>
+            Buat karya visual yang tajam dan elegan dengan AI. Pilih model, atur detail, lalu manifestasikan imajinasimu.
+          </p>
+        </div>
+
+        <div style={styles.heroActions}>
+          <button
+            type="button"
+            style={{
+              ...styles.heroButton,
+              ...(activeTab === "ai-generator" ? styles.heroButtonActive : {}),
+            }}
+            onClick={() => onSelectTab?.("ai-generator")}
+          >
+            Image Generator
+          </button>
+          <button
+            type="button"
+            style={{
+              ...styles.heroButton,
+              ...(activeTab === "ai-summarize" ? styles.heroButtonActive : {}),
+            }}
+            onClick={() => onSelectTab?.("ai-summarize")}
+          >
+            Text Summarizer
+          </button>
+        </div>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleGenerate} style={styles.form}>
-
-        {/* Model Selector */}
-        <div style={styles.section}>
-          <label style={styles.label}>🤖 Pilih Model AI</label>
-          <div style={styles.modelGrid}>
-            {MODELS.map(m => (
-              <button
-                key={m.id}
-                type="button"
-                id={`model-${m.id.split("/")[1]}`}
-                onClick={() => setSelectedModel(m.id)}
-                style={{
-                  ...styles.modelCard,
-                  ...(selectedModel === m.id ? styles.modelCardActive : {})
-                }}
-              >
-                <span style={styles.modelName}>{m.label}</span>
-                <span style={styles.modelDesc}>{m.desc}</span>
-              </button>
-            ))}
+      <div style={styles.mainGrid}>
+        <section style={styles.controlCard}>
+          <div style={styles.sectionHeader}>
+            <div>
+              <p style={styles.sectionLabel}>Prompt Input</p>
+              <h3 style={styles.sectionTitle}>Beri arahan AI-mu</h3>
+            </div>
+            <span style={styles.badge}>Creative</span>
           </div>
-        </div>
 
-        {/* Prompt */}
-        <div style={styles.section}>
-          <label style={styles.label}>✏️ Prompt</label>
-          <textarea
-            id="image-prompt"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder='Contoh: "a futuristic Indonesian city at sunset, digital art, highly detailed..."'
-            style={styles.textarea}
-            rows={3}
-            disabled={loading}
-          />
-          <p style={styles.hint}>💡 Tips: Bahasa Inggris lebih akurat. Tambahkan <em>"digital art", "ultra realistic", "cinematic lighting"</em>.</p>
-        </div>
+          <div style={styles.section}>
+            <label style={styles.label}>Prompt</label>
+            <textarea
+              id="image-prompt"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Contoh: cinematic cyberpunk city, neon glow, highly detailed..."
+              style={styles.textarea}
+              rows={5}
+              disabled={loading}
+            />
+          </div>
 
-        {/* Advanced Toggle */}
-        <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          style={styles.advancedToggle}
-          id="btn-advanced-settings"
-        >
-          ⚙️ Advanced Settings {showAdvanced ? "▲" : "▼"}
-        </button>
-
-        {/* Advanced Panel */}
-        {showAdvanced && (
-          <div style={styles.advancedPanel}>
-
-            {/* Negative Prompt */}
-            <div style={styles.field}>
-              <label style={styles.fieldLabel}>🚫 Negative Prompt</label>
-              <textarea
-                value={negativePrompt}
-                onChange={(e) => setNegativePrompt(e.target.value)}
-                placeholder='Hal yang TIDAK diinginkan, contoh: "blurry, ugly, bad quality, watermark"'
-                style={{ ...styles.textarea, fontSize: "0.85rem" }}
-                rows={2}
-                disabled={loading}
-              />
+          <div style={styles.section}>
+            <p style={styles.label}>Pilih Model</p>
+            <div style={styles.modelGrid}>
+              {MODELS.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setSelectedModel(m.id)}
+                  style={{
+                    ...styles.modelCard,
+                    ...(selectedModel === m.id ? styles.modelCardActive : {}),
+                  }}
+                >
+                  <span style={styles.modelName}>{m.label}</span>
+                  <span style={styles.modelDesc}>{m.desc}</span>
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* CFG Scale + Steps */}
-            <div style={styles.row2}>
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((prev) => !prev)}
+            style={styles.advancedToggle}
+          >
+            {showAdvanced ? "Hide advanced settings" : "Show advanced settings"} {showAdvanced ? "▲" : "▼"}
+          </button>
+
+          {showAdvanced && (
+            <div style={styles.advancedPanel}>
               <div style={styles.field}>
-                <label style={styles.fieldLabel}>
-                  🎯 CFG Scale: <strong>{guidanceScale}</strong>
-                </label>
-                <input
-                  type="range" min="1" max="20" step="0.5"
-                  value={guidanceScale}
-                  onChange={(e) => setGuidanceScale(parseFloat(e.target.value))}
-                  style={styles.slider}
+                <label style={styles.label}>Negative Prompt</label>
+                <textarea
+                  value={negativePrompt}
+                  onChange={(e) => setNegativePrompt(e.target.value)}
+                  placeholder="Contoh: blurry, bad anatomy, watermark"
+                  style={styles.textarea}
+                  rows={2}
                   disabled={loading}
                 />
-                <div style={styles.sliderHint}><span>Bebas (1)</span><span>Ketat (20)</span></div>
               </div>
-              <div style={styles.field}>
-                <label style={styles.fieldLabel}>
-                  🔄 Inference Steps: <strong>{inferenceSteps}</strong>
-                </label>
-                <input
-                  type="range" min="10" max="100" step="5"
-                  value={inferenceSteps}
-                  onChange={(e) => setInferenceSteps(parseInt(e.target.value))}
-                  style={styles.slider}
-                  disabled={loading}
-                />
-                <div style={styles.sliderHint}><span>Cepat (10)</span><span>Detail (100)</span></div>
-              </div>
-            </div>
 
-            {/* Width & Height (disabled for FLUX) */}
-            {!isFlux && (
               <div style={styles.row2}>
                 <div style={styles.field}>
-                  <label style={styles.fieldLabel}>↔️ Width</label>
-                  <select value={width} onChange={(e) => setWidth(parseInt(e.target.value))} style={styles.select} disabled={loading}>
-                    {SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}px</option>)}
-                  </select>
+                  <label style={styles.label}>CFG Scale: {guidanceScale}</label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="20"
+                    step="0.5"
+                    value={guidanceScale}
+                    onChange={(e) => setGuidanceScale(parseFloat(e.target.value))}
+                    style={styles.slider}
+                    disabled={loading}
+                  />
                 </div>
                 <div style={styles.field}>
-                  <label style={styles.fieldLabel}>↕️ Height</label>
-                  <select value={height} onChange={(e) => setHeight(parseInt(e.target.value))} style={styles.select} disabled={loading}>
-                    {SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}px</option>)}
-                  </select>
+                  <label style={styles.label}>Inference Steps: {inferenceSteps}</label>
+                  <input
+                    type="range"
+                    min="10"
+                    max="100"
+                    step="5"
+                    value={inferenceSteps}
+                    onChange={(e) => setInferenceSteps(parseInt(e.target.value, 10))}
+                    style={styles.slider}
+                    disabled={loading}
+                  />
                 </div>
               </div>
-            )}
-            {isFlux && (
-              <p style={styles.fluxNote}>ℹ️ Model FLUX menggunakan ukuran gambar otomatis (1024×1024).</p>
-            )}
 
-            {/* Seed */}
-            <div style={styles.field}>
-              <label style={styles.fieldLabel}>🌱 Seed (opsional — untuk hasil reproducible)</label>
-              <div style={styles.seedRow}>
-                <input
-                  type="number"
-                  value={seed}
-                  onChange={(e) => setSeed(e.target.value)}
-                  placeholder="Kosongkan untuk acak"
-                  style={{ ...styles.input, flex: 1 }}
-                  disabled={loading}
-                />
-                <button type="button" onClick={randomSeed} style={styles.btnSeed} disabled={loading}>🎲 Acak</button>
-                <button type="button" onClick={() => setSeed("")} style={styles.btnSeed} disabled={loading}>✕ Reset</button>
+              {!isFlux ? (
+                <div style={styles.row2}>
+                  <div style={styles.field}>
+                    <label style={styles.label}>Width</label>
+                    <select
+                      value={width}
+                      onChange={(e) => setWidth(parseInt(e.target.value, 10))}
+                      style={styles.select}
+                      disabled={loading}
+                    >
+                      {SIZE_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}px
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={styles.field}>
+                    <label style={styles.label}>Height</label>
+                    <select
+                      value={height}
+                      onChange={(e) => setHeight(parseInt(e.target.value, 10))}
+                      style={styles.select}
+                      disabled={loading}
+                    >
+                      {SIZE_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}px
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <p style={styles.note}>Model FLUX otomatis menggunakan 1024×1024.</p>
+              )}
+
+              <div style={styles.field}>
+                <label style={styles.label}>Seed (opsional)</label>
+                <div style={styles.seedRow}>
+                  <input
+                    type="number"
+                    value={seed}
+                    onChange={(e) => setSeed(e.target.value)}
+                    placeholder="Kosongkan untuk acak"
+                    style={styles.input}
+                    disabled={loading}
+                  />
+                  <button type="button" onClick={randomSeed} style={styles.btnSeed} disabled={loading}>
+                    🎲
+                  </button>
+                  <button type="button" onClick={() => setSeed("")} style={styles.btnSeed} disabled={loading}>
+                    ✕
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Submit Row */}
-        <div style={styles.btnRow}>
-          <button
-            type="submit"
-            style={{ ...styles.btnGenerate, ...(loading ? styles.btnDisabled : {}) }}
-            disabled={loading}
-            id="btn-generate"
-          >
-            {loading ? (
-              <><Spinner size={18} color="white" /><span style={{ marginLeft: "0.5rem" }}>Generating...</span></>
-            ) : "✨ Generate Gambar"}
-          </button>
-          {result && (
-            <button type="button" onClick={handleReset} style={styles.btnReset}>🔄 Reset</button>
           )}
-        </div>
-      </form>
 
-      {/* Loading */}
-      {loading && (
-        <div style={styles.loadingCard}>
-          <Spinner size={40} color="#2E75B6" />
-          <p style={styles.loadingText}>AI sedang menggambar...</p>
-          <p style={styles.loadingSubtext}>{MODELS.find(m => m.id === selectedModel)?.label} · {inferenceSteps} steps</p>
-        </div>
-      )}
+          <div style={styles.submitRow}>
+            <button
+              type="button"
+              onClick={handleGenerate}
+              style={{ ...styles.btnGenerate, ...(loading ? styles.btnDisabled : {}) }}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Spinner size={18} color="#fff" />
+                  <span style={{ marginLeft: "0.6rem" }}>Generating...</span>
+                </>
+              ) : (
+                "Manifest"
+              )}
+            </button>
+            <button type="button" onClick={handleReset} style={styles.btnSecondary}>
+              Reset
+            </button>
+          </div>
+        </section>
 
-      {/* Result */}
-      {result && !loading && (
-        <div style={styles.resultCard}>
-          <div style={styles.resultHeader}>
-            <h3 style={styles.resultTitle}>🖼️ Hasil Generate</h3>
-            <button onClick={handleDownload} style={styles.btnDownload} id="btn-download">⬇️ Download</button>
+        <section style={styles.previewCard}>
+          <div style={styles.previewHeader}>
+            <div>
+              <p style={styles.sectionLabel}>Output Preview</p>
+              <h3 style={styles.sectionTitle}>Hasil Generate</h3>
+            </div>
+            {result && (
+              <button type="button" onClick={handleDownload} style={styles.btnDownload}>
+                ⬇️ Download
+              </button>
+            )}
           </div>
-          <img
-            src={`data:image/png;base64,${result.image_base64}`}
-            alt={result.prompt}
-            style={styles.resultImage}
-          />
-          <div style={styles.resultMeta}>
-            <p style={styles.metaItem}><strong>Prompt:</strong> {result.prompt}</p>
-            <p style={styles.metaItem}><strong>Model:</strong> {result.model}</p>
-            <p style={styles.metaItem}><strong>CFG Scale:</strong> {guidanceScale} · <strong>Steps:</strong> {inferenceSteps}{seed ? ` · Seed: ${seed}` : ""}</p>
-          </div>
-        </div>
-      )}
+
+          {loading ? (
+            <div style={styles.loadingPanel}>
+              <Spinner size={40} color="#ffb26c" />
+              <p style={styles.loadingText}>AI sedang menggambar...</p>
+              <p style={styles.loadingSubtext}>
+                {MODELS.find((m) => m.id === selectedModel)?.label}
+              </p>
+            </div>
+          ) : result ? (
+            <>
+              <div style={styles.imageWrapper}>
+                <img
+                  src={`data:image/png;base64,${result.image_base64}`}
+                  alt={result.prompt || "Generated"}
+                  style={styles.resultImage}
+                />
+              </div>
+              <div style={styles.resultMeta}>
+                <p style={styles.metaLine}>
+                  <strong>Prompt:</strong> {result.prompt}
+                </p>
+                <p style={styles.metaLine}>
+                  <strong>Model:</strong> {result.model}
+                </p>
+                <p style={styles.metaLine}>
+                  <strong>CFG:</strong> {guidanceScale} · <strong>Steps:</strong> {inferenceSteps}
+                  {seed ? ` · Seed: ${seed}` : ""}
+                </p>
+              </div>
+            </>
+          ) : (
+            <div style={styles.emptyState}>
+              <div style={styles.emptyIcon}>✨</div>
+              <p style={styles.emptyTitle}>Canvas is empty</p>
+              <p style={styles.emptyText}>
+                Masukkan prompt, lalu tekan tombol manifest untuk melihat hasil AI.
+              </p>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   )
 }
 
 const styles = {
-  container: { display: "flex", flexDirection: "column", gap: "1.5rem" },
-  heroSection: {
-    textAlign: "center", padding: "2rem",
-    background: "linear-gradient(135deg, #1F4E79 0%, #2E75B6 50%, #548235 100%)",
-    borderRadius: "16px", color: "white",
-    boxShadow: "0 8px 32px rgba(31,78,121,0.25)",
+  pageWrapper: {
+    width: "100%",
+    minHeight: "100%",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1.75rem",
+    fontFamily: "'SF Pro Display', 'SF Pro', system-ui, sans-serif",
+    color: "#eef2ff",
+    padding: "0",
   },
-  heroIcon: { fontSize: "3rem", marginBottom: "0.5rem" },
-  heroTitle: { margin: "0 0 0.5rem 0", fontSize: "1.8rem", fontWeight: "bold", textShadow: "0 2px 4px rgba(0,0,0,0.3)" },
-  heroSubtitle: { margin: 0, fontSize: "1rem", opacity: 0.9 },
-  form: {
-    backgroundColor: "white", padding: "1.5rem", borderRadius: "16px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: "1.25rem",
+  hero: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+    gap: "1.5rem",
+    padding: "2rem",
+    borderRadius: "30px",
+    background: "linear-gradient(135deg, rgba(255, 164, 82, 0.14), rgba(25, 39, 76, 0.92))",
+    border: "1px solid rgba(255, 156, 59, 0.12)",
+    boxShadow: "0 30px 80px rgba(0, 0, 0, 0.2)",
   },
-  section: { display: "flex", flexDirection: "column", gap: "0.5rem" },
-  label: { fontWeight: "bold", fontSize: "0.9rem", color: "#444" },
-  modelGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "0.5rem" },
-  modelCard: {
-    padding: "0.7rem", border: "2px solid #e0e0e0", borderRadius: "10px",
-    backgroundColor: "#fafafa", cursor: "pointer", textAlign: "left",
-    display: "flex", flexDirection: "column", gap: "0.2rem", transition: "all 0.2s",
+  heroTextBlock: { flex: "1 1 440px", minWidth: "280px" },
+  kicker: {
+    margin: 0,
+    color: "#ffc38d",
+    fontSize: "0.9rem",
+    letterSpacing: "0.24em",
+    textTransform: "uppercase",
   },
-  modelCardActive: { borderColor: "#2E75B6", backgroundColor: "#EBF5FF" },
-  modelName: { fontWeight: "bold", fontSize: "0.82rem", color: "#1F4E79" },
-  modelDesc: { fontSize: "0.75rem", color: "#888" },
+  heroTitle: {
+    margin: "0.75rem 0 0.85rem 0",
+    fontSize: "clamp(2rem, 3vw, 2.8rem)",
+    lineHeight: 1.05,
+    letterSpacing: "-0.035em",
+    color: "#fff1e4",
+  },
+  heroText: {
+    margin: 0,
+    color: "#d9d7e5",
+    maxWidth: "720px",
+    fontSize: "1rem",
+    lineHeight: 1.75,
+  },
+  heroActions: {
+    display: "flex",
+    gap: "0.8rem",
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
+  heroButton: {
+    borderRadius: "999px",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.06)",
+    color: "#f8f9ff",
+    padding: "0.95rem 1.45rem",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "0.95rem",
+  },
+  heroButtonActive: {
+    borderRadius: "999px",
+    border: "1px solid rgba(255, 151, 73, 0.22)",
+    background: "linear-gradient(135deg, rgba(255, 166, 79, 0.22), rgba(255, 255, 255, 0.08))",
+    color: "#fff4e7",
+    padding: "0.95rem 1.45rem",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "0.95rem",
+  },
+  mainGrid: {
+    display: "grid",
+    gridTemplateColumns: "1.4fr 1fr",
+    gap: "1.5rem",
+    width: "100%",
+    alignItems: "start",
+  },
+  controlCard: {
+    width: "100%",
+    padding: "1.75rem",
+    borderRadius: "30px",
+    background: "rgba(31, 41, 77, 0.94)",
+    border: "1px solid rgba(255, 156, 60, 0.12)",
+    boxShadow: "0 30px 70px rgba(0, 0, 0, 0.22)",
+  },
+  previewCard: {
+    width: "100%",
+    padding: "1.75rem",
+    borderRadius: "30px",
+    background: "rgba(28, 34, 57, 0.96)",
+    border: "1px solid rgba(255, 156, 60, 0.12)",
+    boxShadow: "0 30px 70px rgba(0, 0, 0, 0.22)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+    minHeight: "560px",
+  },
+  sectionHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "1rem",
+    alignItems: "flex-start",
+    marginBottom: "1.5rem",
+  },
+  sectionLabel: {
+    margin: 0,
+    color: "#f2c29b",
+    fontSize: "0.8rem",
+    letterSpacing: "0.18em",
+    textTransform: "uppercase",
+  },
+  sectionTitle: {
+    margin: "0.35rem 0 0",
+    fontSize: "1.38rem",
+    color: "#fff8f0",
+    lineHeight: 1.25,
+  },
+  badge: {
+    display: "inline-flex",
+    padding: "0.5rem 0.9rem",
+    borderRadius: "999px",
+    background: "rgba(255, 148, 66, 0.16)",
+    color: "#ffd8b2",
+    fontSize: "0.8rem",
+    fontWeight: 700,
+  },
+  section: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.9rem",
+    marginBottom: "1.2rem",
+  },
+  label: {
+    color: "#e6d8ca",
+    fontSize: "0.95rem",
+    fontWeight: 600,
+  },
   textarea: {
-    padding: "0.9rem 1rem", border: "2px solid #ddd", borderRadius: "10px",
-    fontSize: "1rem", fontFamily: "'Segoe UI', Arial, sans-serif", resize: "vertical", outline: "none",
+    width: "100%",
+    minHeight: "120px",
+    borderRadius: "18px",
+    border: "1px solid rgba(255,255,255,0.1)",
+    background: "rgba(255,255,255,0.06)",
+    color: "#f8f5ef",
+    padding: "1rem 1.15rem",
+    outline: "none",
+    resize: "vertical",
+    fontSize: "1rem",
+    lineHeight: 1.7,
   },
-  hint: { margin: "0.2rem 0 0 0", fontSize: "0.8rem", color: "#888" },
+  modelGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(125px, 1fr))",
+    gap: "0.75rem",
+  },
+  modelCard: {
+    padding: "0.9rem 1rem",
+    borderRadius: "18px",
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    color: "#f2ede8",
+    textAlign: "left",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    minHeight: "92px",
+    display: "grid",
+    gap: "0.35rem",
+    alignItems: "flex-start",
+  },
+  modelCardActive: {
+    background: "linear-gradient(135deg, rgba(255, 156, 60, 0.16), rgba(255, 255, 255, 0.08))",
+    borderColor: "rgba(255, 156, 60, 0.32)",
+    boxShadow: "0 16px 40px rgba(255, 141, 61, 0.14)",
+  },
+  modelName: {
+    display: "block",
+    fontWeight: 700,
+    color: "#fff7ee",
+    marginBottom: "0.35rem",
+    fontSize: "0.9rem",
+  },
+  modelDesc: {
+    color: "#d2c5b4",
+    fontSize: "0.82rem",
+    lineHeight: 1.5,
+  },
   advancedToggle: {
-    padding: "0.6rem 1rem", border: "2px solid #ddd", borderRadius: "8px",
-    backgroundColor: "#f8f9fa", cursor: "pointer", fontWeight: "bold",
-    fontSize: "0.9rem", color: "#555", textAlign: "left",
+    width: "100%",
+    borderRadius: "18px",
+    border: "1px solid rgba(255,255,255,0.1)",
+    background: "rgba(255,255,255,0.06)",
+    color: "#fff4e6",
+    padding: "0.95rem 1rem",
+    cursor: "pointer",
+    fontWeight: 700,
+    marginBottom: "1rem",
   },
   advancedPanel: {
-    backgroundColor: "#f8f9fa", padding: "1.25rem", borderRadius: "12px",
-    border: "2px solid #e8e8e8", display: "flex", flexDirection: "column", gap: "1rem",
+    display: "grid",
+    gap: "1rem",
+    padding: "1.2rem",
+    borderRadius: "22px",
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.1)",
   },
-  field: { display: "flex", flexDirection: "column", gap: "0.4rem" },
-  fieldLabel: { fontSize: "0.85rem", fontWeight: "bold", color: "#555" },
-  row2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" },
-  slider: { width: "100%", accentColor: "#2E75B6" },
-  sliderHint: { display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#aaa" },
+  field: {
+    display: "grid",
+    gap: "0.55rem",
+  },
+  row2: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "1rem",
+  },
+  slider: {
+    width: "100%",
+    accentColor: "#ff9f4d",
+  },
   select: {
-    padding: "0.6rem 0.8rem", border: "2px solid #ddd", borderRadius: "8px",
-    fontSize: "0.9rem", backgroundColor: "white", outline: "none",
+    width: "100%",
+    padding: "0.85rem 1rem",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.07)",
+    color: "#f7ede2",
+    outline: "none",
+    fontSize: "0.95rem",
   },
-  fluxNote: { margin: 0, fontSize: "0.82rem", color: "#888", backgroundColor: "#fff3cd", padding: "0.5rem 0.75rem", borderRadius: "6px" },
-  seedRow: { display: "flex", gap: "0.5rem", alignItems: "center" },
+  note: {
+    margin: 0,
+    color: "#e2c8a3",
+    fontSize: "0.9rem",
+  },
+  seedRow: {
+    display: "flex",
+    gap: "0.75rem",
+    flexWrap: "wrap",
+  },
   input: {
-    padding: "0.6rem 0.8rem", border: "2px solid #ddd", borderRadius: "8px",
-    fontSize: "0.9rem", outline: "none",
+    width: "100%",
+    padding: "0.85rem 1rem",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.08)",
+    color: "#f7f1e8",
+    outline: "none",
+    fontSize: "0.95rem",
   },
   btnSeed: {
-    padding: "0.6rem 0.8rem", border: "2px solid #ddd", borderRadius: "8px",
-    backgroundColor: "white", cursor: "pointer", fontSize: "0.85rem", whiteSpace: "nowrap",
+    minWidth: "96px",
+    padding: "0.85rem 1rem",
+    borderRadius: "16px",
+    background: "rgba(255,255,255,0.08)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    color: "#f4e6d3",
+    cursor: "pointer",
+    fontWeight: 700,
   },
-  btnRow: { display: "flex", gap: "0.75rem", alignItems: "center" },
+  submitRow: {
+    display: "flex",
+    gap: "1rem",
+    marginTop: "0.5rem",
+    flexWrap: "wrap",
+  },
   btnGenerate: {
-    flex: 1, padding: "0.9rem 1.5rem",
-    background: "linear-gradient(135deg, #1F4E79, #2E75B6)",
-    color: "white", border: "none", borderRadius: "10px",
-    fontSize: "1rem", fontWeight: "bold", cursor: "pointer",
-    display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
+    flex: 1,
+    minHeight: "54px",
+    borderRadius: "18px",
+    border: "none",
+    background: "linear-gradient(135deg, #ffb56e, #ff8f48)",
+    color: "#111827",
+    fontWeight: 800,
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.65rem",
   },
-  btnDisabled: { opacity: 0.7, cursor: "not-allowed" },
-  btnReset: {
-    padding: "0.9rem 1.2rem", backgroundColor: "#f0f2f5",
-    color: "#555", border: "2px solid #ddd", borderRadius: "10px",
-    fontSize: "0.95rem", fontWeight: "bold", cursor: "pointer",
+  btnSecondary: {
+    minHeight: "54px",
+    borderRadius: "18px",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.08)",
+    color: "#f7ece1",
+    padding: "0 1.4rem",
+    cursor: "pointer",
+    fontWeight: 700,
   },
-  loadingCard: {
-    backgroundColor: "white", padding: "3rem 2rem", borderRadius: "16px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-    display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem",
+  btnDisabled: {
+    opacity: 0.75,
+    cursor: "not-allowed",
   },
-  loadingText: { margin: 0, fontSize: "1.1rem", fontWeight: "bold", color: "#1F4E79" },
-  loadingSubtext: { margin: 0, fontSize: "0.85rem", color: "#888" },
-  resultCard: {
-    backgroundColor: "white", padding: "1.5rem", borderRadius: "16px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: "1rem",
+  previewHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "1rem",
+    alignItems: "center",
   },
-  resultHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  resultTitle: { margin: 0, color: "#1F4E79", fontSize: "1.2rem" },
   btnDownload: {
-    padding: "0.5rem 1rem",
-    background: "linear-gradient(135deg, #548235, #70AD47)",
-    color: "white", border: "none", borderRadius: "8px", cursor: "pointer",
-    fontWeight: "bold", fontSize: "0.9rem",
+    borderRadius: "16px",
+    border: "none",
+    background: "linear-gradient(135deg, #ffb56e, #ff8f48)",
+    color: "#111827",
+    padding: "0.9rem 1rem",
+    fontWeight: 700,
+    cursor: "pointer",
   },
-  resultImage: { width: "100%", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.15)", objectFit: "contain" },
-  resultMeta: { backgroundColor: "#f8f9fa", padding: "0.75rem 1rem", borderRadius: "8px", borderLeft: "4px solid #2E75B6" },
-  metaItem: { margin: "0 0 0.25rem 0", fontSize: "0.85rem", color: "#555" },
+  loadingPanel: {
+    flex: 1,
+    minHeight: "320px",
+    borderRadius: "24px",
+    background: "rgba(255,255,255,0.08)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    display: "grid",
+    placeItems: "center",
+    gap: "1rem",
+    textAlign: "center",
+    padding: "2rem",
+  },
+  loadingText: {
+    margin: 0,
+    fontSize: "1.1rem",
+    fontWeight: 700,
+    color: "#fff7e9",
+  },
+  loadingSubtext: {
+    margin: 0,
+    color: "#f0d8b5",
+  },
+  imageWrapper: {
+    borderRadius: "24px",
+    overflow: "hidden",
+    boxShadow: "0 24px 60px rgba(0,0,0,0.24)",
+  },
+  resultImage: {
+    width: "100%",
+    display: "block",
+  },
+  resultMeta: {
+    padding: "1rem 1.2rem",
+    borderRadius: "20px",
+    background: "rgba(255,255,255,0.07)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    color: "#f3e7d7",
+    fontSize: "0.92rem",
+    lineHeight: 1.7,
+  },
+  metaLine: {
+    margin: "0 0 0.55rem 0",
+  },
+  emptyState: {
+    flex: 1,
+    borderRadius: "24px",
+    padding: "2.5rem",
+    display: "grid",
+    placeItems: "center",
+    gap: "0.85rem",
+    background: "rgba(255,255,255,0.05)",
+    border: "1px dashed rgba(255,255,255,0.14)",
+    color: "#eedccb",
+    textAlign: "center",
+  },
+  emptyIcon: {
+    width: "76px",
+    height: "76px",
+    borderRadius: "50%",
+    display: "grid",
+    placeItems: "center",
+    background: "rgba(255,255,255,0.12)",
+    color: "#ffcf9a",
+    fontSize: "2rem",
+  },
+  emptyTitle: {
+    margin: 0,
+    fontSize: "1.25rem",
+    fontWeight: 700,
+    color: "#fff9ee",
+  },
+  emptyText: {
+    margin: 0,
+    maxWidth: "280px",
+    color: "#e4d2b4",
+    lineHeight: 1.7,
+  },
 }
 
 export default ImageGeneratorPage

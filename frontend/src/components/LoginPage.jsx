@@ -20,6 +20,7 @@ function LoginPage({ onLogin, onRegister, showToast }) {
 
   const resetForm = () => {
     setFormData(initialFormData)
+    setError("")
   }
 
   const handleChange = (e) => {
@@ -55,6 +56,7 @@ function LoginPage({ onLogin, onRegister, showToast }) {
       resetForm()
     } catch (err) {
       showToast(err.message, "error")
+      setError(err.message)
     } finally {
       setLoading(false)
     }
@@ -62,9 +64,15 @@ function LoginPage({ onLogin, onRegister, showToast }) {
 
   return (
     <div style={styles.wrapper}>
+      <div style={styles.backgroundGlow} />
       <div style={styles.card}>
-        <h1 style={styles.title}>☁️ Cloud App</h1>
-        <p style={styles.subtitle}>Komputasi Awan — SI ITK</p>
+        <div style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Aetheris Cloud</h1>
+            <p style={styles.subtitle}>Masuk atau daftar untuk mulai menggunakan AI generator dan summarizer.</p>
+          </div>
+          <div style={styles.badge}>Secure</div>
+        </div>
 
         <div style={styles.tabs}>
           <button
@@ -72,7 +80,6 @@ function LoginPage({ onLogin, onRegister, showToast }) {
             style={{ ...styles.tab, ...(isRegister ? {} : styles.tabActive) }}
             onClick={() => {
               setIsRegister(false)
-              setError("")
               resetForm()
             }}
           >
@@ -83,7 +90,6 @@ function LoginPage({ onLogin, onRegister, showToast }) {
             style={{ ...styles.tab, ...(isRegister ? styles.tabActive : {}) }}
             onClick={() => {
               setIsRegister(true)
-              setError("")
               resetForm()
             }}
           >
@@ -163,6 +169,8 @@ function LoginPage({ onLogin, onRegister, showToast }) {
             />
           </div>
 
+          {error && <div style={styles.error}>{error}</div>}
+
           <button type="submit" style={styles.btnSubmit} disabled={loading}>
             {loading ? (
               <>
@@ -187,83 +195,130 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#1F4E79",
+    background: "radial-gradient(circle at top left, rgba(152, 112, 255, 0.35), transparent 28%), radial-gradient(circle at bottom right, rgba(255, 175, 110, 0.22), transparent 28%), #080914",
     padding: "2rem",
-    fontFamily: "'Segoe UI', Arial, sans-serif",
+    fontFamily: "'SF Pro Display', 'SF Pro', 'Inter', system-ui, sans-serif",
+  },
+  backgroundGlow: {
+    position: "absolute",
+    width: "720px",
+    height: "720px",
+    borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(255, 189, 169, 0.14), transparent 52%)",
+    filter: "blur(80px)",
+    top: "-180px",
+    right: "-120px",
+    pointerEvents: "none",
   },
   card: {
-    backgroundColor: "white",
-    padding: "2.5rem",
-    borderRadius: "16px",
+    position: "relative",
     width: "100%",
-    maxWidth: "420px",
-    boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+    maxWidth: "460px",
+    background: "rgba(15, 23, 42, 0.92)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "28px",
+    padding: "2rem",
+    boxShadow: "0 24px 80px rgba(0, 0, 0, 0.35)",
+    backdropFilter: "blur(18px)",
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "1rem",
+    alignItems: "flex-start",
+    marginBottom: "1.75rem",
   },
   title: {
-    textAlign: "center",
-    margin: "0 0 0.25rem 0",
-    color: "#1F4E79",
-    fontSize: "2rem",
+    margin: 0,
+    fontSize: "2.2rem",
+    lineHeight: 1.05,
+    color: "#fff",
   },
   subtitle: {
-    textAlign: "center",
-    color: "#888",
-    margin: "0 0 1.5rem 0",
-    fontSize: "0.9rem",
+    margin: "0.65rem 0 0",
+    color: "#a1a6b3",
+    lineHeight: 1.6,
+    maxWidth: "320px",
+    fontSize: "0.95rem",
+  },
+  badge: {
+    alignSelf: "center",
+    padding: "0.5rem 0.9rem",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg, rgba(255,180,130,0.16), rgba(255,255,255,0.08))",
+    border: "1px solid rgba(255,255,255,0.14)",
+    color: "#ffe7d1",
+    fontSize: "0.82rem",
+    letterSpacing: "0.02em",
   },
   tabs: {
-    display: "flex",
-    marginBottom: "1.5rem",
-    borderRadius: "8px",
-    overflow: "hidden",
-    border: "2px solid #e0e0e0",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "0.5rem",
+    marginBottom: "1.75rem",
+    background: "rgba(255,255,255,0.04)",
+    borderRadius: "14px",
+    padding: "0.35rem",
   },
   tab: {
-    flex: 1,
-    padding: "0.7rem",
     border: "none",
-    backgroundColor: "#f0f0f0",
+    borderRadius: "12px",
+    padding: "0.95rem 1rem",
+    background: "transparent",
+    color: "#a1a6b3",
+    fontWeight: 700,
     cursor: "pointer",
-    fontSize: "0.95rem",
-    fontWeight: "bold",
-    color: "#888",
+    transition: "all 0.18s ease",
   },
   tabActive: {
-    backgroundColor: "#1F4E79",
-    color: "white",
+    background: "linear-gradient(135deg, rgba(255, 183, 128, 0.22), rgba(255, 255, 255, 0.08))",
+    color: "#fff",
+    boxShadow: "0 10px 30px rgba(255, 183, 128, 0.14)",
   },
   form: {
-    display: "flex",
-    flexDirection: "column",
+    display: "grid",
     gap: "1rem",
   },
   field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.3rem",
+    display: "grid",
+    gap: "0.45rem",
   },
   label: {
-    fontSize: "0.85rem",
-    fontWeight: "bold",
-    color: "#555",
+    color: "#c8c8dc",
+    fontSize: "0.86rem",
+    fontWeight: 600,
   },
   input: {
-    padding: "0.75rem 1rem",
-    border: "2px solid #ddd",
-    borderRadius: "8px",
-    fontSize: "1rem",
+    width: "100%",
+    padding: "0.95rem 1rem",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.04)",
+    color: "#f8f9ff",
     outline: "none",
+    fontSize: "0.98rem",
+    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
   },
   btnSubmit: {
-    padding: "0.8rem",
-    backgroundColor: "#548235",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "1rem",
-    fontWeight: "bold",
     marginTop: "0.5rem",
+    padding: "0.95rem 1rem",
+    borderRadius: "16px",
+    border: "none",
+    background: "linear-gradient(135deg, #ffb57f, #ff8f8f)",
+    color: "#111827",
+    fontWeight: 700,
+    fontSize: "1rem",
+    cursor: "pointer",
+    boxShadow: "0 18px 40px rgba(255, 149, 92, 0.24)",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+  },
+  error: {
+    padding: "0.85rem 1rem",
+    borderRadius: "14px",
+    background: "rgba(255, 74, 91, 0.14)",
+    color: "#ffccd6",
+    border: "1px solid rgba(255, 74, 91, 0.25)",
+    fontSize: "0.92rem",
   },
 }
 
