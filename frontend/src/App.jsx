@@ -6,6 +6,7 @@ import ItemList from "./components/ItemList"
 import LoginPage from "./components/LoginPage"
 import Toast from "./components/Toast"
 import ImageGeneratorPage from "./components/ImageGeneratorPage"
+import AiSummarizePage from "./components/AiSummarizePage" 
 import { useToast } from "./hooks/useToast"
 import {
   fetchItems, createItem, updateItem, deleteItem,
@@ -192,6 +193,15 @@ function App() {
           >
             🎨 AI Generator
           </button>
+          <button
+            onClick={() => setActiveTab("ai-summarize")}
+            style={{
+              ...styles.tabBtn,
+              ...(activeTab === "ai-summarize" ? styles.tabBtnActive : {}),
+            }}
+          >
+            📝 AI Summarize
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -217,6 +227,9 @@ function App() {
         {activeTab === "ai-generator" && (
           <ImageGeneratorPage showToast={showToast} />
         )}
+        {activeTab === "ai-summarize" && (
+          <AiSummarizePage showToast={showToast} />
+        )}
       </div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
@@ -231,6 +244,24 @@ const styles = {
     fontFamily: "'Segoe UI', Arial, sans-serif",
   },
   container: { maxWidth: "900px", margin: "0 auto" },
+  tabNav: {
+    display: "flex",
+    gap: "0.75rem",
+    flexWrap: "wrap",
+    marginBottom: "1.5rem",
+  },
+  tabBtn: {
+    background: "#fff",
+    border: "1px solid #d1d5db",
+    borderRadius: "999px",
+    padding: "0.8rem 1.2rem",
+    cursor: "pointer",
+  },
+  tabBtnActive: {
+    backgroundColor: "#2563eb",
+    color: "#fff",
+    borderColor: "#2563eb",
+  },
 }
 
 export default App
