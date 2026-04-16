@@ -322,7 +322,6 @@ http://localhost:8000/auth/me
 ```json
 {
   "models": [
-    "stabilityai/stable-diffusion-3-5-large-turbo",
     "black-forest-labs/FLUX.1-dev",
     "stabilityai/stable-diffusion-xl-base-1.0"
   ]
@@ -354,7 +353,7 @@ http://localhost:8000/generate/models
 ```json
 {
   "prompt": "A futuristic city with flying cars and neon lights",
-  "model": "stabilityai/stable-diffusion-3-5-large-turbo",
+  "model": "stabilityai/black-forest-labs/FLUX.1-dev",
   "negative_prompt": "blurry, low quality, distorted",
   "guidance_scale": 7.5,
   "num_inference_steps": 20,
@@ -370,7 +369,7 @@ http://localhost:8000/generate/models
 {
   "image_base64": "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAA...",
   "prompt": "A futuristic city with flying cars and neon lights",
-  "model": "stabilityai/stable-diffusion-3-5-large-turbo"
+  "model": "stabilityai/black-forest-labs/FLUX.1-dev"
 }
 ```
 
@@ -383,7 +382,7 @@ curl -X 'POST' \
   -H 'Content-Type: application/json' \
   -d '{
   "prompt": "A futuristic city with flying cars and neon lights",
-  "model": "stabilityai/stable-diffusion-3-5-large-turbo",
+  "model": "stabilityai/black-forest-labs/FLUX.1-dev",
   "negative_prompt": "blurry, low quality",
   "guidance_scale": 7.5,
   "num_inference_steps": 20,
@@ -508,7 +507,7 @@ http://localhost:8000/generate/caption
     "prompt": "A futuristic city with flying cars",
     "negative_prompt": "blurry",
     "image_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhE...",
-    "model_name": "stabilityai/stable-diffusion-3-5-large-turbo",
+    "model_name": "stabilityai/black-forest-labs/FLUX.1-dev",
     "generation_time": 45.23,
     "status": "completed",
     "error_message": null,
@@ -563,7 +562,7 @@ http://localhost:8000/history/images?skip=0&limit=10
   "id": 1,
   "user_id": 1,
   "prompt": "A futuristic city with flying cars",
-  "model_name": "stabilityai/stable-diffusion-3-5-large-turbo",
+  "model_name": "stabilityai/black-forest-labs/FLUX.1-dev",
   "generation_time": 45.23,
   "status": "completed",
   "created_at": "2026-04-16T10:30:00Z"
