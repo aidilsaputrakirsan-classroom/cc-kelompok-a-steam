@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, EmailStr
-from typing import Optional
+from typing import Optional, List, Any, Dict
 from datetime import datetime
 
 
@@ -222,3 +222,150 @@ class ImageCaptionHistoryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ============================================================
+# CHAT SESSION SCHEMAS
+# ============================================================
+
+class ChatSessionCreate(BaseModel):
+    """Schema untuk membuat sesi percakapan baru (dan langsung memanggil AI)."""
+    title: str = Field(
+        default="New Chat",
+        max_length=255,
+        examples=["Generate kucing imut"],
+        description="Judul sesi percakapan (bisa diubah nanti)"
+    )
+    session_type: str = Field(
+        ...,
+        examples=["image"],
+        description="Jenis sesi: 'image' (generate gambar) atau 'summarize' (rangkum teks)"
+    )
+    first_message: str = Field(
+        ..., min_length=3,
+        examples=["a cute cat sitting on a desk, digital art"],
+        description="Pesan pertama user (prompt gambar atau teks/URL yang ingin dirangkum)"
+    )
+    # Untuk session_type='image'
+    model: Optional[str] = Field(
+        default="black-forest-labs/FLUX.1-schnell",
+        description="Model image generation (hanya untuk session_type='image')"
+    )
+    negative_prompt: Optional[str] = Field(
+        default=None, max_length=300,
+        description="Hal yang TIDAK diinginkan dalam gambar (hanya untuk session_type='image')"
+    )
+    # Untuk session_type='summarize'
+    source_type: Optional[str] = Field(
+        default="text",
+        examples=["text"],
+        description="Jenis sumber teks: 'url', 'text', atau 'file' (hanya untuk session_type='summarize')"
+    )
+
+    @field_validator("session_type")
+    @classmethod
+    def validate_session_type(cls, v: str) -> str:
+        allowed = {"image", "summarize"}
+        if v not in allowed:
+            raise ValueError(f"session_type harus salah satu dari: {', '.join(allowed)}")
+        return v
+
+    @field_validator("source_type")
+    @classmethod
+    def validate_source_type(cls, v: str) -> str:
+        if v is not None:
+            allowed = {"url", "text", "file"}
+            if v not in allowed:
+                raise ValueError(f"source_type harus salah satu dari: {', '.join(allowed)}")
+        return v
+
+
+class ContinueChatRequest(BaseModel):
+    """Schema untuk melanjutkan percakapan dalam sesi yang sudah ada."""
+    message: str = Field(
+        ..., min_length=3,
+        examples=["a cute cat with blue background"],
+        description="Pesan baru dari user (prompt gambar atau teks/URL baru)"
+    )
+    # Untuk session_type='image'
+    model: Optional[str] = Field(
+        default="black-forest-labs/FLUX.1-schnell",
+        description="Model image generation (hanya untuk sesi image)"
+    )
+    negative_prompt: Optional[str] = Field(
+        default=None, max_length=300,
+        description="Hal yang TIDAK diinginkan dalam gambar (hanya untuk sesi image)"
+    )
+    # Untuk session_type='summarize'
+    source_type: Optional[str] = Field(
+        default="text",
+        description="Jenis sumber teks: 'url', 'text', atau 'file' (hanya untuk sesi summarize)"
+    )
+
+
+class ChatSessionTitleUpdate(BaseModel):
+    """Schema untuk mengupdate judul sesi."""
+    title: str = Field(
+        ..., min_length=1, max_length=255,
+        examples=["Kucing digital art collection"],
+        description="Judul baru untuk sesi percakapan"
+    )
+
+
+class ChatMessageResponse(BaseModel):
+    """Schema untuk response satu pesan dalam sesi."""
+    id: int
+    session_id: int
+    role: str
+    content_type: str
+    content: str
+    metadata_json: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ChatSessionResponse(BaseModel):
+    """Schema untuk response detail satu sesi (termasuk semua pesan)."""
+    id: int
+    title: str
+    session_type: str
+    created_at: datetime
+    updated_at: datetime
+    messages: List[ChatMessageResponse]
+
+    class Config:
+        from_attributes = True
+
+
+class ChatSessionListItem(BaseModel):
+    """Schema untuk satu item dalam daftar sesi (tanpa semua pesan, hanya preview)."""
+    id: int
+    title: str
+    session_type: str
+    message_count: int
+    last_message_at: Optional[datetime]
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================
+# UNIFIED HISTORY SCHEMA
+# ============================================================
+
+class UnifiedHistoryItem(BaseModel):
+    """Schema untuk satu item di tampilan riwayat gabungan.
+    Setiap item memiliki 'type' yang menunjukkan asal data."""
+    id: int
+    type: str   # 'image_generation' | 'text_summarization' | 'image_caption' | 'chat_session'
+    title: str  # deskripsi singkat (prompt / source_content potongan / session title)
+    status: Optional[str]       # 'completed' | 'failed' | None (untuk chat_session)
+    session_type: Optional[str] # hanya untuk type='chat_session'
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

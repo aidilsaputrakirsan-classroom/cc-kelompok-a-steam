@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from models import User, ImageGeneration, TextSummarization, ImageCaption
+from models import User, ImageGeneration, TextSummarization, ImageCaption, ChatSession, ChatMessage
 from schemas import UserCreate, SummarizeRequest
 from auth import hash_password, verify_password
+import json
 
 
 # ==================== USER CRUD ====================
@@ -218,3 +219,261 @@ def get_image_captions(
         .limit(limit)
         .all()
     )
+
+
+def get_image_caption_by_id(
+    db: Session, user_id: int, caption_id: int
+) -> ImageCaption | None:
+    """Ambil satu riwayat caption gambar berdasarkan ID (harus milik user)."""
+    return (
+        db.query(ImageCaption)
+        .filter(
+            ImageCaption.id == caption_id,
+            ImageCaption.user_id == user_id,
+        )
+        .first()
+    )
+
+
+def delete_image_caption(
+    db: Session, user_id: int, caption_id: int
+) -> bool:
+    """Hapus satu riwayat caption gambar. Return True jika berhasil."""
+    record = get_image_caption_by_id(db, user_id, caption_id)
+    if not record:
+        return False
+    db.delete(record)
+    db.commit()
+    return True
+
+
+# ==================== TEXT SUMMARIZATION DETAIL & DELETE ====================
+
+def get_summarization_by_id(
+    db: Session, user_id: int, summarization_id: int
+) -> TextSummarization | None:
+    """Ambil satu riwayat summarisasi berdasarkan ID (harus milik user)."""
+    return (
+        db.query(TextSummarization)
+        .filter(
+            TextSummarization.id == summarization_id,
+            TextSummarization.user_id == user_id,
+        )
+        .first()
+    )
+
+
+def delete_summarization(
+    db: Session, user_id: int, summarization_id: int
+) -> bool:
+    """Hapus satu riwayat summarisasi. Return True jika berhasil."""
+    record = get_summarization_by_id(db, user_id, summarization_id)
+    if not record:
+        return False
+    db.delete(record)
+    db.commit()
+    return True
+
+
+# ==================== CHAT SESSION CRUD ====================
+
+def create_chat_session(
+    db: Session,
+    user_id: int,
+    title: str,
+    session_type: str,
+) -> ChatSession:
+    """Buat sesi percakapan baru."""
+    session = ChatSession(
+        user_id=user_id,
+        title=title,
+        session_type=session_type,
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+def add_chat_message(
+    db: Session,
+    session_id: int,
+    role: str,
+    content: str,
+    content_type: str = "text",
+    metadata: dict = None,
+) -> ChatMessage:
+    """Tambah pesan baru ke dalam sesi percakapan."""
+    message = ChatMessage(
+        session_id=session_id,
+        role=role,
+        content_type=content_type,
+        content=content,
+        metadata_json=json.dumps(metadata) if metadata else None,
+    )
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    return message
+
+
+def get_chat_sessions(
+    db: Session,
+    user_id: int,
+    skip: int = 0,
+    limit: int = 20,
+) -> list[dict]:
+    """
+    Ambil daftar sesi percakapan milik user (terbaru duluan).
+    Mengembalikan list dict karena perlu menghitung message_count dan last_message_at.
+    """
+    from sqlalchemy import func
+    sessions = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_id == user_id)
+        .order_by(ChatSession.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    result = []
+    for s in sessions:
+        msg_count = db.query(func.count(ChatMessage.id)).filter(ChatMessage.session_id == s.id).scalar() or 0
+        last_msg = (
+            db.query(ChatMessage.created_at)
+            .filter(ChatMessage.session_id == s.id)
+            .order_by(ChatMessage.created_at.desc())
+            .first()
+        )
+        result.append({
+            "id": s.id,
+            "title": s.title,
+            "session_type": s.session_type,
+            "message_count": msg_count,
+            "last_message_at": last_msg[0] if last_msg else None,
+            "created_at": s.created_at,
+            "updated_at": s.updated_at,
+        })
+    return result
+
+
+def get_chat_session_by_id(
+    db: Session, user_id: int, session_id: int
+) -> ChatSession | None:
+    """Ambil satu sesi percakapan beserta semua pesannya (harus milik user)."""
+    return (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.id == session_id,
+            ChatSession.user_id == user_id,
+        )
+        .first()
+    )
+
+
+def delete_chat_session(
+    db: Session, user_id: int, session_id: int
+) -> bool:
+    """Hapus sesi percakapan beserta semua pesannya. Return True jika berhasil."""
+    session = get_chat_session_by_id(db, user_id, session_id)
+    if not session:
+        return False
+    db.delete(session)
+    db.commit()
+    return True
+
+
+def update_chat_session_title(
+    db: Session, user_id: int, session_id: int, title: str
+) -> ChatSession | None:
+    """Update judul sesi percakapan. Return sesi yang diupdate atau None jika tidak ditemukan."""
+    session = get_chat_session_by_id(db, user_id, session_id)
+    if not session:
+        return None
+    session.title = title
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+# ==================== UNIFIED HISTORY ====================
+
+def get_unified_history(
+    db: Session,
+    user_id: int,
+    skip: int = 0,
+    limit: int = 50,
+) -> list[dict]:
+    """
+    Ambil riwayat gabungan dari semua jenis aktivitas user,
+    diurutkan dari yang terbaru. Mengembalikan list dict seragam.
+    """
+    items = []
+
+    # Image generations
+    image_gens = (
+        db.query(ImageGeneration)
+        .filter(ImageGeneration.user_id == user_id)
+        .all()
+    )
+    for r in image_gens:
+        items.append({
+            "id": r.id,
+            "type": "image_generation",
+            "title": r.prompt[:80] + ("..." if len(r.prompt) > 80 else ""),
+            "status": r.status,
+            "session_type": None,
+            "created_at": r.created_at,
+        })
+
+    # Text summarizations
+    summaries = (
+        db.query(TextSummarization)
+        .filter(TextSummarization.user_id == user_id)
+        .all()
+    )
+    for r in summaries:
+        items.append({
+            "id": r.id,
+            "type": "text_summarization",
+            "title": r.source_content[:80] + ("..." if len(r.source_content) > 80 else ""),
+            "status": r.status,
+            "session_type": None,
+            "created_at": r.created_at,
+        })
+
+    # Image captions
+    captions = (
+        db.query(ImageCaption)
+        .filter(ImageCaption.user_id == user_id)
+        .all()
+    )
+    for r in captions:
+        items.append({
+            "id": r.id,
+            "type": "image_caption",
+            "title": r.image_url[:80] + ("..." if len(r.image_url) > 80 else ""),
+            "status": r.status,
+            "session_type": None,
+            "created_at": r.created_at,
+        })
+
+    # Chat sessions
+    chat_sessions = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_id == user_id)
+        .all()
+    )
+    for s in chat_sessions:
+        items.append({
+            "id": s.id,
+            "type": "chat_session",
+            "title": s.title,
+            "status": None,
+            "session_type": s.session_type,
+            "created_at": s.created_at,
+        })
+
+    # Urutkan semua berdasarkan created_at descending lalu paginate
+    items.sort(key=lambda x: x["created_at"], reverse=True)
+    return items[skip: skip + limit]

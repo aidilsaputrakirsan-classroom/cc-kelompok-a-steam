@@ -26,6 +26,7 @@ class User(Base):
     image_generations = relationship("ImageGeneration", back_populates="user", cascade="all, delete-orphan")
     summarizations = relationship("TextSummarization", back_populates="user", cascade="all, delete-orphan")
     captions = relationship("ImageCaption", back_populates="user", cascade="all, delete-orphan")
+    chat_sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
@@ -107,3 +108,57 @@ class ImageCaption(Base):
 
     def __repr__(self):
         return f"<ImageCaption(id={self.id}, user_id={self.user_id}, status='{self.status}')>"
+
+
+class ChatSession(Base):
+    """
+    Model untuk tabel 'chat_sessions'.
+    Menyimpan sesi percakapan user — setiap sesi berisi kumpulan aktivitas
+    (generate gambar atau rangkum teks) yang dikelompokkan bersama.
+    Session type: 'image' | 'summarize'
+    """
+    __tablename__ = "chat_sessions"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(255), nullable=False, default="New Chat")
+    session_type = Column(String(20), nullable=False)   # 'image' | 'summarize'
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User", back_populates="chat_sessions")
+    messages = relationship(
+        "ChatMessage",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.created_at",
+    )
+
+    def __repr__(self):
+        return f"<ChatSession(id={self.id}, user_id={self.user_id}, type='{self.session_type}', title='{self.title}')>"
+
+
+class ChatMessage(Base):
+    """
+    Model untuk tabel 'chat_messages'.
+    Menyimpan setiap pesan dalam sebuah sesi — baik dari user maupun dari AI.
+    role: 'user' | 'assistant'
+    content_type: 'text' | 'image_base64'
+    metadata_json: string JSON untuk info tambahan (model_name, prompt asli, dll)
+    """
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    session_id = Column(Integer, ForeignKey("chat_sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(10), nullable=False)            # 'user' | 'assistant'
+    content_type = Column(String(20), default="text")   # 'text' | 'image_base64'
+    content = Column(Text, nullable=False)
+    metadata_json = Column(Text, nullable=True)          # JSON: {"model": ..., "generation_time": ...}
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationship balik ke ChatSession
+    session = relationship("ChatSession", back_populates="messages")
+
+    def __repr__(self):
+        return f"<ChatMessage(id={self.id}, session_id={self.session_id}, role='{self.role}')>"

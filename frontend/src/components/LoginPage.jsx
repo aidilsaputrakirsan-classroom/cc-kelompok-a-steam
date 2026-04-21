@@ -68,7 +68,7 @@ function LoginPage({ onLogin, onRegister, showToast }) {
       <div style={styles.card}>
         <div style={styles.header}>
           <div>
-            <h1 style={styles.title}>Aetheris Cloud</h1>
+            <h1 style={styles.title}>Intirupa</h1>
             <p style={styles.subtitle}>Masuk atau daftar untuk mulai menggunakan AI generator dan summarizer.</p>
           </div>
           <div style={styles.badge}>Secure</div>

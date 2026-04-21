@@ -15,6 +15,9 @@ from schemas import (
     ImageGenerationHistoryResponse,
     SummarizeRequest, SummarizationHistoryResponse,
     ImageCaptionHistoryResponse,
+    ChatSessionCreate, ContinueChatRequest, ChatSessionTitleUpdate,
+    ChatMessageResponse, ChatSessionResponse, ChatSessionListItem,
+    UnifiedHistoryItem,
 )
 from auth import create_access_token, get_current_user
 import crud
@@ -440,6 +443,77 @@ def get_caption_history(
     return crud.get_image_captions(db=db, user_id=current_user.id, skip=skip, limit=limit)
 
 
+@app.get("/history/captions/{caption_id}", response_model=ImageCaptionHistoryResponse)
+def get_caption_history_by_id(
+    caption_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Ambil detail satu riwayat caption gambar. **Membutuhkan autentikasi.**"""
+    record = crud.get_image_caption_by_id(db=db, user_id=current_user.id, caption_id=caption_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Riwayat tidak ditemukan.")
+    return record
+
+
+@app.delete("/history/captions/{caption_id}", status_code=204)
+def delete_caption_history(
+    caption_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Hapus satu riwayat caption gambar. **Membutuhkan autentikasi.**"""
+    success = crud.delete_image_caption(db=db, user_id=current_user.id, caption_id=caption_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Riwayat tidak ditemukan.")
+    return None
+
+
+# ==================== HISTORY: TEXT SUMMARIZATIONS (detail & delete) ====================
+
+@app.get("/history/summaries/{summarization_id}", response_model=SummarizationHistoryResponse)
+def get_summary_history_by_id(
+    summarization_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Ambil detail satu riwayat summarisasi teks. **Membutuhkan autentikasi.**"""
+    record = crud.get_summarization_by_id(db=db, user_id=current_user.id, summarization_id=summarization_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Riwayat tidak ditemukan.")
+    return record
+
+
+@app.delete("/history/summaries/{summarization_id}", status_code=204)
+def delete_summary_history(
+    summarization_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Hapus satu riwayat summarisasi teks. **Membutuhkan autentikasi.**"""
+    success = crud.delete_summarization(db=db, user_id=current_user.id, summarization_id=summarization_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Riwayat tidak ditemukan.")
+    return None
+
+
+# ==================== HISTORY: UNIFIED ====================
+
+@app.get("/history/all", response_model=list[UnifiedHistoryItem])
+def get_all_history(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Ambil semua riwayat aktivitas user dalam satu endpoint (gabungan generate gambar,
+    rangkum teks, caption, dan sesi chat), diurutkan dari yang terbaru.
+    **Membutuhkan autentikasi.**
+    """
+    return crud.get_unified_history(db=db, user_id=current_user.id, skip=skip, limit=limit)
+
+
 # ==================== STATS ====================
 
 @app.get("/stats")
@@ -470,3 +544,319 @@ def get_user_stats(
             "total_api_calls": total_images + total_summaries + total_captions,
         }
     }
+
+
+# ==================== CHAT SESSIONS ====================
+
+@app.post("/chat/sessions", response_model=ChatSessionResponse, status_code=201)
+async def create_chat_session(
+    request: ChatSessionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Buat sesi percakapan baru dan langsung proses pesan pertama dengan AI.
+
+    - **session_type = 'image'**: `first_message` digunakan sebagai prompt generate gambar
+    - **session_type = 'summarize'**: `first_message` digunakan sebagai teks/URL yang dirangkum
+
+    **Membutuhkan autentikasi.**
+    """
+    # Buat sesi
+    session = crud.create_chat_session(
+        db=db,
+        user_id=current_user.id,
+        title=request.title,
+        session_type=request.session_type,
+    )
+
+    # Simpan pesan user
+    crud.add_chat_message(
+        db=db,
+        session_id=session.id,
+        role="user",
+        content=request.first_message,
+        content_type="text",
+    )
+
+    # Proses AI sesuai session_type
+    if request.session_type == "image":
+        model_name = request.model or "black-forest-labs/FLUX.1-schnell"
+        if model_name not in AVAILABLE_MODELS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Model '{model_name}' tidak tersedia. Pilih dari: {', '.join(AVAILABLE_MODELS)}"
+            )
+        hf_api_key = os.getenv("HUGGINGFACE_API_KEY")
+        if not hf_api_key:
+            raise HTTPException(status_code=503, detail="Hugging Face API Key belum dikonfigurasi.")
+
+        start_time = time.time()
+        try:
+            client = AsyncInferenceClient(api_key=hf_api_key, provider="auto")
+            kwargs = {
+                "prompt": request.first_message,
+                "model": model_name,
+                "guidance_scale": 7.5,
+                "num_inference_steps": 30,
+            }
+            if request.negative_prompt:
+                kwargs["negative_prompt"] = request.negative_prompt
+            image = await client.text_to_image(**kwargs)
+
+            buffer = io.BytesIO()
+            image.save(buffer, format="PNG")
+            image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+            generation_time = round(time.time() - start_time, 2)
+
+            # Simpan response AI sebagai message
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=image_base64,
+                content_type="image_base64",
+                metadata={"model": model_name, "generation_time": generation_time, "prompt": request.first_message},
+            )
+            crud.increment_api_used(db=db, user_id=current_user.id)
+
+        except Exception as e:
+            error_str = str(e)
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=f"[Gagal generate gambar: {error_str[:200]}]",
+                content_type="text",
+                metadata={"error": error_str[:300]},
+            )
+            if "402" in error_str or "payment" in error_str.lower():
+                raise HTTPException(status_code=402, detail="Model ini membutuhkan kredit berbayar.")
+            raise HTTPException(status_code=502, detail=f"Hugging Face API error: {error_str[:300]}")
+
+    elif request.session_type == "summarize":
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        if not gemini_api_key:
+            raise HTTPException(status_code=503, detail="Gemini API Key belum dikonfigurasi.")
+
+        start_time = time.time()
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=gemini_api_key)
+            model = genai.GenerativeModel("gemini-2.5-flash")
+            prompt = f"Tolong rangkum dalam bahasa Indonesia dari teks atau tautan berikut secara ringkas namun informatif:\n\n{request.first_message}"
+            response = await model.generate_content_async(prompt)
+            summary_text = response.text
+            processing_time = round(time.time() - start_time, 2)
+
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=summary_text,
+                content_type="text",
+                metadata={"model": "gemini-2.5-flash", "processing_time": processing_time, "source_type": request.source_type},
+            )
+            crud.increment_api_used(db=db, user_id=current_user.id)
+
+        except Exception as e:
+            error_str = str(e)
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=f"[Gagal merangkum: {error_str[:200]}]",
+                content_type="text",
+                metadata={"error": error_str[:300]},
+            )
+            raise HTTPException(status_code=502, detail=f"Gemini API error: {error_str[:300]}")
+
+    # Refresh dan kembalikan sesi lengkap
+    db.refresh(session)
+    return session
+
+
+@app.get("/chat/sessions", response_model=list[ChatSessionListItem])
+def get_chat_sessions(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Ambil daftar semua sesi percakapan milik user (terbaru duluan).
+    Setiap item menyertakan jumlah pesan dan waktu pesan terakhir.
+    **Membutuhkan autentikasi.**
+    """
+    return crud.get_chat_sessions(db=db, user_id=current_user.id, skip=skip, limit=limit)
+
+
+@app.get("/chat/sessions/{session_id}", response_model=ChatSessionResponse)
+def get_chat_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Ambil detail satu sesi percakapan beserta semua pesannya.
+    **Membutuhkan autentikasi.**
+    """
+    session = crud.get_chat_session_by_id(db=db, user_id=current_user.id, session_id=session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesi tidak ditemukan.")
+    return session
+
+
+@app.post("/chat/sessions/{session_id}/continue", response_model=ChatSessionResponse)
+async def continue_chat_session(
+    session_id: int,
+    request: ContinueChatRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Lanjutkan sesi percakapan yang sudah ada dengan mengirim pesan baru.
+    AI akan langsung memproses dan membalas dalam satu request.
+    **Membutuhkan autentikasi.**
+    """
+    session = crud.get_chat_session_by_id(db=db, user_id=current_user.id, session_id=session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesi tidak ditemukan.")
+
+    # Simpan pesan user
+    crud.add_chat_message(
+        db=db,
+        session_id=session.id,
+        role="user",
+        content=request.message,
+        content_type="text",
+    )
+
+    # Proses AI sesuai session_type
+    if session.session_type == "image":
+        model_name = request.model or "black-forest-labs/FLUX.1-schnell"
+        if model_name not in AVAILABLE_MODELS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Model '{model_name}' tidak tersedia. Pilih dari: {', '.join(AVAILABLE_MODELS)}"
+            )
+        hf_api_key = os.getenv("HUGGINGFACE_API_KEY")
+        if not hf_api_key:
+            raise HTTPException(status_code=503, detail="Hugging Face API Key belum dikonfigurasi.")
+
+        start_time = time.time()
+        try:
+            client = AsyncInferenceClient(api_key=hf_api_key, provider="auto")
+            kwargs = {
+                "prompt": request.message,
+                "model": model_name,
+                "guidance_scale": 7.5,
+                "num_inference_steps": 30,
+            }
+            if request.negative_prompt:
+                kwargs["negative_prompt"] = request.negative_prompt
+            image = await client.text_to_image(**kwargs)
+
+            buffer = io.BytesIO()
+            image.save(buffer, format="PNG")
+            image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+            generation_time = round(time.time() - start_time, 2)
+
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=image_base64,
+                content_type="image_base64",
+                metadata={"model": model_name, "generation_time": generation_time},
+            )
+            crud.increment_api_used(db=db, user_id=current_user.id)
+
+        except Exception as e:
+            error_str = str(e)
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=f"[Gagal generate gambar: {error_str[:200]}]",
+                content_type="text",
+                metadata={"error": error_str[:300]},
+            )
+            if "402" in error_str or "payment" in error_str.lower():
+                raise HTTPException(status_code=402, detail="Model ini membutuhkan kredit berbayar.")
+            raise HTTPException(status_code=502, detail=f"Hugging Face API error: {error_str[:300]}")
+
+    elif session.session_type == "summarize":
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        if not gemini_api_key:
+            raise HTTPException(status_code=503, detail="Gemini API Key belum dikonfigurasi.")
+
+        start_time = time.time()
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=gemini_api_key)
+            model = genai.GenerativeModel("gemini-2.5-flash")
+            prompt = f"Tolong rangkum dalam bahasa Indonesia dari teks atau tautan berikut secara ringkas namun informatif:\n\n{request.message}"
+            response = await model.generate_content_async(prompt)
+            summary_text = response.text
+            processing_time = round(time.time() - start_time, 2)
+
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=summary_text,
+                content_type="text",
+                metadata={"model": "gemini-2.5-flash", "processing_time": processing_time},
+            )
+            crud.increment_api_used(db=db, user_id=current_user.id)
+
+        except Exception as e:
+            error_str = str(e)
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=f"[Gagal merangkum: {error_str[:200]}]",
+                content_type="text",
+                metadata={"error": error_str[:300]},
+            )
+            raise HTTPException(status_code=502, detail=f"Gemini API error: {error_str[:300]}")
+
+    db.refresh(session)
+    return session
+
+
+@app.patch("/chat/sessions/{session_id}", response_model=ChatSessionResponse)
+def update_chat_session_title(
+    session_id: int,
+    request: ChatSessionTitleUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Update judul sesi percakapan.
+    **Membutuhkan autentikasi.**
+    """
+    session = crud.update_chat_session_title(
+        db=db, user_id=current_user.id, session_id=session_id, title=request.title
+    )
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesi tidak ditemukan.")
+    return session
+
+
+@app.delete("/chat/sessions/{session_id}", status_code=204)
+def delete_chat_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Hapus sesi percakapan beserta semua pesannya.
+    **Membutuhkan autentikasi.**
+    """
+    success = crud.delete_chat_session(db=db, user_id=current_user.id, session_id=session_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Sesi tidak ditemukan.")
+    return None
