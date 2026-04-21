@@ -1,23 +1,28 @@
 import { useState } from "react"
+import Spinner from "./Spinner"
+import { summarizeText } from "../services/api"
 
 function AiSummarizePage({ showToast, activeTab, onSelectTab }) {
   const [inputText, setInputText] = useState("")
   const [summary, setSummary] = useState("")
   const [isWorking, setIsWorking] = useState(false)
 
-  const handleSummarize = () => {
+  const handleSummarize = async () => {
     if (!inputText.trim()) {
       showToast("Masukkan teks terlebih dahulu.", "error")
       return
     }
 
     setIsWorking(true)
-    setTimeout(() => {
-      const result = simpleSummarize(inputText)
-      setSummary(result)
+    try {
+      const data = await summarizeText(inputText.trim(), "text")
+      setSummary(data.summary)
+      showToast("Ringkasan berhasil dibuat oleh Gemini AI! 📝", "success")
+    } catch (err) {
+      showToast("Gagal merangkum: " + err.message, "error")
+    } finally {
       setIsWorking(false)
-      showToast("Ringkasan berhasil dibuat.", "success")
-    }, 250)
+    }
   }
 
   const handleClear = () => {
@@ -37,23 +42,19 @@ function AiSummarizePage({ showToast, activeTab, onSelectTab }) {
         </div>
 
         <div style={styles.heroActions}>
-          <button
-            type="button"
-            style={styles.heroButton}
-            onClick={() => onSelectTab?.("ai-generator")}
-          >
-            Image Generator
-          </button>
-          <button
-            type="button"
-            style={{
-              ...styles.heroButton,
-              ...(activeTab === "ai-summarize" ? styles.heroButtonActive : {}),
-            }}
-            onClick={() => onSelectTab?.("ai-summarize")}
-          >
-            Text Summarizer
-          </button>
+          {["ai-generator", "ai-summarize", "chat-history"].map(tab => (
+            <button
+              key={tab}
+              type="button"
+              style={{
+                ...styles.heroButton,
+                ...(activeTab === tab ? styles.heroButtonActive : {}),
+              }}
+              onClick={() => onSelectTab?.(tab)}
+            >
+              {tab === "ai-generator" ? "Image Generator" : tab === "ai-summarize" ? "Text Summarizer" : "History"}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -100,18 +101,6 @@ function AiSummarizePage({ showToast, activeTab, onSelectTab }) {
       </div>
     </div>
   )
-}
-
-const simpleSummarize = (text) => {
-  const cleaned = text.trim()
-  if (!cleaned) return ""
-
-  const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean)
-  if (sentences.length <= 2) {
-    return cleaned
-  }
-
-  return sentences.slice(0, 2).join(" ")
 }
 
 const styles = {

@@ -144,3 +144,125 @@ export async function generateImage(params) {
   })
   return handleResponse(response)
 }
+
+// ==================== SUMMARIZE API ====================
+
+export async function summarizeText(sourceContent, sourceType = "text") {
+  const response = await fetch(`${API_URL}/generate/summarize`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ source_type: sourceType, source_content: sourceContent }),
+  })
+  return handleResponse(response)
+}
+
+// ==================== HISTORY API ====================
+
+export async function getImageHistory(skip = 0, limit = 20) {
+  const response = await fetch(`${API_URL}/history/images?skip=${skip}&limit=${limit}`, {
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}
+
+export async function deleteImageHistory(id) {
+  const response = await fetch(`${API_URL}/history/images/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}
+
+export async function getSummaryHistory(skip = 0, limit = 20) {
+  const response = await fetch(`${API_URL}/history/summaries?skip=${skip}&limit=${limit}`, {
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}
+
+export async function deleteSummaryHistory(id) {
+  const response = await fetch(`${API_URL}/history/summaries/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}
+
+export async function getAllHistory(skip = 0, limit = 50) {
+  const response = await fetch(`${API_URL}/history/all?skip=${skip}&limit=${limit}`, {
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}
+
+// ==================== CHAT SESSIONS API ====================
+
+export async function createChatSession(payload) {
+  const response = await fetch(`${API_URL}/chat/sessions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify(payload),
+  })
+  return handleResponse(response)
+}
+
+export async function getChatSessions(skip = 0, limit = 30) {
+  const response = await fetch(`${API_URL}/chat/sessions?skip=${skip}&limit=${limit}`, {
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}
+
+export async function getChatSessionById(id) {
+  const response = await fetch(`${API_URL}/chat/sessions/${id}`, {
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}
+
+export async function continueChatSession(id, payload) {
+  const response = await fetch(`${API_URL}/chat/sessions/${id}/continue`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify(payload),
+  })
+  return handleResponse(response)
+}
+
+export async function updateChatSessionTitle(id, title) {
+  const response = await fetch(`${API_URL}/chat/sessions/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ title }),
+  })
+  return handleResponse(response)
+}
+
+export async function deleteChatSession(id) {
+  const response = await fetch(`${API_URL}/chat/sessions/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}
+
+// ==================== STATS API ====================
+
+export async function getUserStats() {
+  const response = await fetch(`${API_URL}/stats`, {
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}

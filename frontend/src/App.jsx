@@ -4,6 +4,7 @@ import LoginPage from "./components/LoginPage"
 import Toast from "./components/Toast"
 import ImageGeneratorPage from "./components/ImageGeneratorPage"
 import AiSummarizePage from "./components/AiSummarizePage"
+import ChatHistoryPage from "./components/ChatHistoryPage"
 import { useToast } from "./hooks/useToast"
 import {
   fetchItems,
@@ -28,7 +29,7 @@ function App() {
   const { toast, showToast, hideToast } = useToast()
 
   // ==================== APP STATE ====================
-  const [activeTab, setActiveTab] = useState("ai-generator") // "ai-generator" | "ai-summarize"
+  const [activeTab, setActiveTab] = useState("chat-history")
   const [items, setItems] = useState([])
   const [totalItems, setTotalItems] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -86,8 +87,8 @@ function App() {
       const userData = await getMe()
       setUser(userData)
       setIsAuthenticated(true)
-      setActiveTab("ai-generator")
-      showToast("Login berhasil! Selamat datang kembali!", "success")
+      setActiveTab("chat-history")
+      showToast("Login berhasil! Selamat datang di Inti Studio! ✨", "success")
     } catch (err) {
       showToast("Login gagal: " + err.message, "error")
     }
@@ -177,20 +178,11 @@ function App() {
           onLogout={handleLogout}
         />
 
-        {activeTab === "ai-generator" && (
-          <ImageGeneratorPage
-            showToast={showToast}
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-          />
-        )}
-        {activeTab === "ai-summarize" && (
-          <AiSummarizePage
-            showToast={showToast}
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-          />
-        )}
+        <ChatHistoryPage
+          showToast={showToast}
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
+        />
       </div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>

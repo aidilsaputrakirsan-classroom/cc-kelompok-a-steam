@@ -83,26 +83,19 @@ function ImageGeneratorPage({ showToast, activeTab, onSelectTab }) {
         </div>
 
         <div style={styles.heroActions}>
-          <button
-            type="button"
-            style={{
-              ...styles.heroButton,
-              ...(activeTab === "ai-generator" ? styles.heroButtonActive : {}),
-            }}
-            onClick={() => onSelectTab?.("ai-generator")}
-          >
-            Image Generator
-          </button>
-          <button
-            type="button"
-            style={{
-              ...styles.heroButton,
-              ...(activeTab === "ai-summarize" ? styles.heroButtonActive : {}),
-            }}
-            onClick={() => onSelectTab?.("ai-summarize")}
-          >
-            Text Summarizer
-          </button>
+          {["ai-generator", "ai-summarize", "chat-history"].map(tab => (
+            <button
+              key={tab}
+              type="button"
+              style={{
+                ...styles.heroButton,
+                ...(activeTab === tab ? styles.heroButtonActive : {}),
+              }}
+              onClick={() => onSelectTab?.(tab)}
+            >
+              {tab === "ai-generator" ? "Image Generator" : tab === "ai-summarize" ? "Text Summarizer" : "History"}
+            </button>
+          ))}
         </div>
       </div>
 
