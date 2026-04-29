@@ -1,0 +1,21 @@
+# =============================================
+# CODEOWNERS — Inti Rupa
+# =============================================
+# Setiap baris: pola file → username GitHub reviewer
+# Reviewer otomatis ditambahkan saat PR mengubah file terkait
+
+# Backend — Lead Backend
+/backend/                @IrfanZakiRiyanto
+
+# Frontend — Lead Frontend
+/frontend/               @Incharaghil
+
+# Docker & Infrastructure — Lead DevOps
+docker-compose.yml       @JonathanCristopherJetro
+/backend/Dockerfile      @JonathanCristopherJetro
+/frontend/Dockerfile     @JonathanCristopherJetro
+Makefile                 @JonathanCristopherJetro
+
+# Documentation — Lead QA & Docs
+README.md                @Jonathan-Joseph-yudita
+/docs/                   @Jonathan-Joseph-yudita
