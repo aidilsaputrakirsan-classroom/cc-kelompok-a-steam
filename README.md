@@ -79,6 +79,18 @@ Sistem **Inti Rupa** menggunakan arsitektur **client-server** berbasis cloud. Fr
 
 ---
 
+### ⚙️ Development Workflow (Makefile)
+
+Untuk mempermudah workflow pengembangan dan CI/CD, Anda dapat menggunakan perintah `make` berikut:
+
+| Perintah | Deskripsi |
+| :--- | :--- |
+| `make lint` | Menjalankan linter untuk menjaga kualitas kode (backend & frontend). |
+| `make test` | Menjalankan *automated tests* (unit test, dll). |
+| `make pr-check` | Menjalankan semua pengujian (`lint` & `test`) lalu melakukan *build* image Docker. Digunakan untuk verifikasi sebelum Pull Request. |
+
+---
+
 ### 📅 Roadmap
 
 | Minggu | Target                 | Status |
