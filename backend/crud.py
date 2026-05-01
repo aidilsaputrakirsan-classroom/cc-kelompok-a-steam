@@ -320,18 +320,24 @@ def add_chat_message(
 def get_chat_sessions(
     db: Session,
     user_id: int,
+    session_type: str = None,
     skip: int = 0,
     limit: int = 20,
 ) -> list[dict]:
     """
     Ambil daftar sesi percakapan milik user (terbaru duluan).
+    Bisa di-filter berdasarkan session_type.
     Mengembalikan list dict karena perlu menghitung message_count dan last_message_at.
     """
     from sqlalchemy import func
+    
+    query = db.query(ChatSession).filter(ChatSession.user_id == user_id)
+    
+    if session_type:
+        query = query.filter(ChatSession.session_type == session_type)
+        
     sessions = (
-        db.query(ChatSession)
-        .filter(ChatSession.user_id == user_id)
-        .order_by(ChatSession.updated_at.desc())
+        query.order_by(ChatSession.updated_at.desc())
         .offset(skip)
         .limit(limit)
         .all()

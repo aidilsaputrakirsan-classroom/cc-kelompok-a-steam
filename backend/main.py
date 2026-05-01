@@ -678,6 +678,7 @@ async def create_chat_session(
 
 @app.get("/chat/sessions", response_model=list[ChatSessionListItem])
 def get_chat_sessions(
+    session_type: str = Query(None, description="Filter berdasarkan kategori chat (contoh: image, summarize)"),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -686,9 +687,10 @@ def get_chat_sessions(
     """
     Ambil daftar semua sesi percakapan milik user (terbaru duluan).
     Setiap item menyertakan jumlah pesan dan waktu pesan terakhir.
+    Bisa di-filter berdasarkan kategori chat (session_type).
     **Membutuhkan autentikasi.**
     """
-    return crud.get_chat_sessions(db=db, user_id=current_user.id, skip=skip, limit=limit)
+    return crud.get_chat_sessions(db=db, user_id=current_user.id, session_type=session_type, skip=skip, limit=limit)
 
 
 @app.get("/chat/sessions/{session_id}", response_model=ChatSessionResponse)
