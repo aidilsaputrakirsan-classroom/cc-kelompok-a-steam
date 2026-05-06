@@ -255,7 +255,7 @@ async def create_chat_session(
         try:
             import google.generativeai as genai
             genai.configure(api_key=gemini_api_key)
-            model = genai.GenerativeModel("gemini-2.5-flash")
+            model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
             prompt = f"Tolong rangkum dalam bahasa Indonesia dari teks atau tautan berikut secara ringkas namun informatif:\n\n{request.first_message}"
             response = await model.generate_content_async(prompt)
             summary_text = response.text
@@ -409,7 +409,7 @@ async def continue_chat_session(
         try:
             import google.generativeai as genai
             genai.configure(api_key=gemini_api_key)
-            model = genai.GenerativeModel("gemini-2.5-flash")
+            model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
             prompt = f"Tolong rangkum dalam bahasa Indonesia dari teks atau tautan berikut secara ringkas namun informatif:\n\n{request.message}"
             response = await model.generate_content_async(prompt)
             summary_text = response.text
