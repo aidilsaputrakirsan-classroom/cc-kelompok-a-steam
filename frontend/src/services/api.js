@@ -5,11 +5,16 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 const TOKEN_KEY = "inti_rupa_token"
 
 // Restore token dari localStorage saat app pertama load
-let authToken = localStorage.getItem(TOKEN_KEY) || null
+let authToken = null
+if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
+  authToken = localStorage.getItem(TOKEN_KEY) || null
+}
 
 export function setToken(token) {
   authToken = token
-  localStorage.setItem(TOKEN_KEY, token)
+  if (typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
+    localStorage.setItem(TOKEN_KEY, token)
+  }
 }
 
 export function getToken() {
@@ -18,7 +23,9 @@ export function getToken() {
 
 export function clearToken() {
   authToken = null
-  localStorage.removeItem(TOKEN_KEY)
+  if (typeof localStorage !== 'undefined' && typeof localStorage.removeItem === 'function') {
+    localStorage.removeItem(TOKEN_KEY)
+  }
 }
 
 function authHeaders() {
