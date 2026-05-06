@@ -12,6 +12,8 @@ from sqlalchemy.pool import StaticPool
 # Tambahkan path backend root agar bisa di-import
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+os.environ["TESTING"] = "true"
+
 from database import Base, get_db
 from main import app
 

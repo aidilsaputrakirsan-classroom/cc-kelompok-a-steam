@@ -22,13 +22,20 @@ import google.generativeai as genai
 
 load_dotenv()
 
-# Buat semua tabel secara otomatis
-Base.metadata.create_all(bind=engine)
+from contextlib import asynccontextmanager
+
+# Buat semua tabel secara otomatis saat aplikasi mulai
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if os.getenv("TESTING") != "true":
+        Base.metadata.create_all(bind=engine)
+    yield
 
 app = FastAPI(
     title="Inti Rupa API",
     description="REST API untuk platform AI — Komputasi Awan SI ITK",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # ==================== CORS ====================
