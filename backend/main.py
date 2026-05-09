@@ -255,7 +255,8 @@ async def create_chat_session(
         try:
             import google.generativeai as genai
             genai.configure(api_key=gemini_api_key)
-            model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
+            model_name = "gemini-3.1-flash-lite-preview"
+            model = genai.GenerativeModel(model_name)
             prompt = f"Tolong rangkum dalam bahasa Indonesia dari teks atau tautan berikut secara ringkas namun informatif:\n\n{request.first_message}"
             response = await model.generate_content_async(prompt)
             summary_text = response.text
@@ -267,7 +268,7 @@ async def create_chat_session(
                 role="assistant",
                 content=summary_text,
                 content_type="text",
-                metadata={"model": "gemini-2.5-flash", "processing_time": processing_time, "source_type": request.source_type},
+                metadata={"model": model_name, "processing_time": processing_time, "source_type": request.source_type},
             )
             crud.increment_api_used(db=db, user_id=current_user.id)
 
@@ -409,7 +410,8 @@ async def continue_chat_session(
         try:
             import google.generativeai as genai
             genai.configure(api_key=gemini_api_key)
-            model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
+            model_name = "gemini-3.1-flash-lite-preview"
+            model = genai.GenerativeModel(model_name)
             prompt = f"Tolong rangkum dalam bahasa Indonesia dari teks atau tautan berikut secara ringkas namun informatif:\n\n{request.message}"
             response = await model.generate_content_async(prompt)
             summary_text = response.text
@@ -421,7 +423,7 @@ async def continue_chat_session(
                 role="assistant",
                 content=summary_text,
                 content_type="text",
-                metadata={"model": "gemini-2.5-flash", "processing_time": processing_time},
+                metadata={"model": model_name, "processing_time": processing_time},
             )
             crud.increment_api_used(db=db, user_id=current_user.id)
 
