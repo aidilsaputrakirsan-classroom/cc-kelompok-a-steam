@@ -1,6 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-inti-dark: #060913;
+  --color-inti-card: rgba(31, 41, 77, 0.94);
+  --color-inti-orange-light: #ffb57f;
+  --color-inti-orange: #ff8f48;
+  --color-inti-orange-dark: #ff9c3c;
+  --color-inti-text-light: #edf2ff;
+  --color-inti-text-muted: #d9d7e5;
+  --color-inti-text-deep: #9aa0b8;
+}
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
