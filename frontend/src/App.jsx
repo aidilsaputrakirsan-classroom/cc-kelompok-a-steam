@@ -4,6 +4,7 @@ import LoginPage from "./components/LoginPage"
 import Toast from "./components/Toast"
 
 import ChatHistoryPage from "./components/ChatHistoryPage"
+import AboutUs from "./components/AboutUs"
 import { useToast } from "./hooks/useToast"
 import {
   fetchItems,
@@ -28,7 +29,7 @@ function App() {
   const { toast, showToast, hideToast } = useToast()
 
   // ==================== APP STATE ====================
-  const [activeTab, setActiveTab] = useState("chat-history")
+  const [activeTab, setActiveTab] = useState("about-us")
   const [items, setItems] = useState([])
   const [totalItems, setTotalItems] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -59,19 +60,19 @@ function App() {
   }, [])
 
   // Restore session dari localStorage saat app pertama load
-  useEffect(() => {
-    const token = getToken()
-    if (token && !isAuthenticated) {
-      getMe()
-        .then((userData) => {
-          setUser(userData)
-          setIsAuthenticated(true)
-        })
-        .catch(() => {
-          clearToken() // Token expired atau invalid
-        })
-    }
-  }, [])
+  // useEffect(() => {
+  //   const token = getToken()
+  //   if (token && !isAuthenticated) {
+  //     getMe()
+  //       .then((userData) => {
+  //         setUser(userData)
+  //         setIsAuthenticated(true)
+  //       })
+  //       .catch(() => {
+  //         clearToken() // Token expired atau invalid
+  //       })
+  //   }
+  // }, [])
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -86,7 +87,7 @@ function App() {
       const userData = await getMe()
       setUser(userData)
       setIsAuthenticated(true)
-      setActiveTab("chat-history")
+      setActiveTab("about-us")
       showToast("Login berhasil! Selamat datang di Inti Studio! ✨", "success")
     } catch (err) {
       showToast("Login gagal: " + err.message, "error")
@@ -177,11 +178,38 @@ function App() {
           onLogout={handleLogout}
         />
 
-        <ChatHistoryPage
-          showToast={showToast}
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-        />
+        <div className="flex gap-3 flex-wrap mb-6">
+          <button
+            onClick={() => setActiveTab("about-us")}
+            className={`px-6 py-3 rounded-full font-bold transition-all duration-300 ${
+              activeTab === "about-us"
+                ? "bg-gradient-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105"
+                : "bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30"
+            }`}
+          >
+            ℹ️ About Us
+          </button>
+          <button
+            onClick={() => setActiveTab("chat-history")}
+            className={`px-6 py-3 rounded-full font-bold transition-all duration-300 ${
+              activeTab === "chat-history"
+                ? "bg-gradient-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105"
+                : "bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30"
+            }`}
+          >
+            💬 Chat History
+          </button>
+        </div>
+
+        {activeTab === "chat-history" ? (
+          <ChatHistoryPage
+            showToast={showToast}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+          />
+        ) : (
+          <AboutUs />
+        )}
       </div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
@@ -204,25 +232,6 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "1.5rem",
-  },
-  tabNav: {
-    display: "flex",
-    gap: "0.75rem",
-    flexWrap: "wrap",
-    marginBottom: "1.5rem",
-  },
-  tabBtn: {
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: "999px",
-    padding: "0.8rem 1.2rem",
-    color: "#e8edf8",
-    cursor: "pointer",
-  },
-  tabBtnActive: {
-    backgroundColor: "#ffb57f",
-    color: "#0f172a",
-    borderColor: "#ffb57f",
   },
 }
 
