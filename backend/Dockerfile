@@ -1,28 +1,47 @@
 # ============================================================
-# Stage: Production Image
+# Stage 1: Builder
 # ============================================================
+FROM python:3.12-slim AS builder
 
-# 1. Base image — Python 3.12 slim (debian minimal, ~50MB)
-FROM python:3.12-slim
-
-# 2. Set working directory di dalam container
 WORKDIR /app
 
-# 3. Copy HANYA requirements.txt dulu (cache optimization)
-#    Layer ini hanya rebuild jika requirements.txt berubah
-COPY requirements.txt .
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# 4. Install Python dependencies
-#    --no-cache-dir: jangan simpan pip cache (hemat space)
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install python dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copy seluruh kode aplikasi
-#    Layer ini rebuild setiap kali kode berubah
+# Strip unused files to save space
+RUN find /opt/venv -type d -name "tests" -exec rm -rf {} + || true && \
+    find /opt/venv -type d -name "__pycache__" -exec rm -rf {} + || true && \
+    rm -rf /opt/venv/lib/python3.12/site-packages/pip /opt/venv/lib/python3.12/site-packages/setuptools
+
+# ============================================================
+# Stage 2: Production Image
+# ============================================================
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder stage
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy application code
 COPY . .
 
-# 6. Dokumentasikan port yang digunakan
 EXPOSE 8000
 
-# 7. Command untuk menjalankan aplikasi
-#    --host 0.0.0.0: agar bisa diakses dari luar container
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
