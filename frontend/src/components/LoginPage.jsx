@@ -191,6 +191,8 @@ function LoginPage({ onLogin, onRegister, showToast }) {
 
 const styles = {
   wrapper: {
+    position: "relative",
+    overflow: "hidden",
     minHeight: "100vh",
     display: "flex",
     alignItems: "center",
