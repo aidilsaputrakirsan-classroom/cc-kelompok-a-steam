@@ -1,4 +1,4 @@
-.PHONY: lint test pr-check
+.PHONY: lint test pr-check up down logs build clean
 
 # Menjalankan linter untuk menjaga kualitas kode
 lint:
@@ -18,3 +18,29 @@ pr-check: lint test
 	@echo "Menjalankan PR check..."
 	docker compose build
 	@echo "PR check berhasil. Kode siap di-merge!"
+
+# ==========================================
+# Docker Shortcut Commands
+# ==========================================
+
+# Menjalankan semua services di background
+up:
+	docker compose up -d
+
+# Mematikan semua services
+down:
+	docker compose down
+
+# Menampilkan logs dari semua services
+logs:
+	docker compose logs -f
+
+# Melakukan build ulang image
+build:
+	docker compose build
+
+# Membersihkan container, network, dan volume
+clean:
+	docker compose down -v
+	@echo "Membersihkan resource docker yang tidak terpakai..."
+	docker system prune -f
