@@ -51,7 +51,7 @@ function LoginPage({ onLogin, onRegister, showToast }) {
         }
         await onRegister(formData)
       } else {
-        await onLogin(formData.email, formData.password)
+        await onLogin(formData.email.trim(), formData.password)
       }
       resetForm()
     } catch (err) {
@@ -142,13 +142,13 @@ function LoginPage({ onLogin, onRegister, showToast }) {
           )}
 
           <div style={styles.field}>
-            <label style={styles.label}>Email</label>
+            <label style={styles.label}>{isRegister ? "Email" : "Email / Username"}</label>
             <input
-              type="email"
+              type={isRegister ? "email" : "text"}
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="email@student.itk.ac.id"
+              placeholder={isRegister ? "email@student.itk.ac.id" : "email atau username"}
               required
               style={styles.input}
               autoComplete={isRegister ? "email" : "username"}
