@@ -3,6 +3,7 @@ from sqlalchemy import or_
 from models import User, ImageGeneration, TextSummarization, ImageCaption, ChatSession, ChatMessage
 from schemas import UserCreate
 from auth import hash_password, verify_password
+from typing import Any
 import json
 
 
@@ -37,16 +38,16 @@ def authenticate_user(db: Session, email: str, password: str) -> User | None:
     user = db.query(User).filter(or_(User.email == email, User.username == email.lower())).first()
     if not user:
         return None
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, str(user.hashed_password)):
         return None
     return user
 
 
-def increment_api_used(db: Session, user_id: int) -> None:
+def increment_api_used(db: Session, user_id: int | Any) -> None:
     """Tambah counter api_used milik user sebesar 1."""
     user = db.query(User).filter(User.id == user_id).first()
     if user:
-        user.api_used += 1
+        user.api_used = (user.api_used or 0) + 1  # type: ignore[assignment]
         db.commit()
 
 
@@ -57,7 +58,7 @@ def increment_api_used(db: Session, user_id: int) -> None:
 
 def create_chat_session(
     db: Session,
-    user_id: int,
+    user_id: int | Any,
     title: str,
     session_type: str,
 ) -> ChatSession:
@@ -75,11 +76,11 @@ def create_chat_session(
 
 def add_chat_message(
     db: Session,
-    session_id: int,
+    session_id: int | Any,
     role: str,
     content: str,
     content_type: str = "text",
-    metadata: dict = None,
+    metadata: dict | None = None,
 ) -> ChatMessage:
     """Tambah pesan baru ke dalam sesi percakapan."""
     message = ChatMessage(
@@ -97,8 +98,8 @@ def add_chat_message(
 
 def get_chat_sessions(
     db: Session,
-    user_id: int,
-    session_type: str = None,
+    user_id: int | Any,
+    session_type: str | None = None,
     skip: int = 0,
     limit: int = 20,
 ) -> list[dict]:
@@ -142,7 +143,7 @@ def get_chat_sessions(
 
 
 def get_chat_session_by_id(
-    db: Session, user_id: int, session_id: int
+    db: Session, user_id: int | Any, session_id: int | Any
 ) -> ChatSession | None:
     """Ambil satu sesi percakapan beserta semua pesannya (harus milik user)."""
     return (
@@ -156,7 +157,7 @@ def get_chat_session_by_id(
 
 
 def delete_chat_session(
-    db: Session, user_id: int, session_id: int
+    db: Session, user_id: int | Any, session_id: int | Any
 ) -> bool:
     """Hapus sesi percakapan beserta semua pesannya. Return True jika berhasil."""
     session = get_chat_session_by_id(db, user_id, session_id)
@@ -168,13 +169,13 @@ def delete_chat_session(
 
 
 def update_chat_session_title(
-    db: Session, user_id: int, session_id: int, title: str
+    db: Session, user_id: int | Any, session_id: int | Any, title: str
 ) -> ChatSession | None:
     """Update judul sesi percakapan. Return sesi yang diupdate atau None jika tidak ditemukan."""
     session = get_chat_session_by_id(db, user_id, session_id)
     if not session:
         return None
-    session.title = title
+    session.title = title  # type: ignore[assignment]
     db.commit()
     db.refresh(session)
     return session

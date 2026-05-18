@@ -257,7 +257,16 @@ async def create_chat_session(
             genai.configure(api_key=gemini_api_key)
             model_name = "gemini-3.1-flash-lite-preview"
             model = genai.GenerativeModel(model_name)
-            prompt = f"Tolong rangkum dalam bahasa Indonesia dari teks atau tautan berikut secara ringkas namun informatif:\n\n{request.first_message}"
+            prompt_template = (
+                "Tolong rangkum teks berikut dalam bahasa Indonesia secara ringkas namun informatif.\n"
+                "Format output menggunakan Markdown dengan struktur yang jelas:\n"
+                "- Gunakan heading ## untuk bagian-bagian utama\n"
+                "- Gunakan bullet points (-) untuk poin-poin penting\n"
+                "- Gunakan **bold** untuk kata kunci atau istilah penting\n"
+                "- Akhiri dengan bagian ## Kesimpulan yang berisi intisari singkat\n\n"
+                "Teks yang dirangkum:\n"
+            )
+            prompt = prompt_template + request.first_message
             response = await model.generate_content_async(prompt)
             summary_text = response.text
             processing_time = round(time.time() - start_time, 2)
@@ -412,7 +421,16 @@ async def continue_chat_session(
             genai.configure(api_key=gemini_api_key)
             model_name = "gemini-3.1-flash-lite-preview"
             model = genai.GenerativeModel(model_name)
-            prompt = f"Tolong rangkum dalam bahasa Indonesia dari teks atau tautan berikut secara ringkas namun informatif:\n\n{request.message}"
+            prompt_template = (
+                "Tolong rangkum teks berikut dalam bahasa Indonesia secara ringkas namun informatif.\n"
+                "Format output menggunakan Markdown dengan struktur yang jelas:\n"
+                "- Gunakan heading ## untuk bagian-bagian utama\n"
+                "- Gunakan bullet points (-) untuk poin-poin penting\n"
+                "- Gunakan **bold** untuk kata kunci atau istilah penting\n"
+                "- Akhiri dengan bagian ## Kesimpulan yang berisi intisari singkat\n\n"
+                "Teks yang dirangkum:\n"
+            )
+            prompt = prompt_template + request.message
             response = await model.generate_content_async(prompt)
             summary_text = response.text
             processing_time = round(time.time() - start_time, 2)

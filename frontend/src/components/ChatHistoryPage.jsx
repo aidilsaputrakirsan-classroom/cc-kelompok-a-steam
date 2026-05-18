@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import Spinner from "./Spinner"
 import {
   getChatSessions,
@@ -44,6 +46,12 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
   // Continue input
   const [continueMsg, setContinueMsg] = useState("")
   const [continueModel, setContinueModel] = useState(MODELS[0].id)
+
+  // Markdown mode state
+  const [inputMode, setInputMode] = useState("plain")       // "plain" | "markdown"
+  const [showPreview, setShowPreview] = useState(false)     // preview tab di continue area
+  const [newMsgInputMode, setNewMsgInputMode] = useState("plain")   // untuk modal
+  const [newMsgShowPreview, setNewMsgShowPreview] = useState(false) // preview tab di modal
 
   // Rename
   const [renamingId, setRenamingId] = useState(null)
@@ -323,6 +331,10 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                             >⬇️ Download</button>
                           </div>
                         </div>
+                      ) : msg.role === "assistant" && activeSession.session_type === "summarize" ? (
+                        <div className="markdown-body" style={s.markdownBody}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                        </div>
                       ) : (
                         <p style={s.msgText}>{msg.content}</p>
                       )}
@@ -358,20 +370,69 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                     ))}
                   </select>
                 )}
+
+                {/* Markdown mode toggle — hanya tampil untuk summarize */}
+                {activeSession.session_type === "summarize" && (
+                  <div style={s.modeToggleRow}>
+                    <button
+                      id="btn-mode-plain"
+                      style={{ ...s.modeToggleBtn, ...(inputMode === "plain" ? s.modeToggleBtnActive : {}) }}
+                      onClick={() => { setInputMode("plain"); setShowPreview(false) }}
+                      title="Mode teks biasa"
+                    >✏️ Plain</button>
+                    <button
+                      id="btn-mode-markdown"
+                      style={{ ...s.modeToggleBtn, ...(inputMode === "markdown" ? s.modeToggleBtnActive : {}) }}
+                      onClick={() => setInputMode("markdown")}
+                      title="Mode Markdown — gunakan # heading, **bold**, - list"
+                    >📝 Markdown</button>
+                    {inputMode === "markdown" && (
+                      <span style={s.mdHintBadge}>Gunakan # heading, **bold**, - list</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Tab Edit/Preview — hanya muncul saat markdown mode */}
+                {activeSession.session_type === "summarize" && inputMode === "markdown" && (
+                  <div style={s.previewTabRow}>
+                    <button
+                      id="btn-tab-edit"
+                      style={{ ...s.previewTab, ...(!showPreview ? s.previewTabActive : {}) }}
+                      onClick={() => setShowPreview(false)}
+                    >Edit</button>
+                    <button
+                      id="btn-tab-preview"
+                      style={{ ...s.previewTab, ...(showPreview ? s.previewTabActive : {}) }}
+                      onClick={() => setShowPreview(true)}
+                    >Preview</button>
+                  </div>
+                )}
+
                 <div style={s.inputRow}>
-                  <textarea
-                    value={continueMsg}
-                    onChange={e => setContinueMsg(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={
-                      activeSession.session_type === "image"
-                        ? "Tulis prompt gambar baru..."
-                        : "Masukkan teks baru yang ingin dirangkum..."
-                    }
-                    style={s.inputTextarea}
-                    rows={2}
-                    disabled={sending}
-                  />
+                  {showPreview && inputMode === "markdown" && activeSession.session_type === "summarize" ? (
+                    <div style={s.previewBox}>
+                      {continueMsg.trim()
+                        ? <div className="markdown-body" style={s.markdownBody}><ReactMarkdown remarkPlugins={[remarkGfm]}>{continueMsg}</ReactMarkdown></div>
+                        : <p style={s.previewPlaceholder}>Ketik sesuatu di tab Edit untuk melihat preview...</p>
+                      }
+                    </div>
+                  ) : (
+                    <textarea
+                      value={continueMsg}
+                      onChange={e => setContinueMsg(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder={
+                        activeSession.session_type === "image"
+                          ? "Tulis prompt gambar baru..."
+                          : inputMode === "markdown"
+                            ? "# Judul\n\n## Bagian\n\n- poin satu\n- poin dua"
+                            : "Masukkan teks baru yang ingin dirangkum..."
+                      }
+                      style={s.inputTextarea}
+                      rows={2}
+                      disabled={sending}
+                    />
+                  )}
                   <button
                     style={{ ...s.btnSend, ...(sending || !continueMsg.trim() ? s.btnDisabled : {}) }}
                     onClick={handleContinue}
@@ -444,21 +505,64 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
             )}
 
             <div style={s.modalField}>
-              <label style={s.modalFieldLabel}>
-                {newType === "image" ? "Prompt Gambar Pertama" : "Teks yang Ingin Dirangkum"}
-              </label>
-              <textarea
-                value={newMessage}
-                onChange={e => setNewMessage(e.target.value)}
-                placeholder={
-                  newType === "image"
-                    ? "Contoh: a futuristic city at night, neon lights, cyberpunk style"
-                    : "Tempel teks panjang yang ingin dirangkum di sini..."
-                }
-                style={{ ...s.modalInput, minHeight: "110px", resize: "vertical" }}
-                rows={5}
-                disabled={creatingSession}
-              />
+              <div style={s.modalFieldHeader}>
+                <label style={s.modalFieldLabel}>
+                  {newType === "image" ? "Prompt Gambar Pertama" : "Teks yang Ingin Dirangkum"}
+                </label>
+                {newType === "summarize" && (
+                  <div style={s.modeToggleRow}>
+                    <button
+                      id="btn-modal-mode-plain"
+                      style={{ ...s.modeToggleBtn, ...(newMsgInputMode === "plain" ? s.modeToggleBtnActive : {}) }}
+                      onClick={() => { setNewMsgInputMode("plain"); setNewMsgShowPreview(false) }}
+                    >✏️ Plain</button>
+                    <button
+                      id="btn-modal-mode-markdown"
+                      style={{ ...s.modeToggleBtn, ...(newMsgInputMode === "markdown" ? s.modeToggleBtnActive : {}) }}
+                      onClick={() => setNewMsgInputMode("markdown")}
+                    >📝 Markdown</button>
+                  </div>
+                )}
+              </div>
+
+              {newType === "summarize" && newMsgInputMode === "markdown" && (
+                <div style={s.previewTabRow}>
+                  <button
+                    id="btn-modal-tab-edit"
+                    style={{ ...s.previewTab, ...(!newMsgShowPreview ? s.previewTabActive : {}) }}
+                    onClick={() => setNewMsgShowPreview(false)}
+                  >Edit</button>
+                  <button
+                    id="btn-modal-tab-preview"
+                    style={{ ...s.previewTab, ...(newMsgShowPreview ? s.previewTabActive : {}) }}
+                    onClick={() => setNewMsgShowPreview(true)}
+                  >Preview</button>
+                </div>
+              )}
+
+              {newType === "summarize" && newMsgInputMode === "markdown" && newMsgShowPreview ? (
+                <div style={{ ...s.previewBox, minHeight: "110px" }}>
+                  {newMessage.trim()
+                    ? <div className="markdown-body" style={s.markdownBody}><ReactMarkdown remarkPlugins={[remarkGfm]}>{newMessage}</ReactMarkdown></div>
+                    : <p style={s.previewPlaceholder}>Ketik sesuatu di tab Edit untuk melihat preview...</p>
+                  }
+                </div>
+              ) : (
+                <textarea
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  placeholder={
+                    newType === "image"
+                      ? "Contoh: a futuristic city at night, neon lights, cyberpunk style"
+                      : newMsgInputMode === "markdown"
+                        ? "# Judul Artikel\n\n## Bagian Utama\n\n- poin satu\n- poin dua\n\nIsi teks panjang di sini..."
+                        : "Tempel teks panjang yang ingin dirangkum di sini..."
+                  }
+                  style={{ ...s.modalInput, minHeight: "110px", resize: "vertical", fontFamily: newMsgInputMode === "markdown" ? "monospace" : "inherit" }}
+                  rows={5}
+                  disabled={creatingSession}
+                />
+              )}
             </div>
 
             <div style={s.modalActions}>
@@ -558,6 +662,25 @@ const s = {
   btnSend: { minWidth: "90px", minHeight: "52px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#111827", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" },
   btnDisabled: { opacity: 0.55, cursor: "not-allowed" },
   inputHint: { margin: 0, fontSize: "0.75rem", color: "#6b7394" },
+
+  // Markdown mode toggle
+  modeToggleRow: { display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" },
+  modeToggleBtn: { padding: "0.3rem 0.8rem", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.05)", color: "#c8bfb0", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease" },
+  modeToggleBtnActive: { background: "rgba(255,156,60,0.2)", borderColor: "rgba(255,156,60,0.4)", color: "#ffcf9a" },
+  mdHintBadge: { fontSize: "0.72rem", color: "#7a7f9a", fontStyle: "italic" },
+
+  // Preview tabs
+  previewTabRow: { display: "flex", gap: "0", borderRadius: "10px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", width: "fit-content" },
+  previewTab: { padding: "0.3rem 1rem", border: "none", background: "rgba(255,255,255,0.04)", color: "#9aa0b8", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", transition: "all 0.15s ease" },
+  previewTabActive: { background: "rgba(255,156,60,0.18)", color: "#ffcf9a" },
+  previewBox: { flex: 1, minHeight: "52px", maxHeight: "260px", overflowY: "auto", padding: "0.85rem 1rem", borderRadius: "18px", border: "1px solid rgba(255,156,60,0.2)", background: "rgba(255,156,60,0.04)" },
+  previewPlaceholder: { margin: 0, color: "#5a6080", fontSize: "0.85rem", fontStyle: "italic" },
+
+  // Markdown rendered output (AI bubble)
+  markdownBody: { fontSize: "0.95rem", lineHeight: 1.75, color: "#f3e7d7", overflowWrap: "break-word", wordBreak: "break-word", maxWidth: "100%" },
+
+  // Modal field header (label + toggle in same row)
+  modalFieldHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" },
 
   // Empty state
   centered: { flex: 1, display: "grid", placeItems: "center", padding: "3rem" },
