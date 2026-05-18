@@ -107,26 +107,31 @@ Untuk mempermudah workflow pengembangan dan CI/CD, Anda dapat menggunakan perint
 | 12-14  | Microservices          |   ⬜   |
 | 15-16  | Final & UAS            |   ⬜   |
 
-## 🧪 Hasil Pengujian API
+## 📋Laporan Pengujian setiap minggu
 
-Berikut adalah detail skenario pengujian yang telah dilakukan
+**⚙️ Modul 2: Backend REST API (FastAPI)**
+  *[Hasil Pengujian API Terintegrasi via Swagger](docs/api-test-results.md)*
+* Testing endpoints: auth/login, generate/image, authorize, generate/summarize
+* Dokumentasi API responses dengan screenshot
+  
+**💻 Modul 3: Frontend Development (React UI)**
+*[Hasil Pengujian Antarmuka (UI)](docs/ui-test-results.md)*
+* Testing: API Connection, Data Rendering, POST/PUT/DELETE operations
+* Search filtering, confirmation dialogs
+* 8 test cases dengan screenshot 
 
 
-## 🧪 Hasil Pengujian API
+**🔐 Modul 4: Integrasi Full-Stack & Autentikasi**
+* [Alur Otentikasi & Otorisasi](docs/auth-test-results.md)
+* 8 test cases: Register, Login, Get Profile, Token validation
+* Testing unauthorized access, expired tokens
 
-Berikut adalah detail skenario pengujian yang telah dilakukan pada API sistem **Inti Rupa**.
+**📦 Modul 5 & 6: Docker Containerization & Orchestration**
+*[ Containerization & Orchestration](docs/cicd.md)*
+* GitHub Actions workflow
+* Automated testing pada Docker build
+* Backend (17 tests) + Frontend (12 tests)
 
-### 1. POST /chat/sessions — Create New Chat Session
-
-![POST Create Chat Session](docs/images/post-chat-sessions.png)
-
-Endpoint ini digunakan untuk menginisialisasi atau membuat sesi chat baru di dalam database. Pengguna perlu mengirimkan payload berupa judul sesi dan tipe sesi. Sistem akan merespon dengan status **201 Created** beserta data sesi yang baru saja dibuat, termasuk daftar pesan awal jika sudah ada.
-
-### 2. GET /chat/sessions — Retrieve Chat Sessions
-
-![GET Chat Sessions](docs/images/get-chat-sessions.png)
-
-Endpoint ini digunakan untuk mengambil daftar seluruh sesi chat yang tersimpan. Sistem akan mengembalikan *array* berisi objek sesi, yang memungkinkan pengguna untuk melihat riwayat percakapan mereka.
 
 
 
