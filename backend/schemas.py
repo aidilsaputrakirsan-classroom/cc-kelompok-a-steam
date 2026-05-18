@@ -66,7 +66,7 @@ class UserCreate(BaseModel):
 
 class LoginRequest(BaseModel):
     """Schema untuk login request."""
-    email: EmailStr = Field(..., examples=["user@student.itk.ac.id"])
+    email: str = Field(..., examples=["user@student.itk.ac.id atau username_anda"])
     password: str = Field(..., examples=["Password123"])
 
 

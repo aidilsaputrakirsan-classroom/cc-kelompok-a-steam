@@ -33,8 +33,8 @@ def create_user(db: Session, user_data: UserCreate) -> User | None:
 
 
 def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    """Autentikasi user: cek email & password."""
-    user = db.query(User).filter(User.email == email).first()
+    """Autentikasi user: cek email/username & password."""
+    user = db.query(User).filter(or_(User.email == email, User.username == email.lower())).first()
     if not user:
         return None
     if not verify_password(password, user.hashed_password):

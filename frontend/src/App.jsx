@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react"
 import Header from "./components/Header"
 import LoginPage from "./components/LoginPage"
 import Toast from "./components/Toast"
+import SuccessModal from "./components/SuccessModal"
+import LogoutModal from "./components/LogoutModal"
 
 import ChatHistoryPage from "./components/ChatHistoryPage"
 import AboutUs from "./components/AboutUs"
@@ -27,6 +29,11 @@ function App() {
 
   // ==================== TOAST ====================
   const { toast, showToast, hideToast } = useToast()
+
+  // ==================== MODAL ====================
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authModalMessage, setAuthModalMessage] = useState("")
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   // ==================== APP STATE ====================
   const [activeTab, setActiveTab] = useState("about-us")
@@ -86,21 +93,44 @@ function App() {
       await login(email, password)
       const userData = await getMe()
       setUser(userData)
-      setIsAuthenticated(true)
-      setActiveTab("about-us")
-      showToast("Login berhasil! Selamat datang di Inti Studio! ✨", "success")
+      setAuthModalMessage("Login berhasil! Selamat datang di Inti Studio! ✨")
+      setShowAuthModal(true)
+      
+      setTimeout(() => {
+        setShowAuthModal(false)
+        setIsAuthenticated(true)
+        setActiveTab("about-us")
+      }, 2000)
     } catch (err) {
       showToast("Login gagal: " + err.message, "error")
     }
   }
 
   const handleRegister = async (userData) => {
-    await register(userData)
-    await handleLogin(userData.email, userData.password)
-    showToast("Registrasi berhasil! Selamat datang!", "success")
+    try {
+      await register(userData)
+      await login(userData.email, userData.password)
+      const newUserData = await getMe()
+      setUser(newUserData)
+      setAuthModalMessage("Registrasi berhasil! Selamat datang!")
+      setShowAuthModal(true)
+      
+      setTimeout(() => {
+        setShowAuthModal(false)
+        setIsAuthenticated(true)
+        setActiveTab("about-us")
+      }, 2000)
+    } catch (err) {
+      showToast("Registrasi gagal: " + err.message, "error")
+    }
   }
 
   const handleLogout = () => {
+    setShowLogoutModal(true)
+  }
+
+  const performLogout = () => {
+    setShowLogoutModal(false)
     clearToken()
     setUser(null)
     setIsAuthenticated(false)
@@ -163,6 +193,7 @@ function App() {
     return (
       <>
         <LoginPage onLogin={handleLogin} onRegister={handleRegister} showToast={showToast} />
+        <SuccessModal isOpen={showAuthModal} message={authModalMessage} />
         {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
       </>
     )
@@ -211,6 +242,11 @@ function App() {
           <AboutUs />
         )}
       </div>
+      <LogoutModal 
+        isOpen={showLogoutModal} 
+        onConfirm={performLogout} 
+        onCancel={() => setShowLogoutModal(false)} 
+      />
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   )

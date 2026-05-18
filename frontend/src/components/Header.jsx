@@ -11,19 +11,7 @@ function Header({ totalItems, isConnected, user, onLogout }) {
         </div>
       </div>
       <div style={styles.right}>
-        <div style={styles.stats}>
-          <span style={styles.badge}>📦 {totalItems} items</span>
-          <span
-            style={{
-              ...styles.status,
-              backgroundColor: isConnected ? "rgba(226, 239, 218, 0.18)" : "rgba(251, 229, 214, 0.18)",
-              color: isConnected ? "#A6B56C" : "#C4532B",
-              borderColor: isConnected ? "rgba(169, 181, 108, 0.28)" : "rgba(196, 83, 43, 0.28)",
-            }}
-          >
-            {isConnected ? "🟢 Online" : "🔴 Offline"}
-          </span>
-        </div>
+
         {user && (
           <div style={styles.user}>
             <span style={styles.userName}>👤 {user.full_name || user.email}</span>
