@@ -9,20 +9,23 @@ Sebelum melakukan `push` atau `Pull Request`, setiap *developer* **WAJIB** memas
 > ⚠️ **PENTING:** Perintah pengujian harus dijalankan di dalam folder modul masing-masing (`backend/` atau `frontend/`).
 
 ### A. Testing Backend (Python / FastAPI)
-Kita menggunakan `pytest` untuk backend. Audit terakhir menunjukkan sistem memiliki **11 unit test**.
+Kita menggunakan `pytest` untuk backend. Audit terakhir menunjukkan sistem memiliki **17 unit test**.
 
 1. Buka terminal dan masuk ke folder backend dengan mengetik :
    cd backend
 2. Lalu ketik `pytest`
-3. maka hasil yang didapat sebagai berikut :
-   berikut adalah interpretasi dari log terminal yang muncul:
-* Collected 11 items: Sistem berhasil mendeteksi  total 11 skenario pengujian otomatis di dalam folder tests/.
-* Indikator Titik (.): Setiap tanda titik melambangkan satu unit test yang berstatus PASSED.
-* test_auth.py ....... (7 passed): Memastikan sistem registrasi, login, dan token keamanan berfungsi 100%.
-* test_chat.py .. (2 passed): Memastikan integrasi fitur chat AI tidak memiliki kendala logika.
-* test_health.py .. (2 passed): Memastikan endpoint kesehatan sistem merespon dengan cepat.
-* 11 passed, 7 warnings: Seluruh test utama LULUS. Namun, terdapat 7 peringatan (warnings) mengenai library yang perlu di-update (seperti Pydantic dan Google Generative AI). Hal ini tidak menggagalkan pengujian, tetapi menjadi catatan bagi tim untuk pemeliharaan ke depan.
-* Execution Time (27.49s): Total waktu yang dibutuhkan mesin untuk memvalidasi seluruh logika backend.
+3. berikut adalah interpretasi dari log terminal yang muncul:
+![Hasil Testing Backend](docs/images/pytest.png)
+
+* **Collected 17 items:** Sistem berhasil mendeteksi dan menjalankan total **17 skenario pengujian** otomatis di dalam folder `tests/` (meningkat dari 11 skenario sebelumnya).
+* **Indikator Titik (`.`):** Setiap tanda titik melambangkan satu unit test yang berstatus **PASSED** (Lolos).
+* `test_auth.py .........` (**9 passed**): Peningkatan dari 7 test, memastikan skenario keamanan, registrasi, dan validasi token jauh lebih kuat.
+* `test_chat.py ......` (**6 passed**): Peningkatan pesat dari 2 test, memastikan berbagai skenario respon fitur chat AI teruji dengan baik.
+* `test_health.py ..` (**2 passed**): Memastikan pemantauan konektivitas dan kesehatan server tetap stabil.
+* **17 passed, 7 warnings:** Seluruh 17 test utama **LULUS**. Peringatan library (*warnings*) yang muncul tetap sama (Pydantic, SQLAlchemy, dan depresiasi Google Generative AI) dan tidak mempengaruhi keabsahan status kelulusan sistem.
+* **Execution Time (25.42s):** Eksekusi pengujian berjalan lebih efisien, memvalidasi lebih banyak test (17 items) dengan waktu yang lebih singkat dibanding sebelumnya (27.49s).
+
+
 
 ### B. Testing Frontend (React / Vite)
 Kita menggunakan **Vitest** untuk memvalidasi komponen UI. Minimal terdapat 3 skenario pengujian.
@@ -43,5 +46,5 @@ Kita menggunakan **Vitest** untuk memvalidasi komponen UI. Minimal terdapat 3 sk
 
 | Kategori | Status | Kuantitas | Keterangan |
 | :--- | :--- | :--- | :--- |
-| **Unit Test Backend** | ✅ PASSED | 11 Items | Lolos pengujian Auth, Chat, dan Health. |
+| **Unit Test Backend** | ✅ PASSED | 17 Items | Lolos pengujian Auth, Chat, dan Health. |
 | **Unit Test Frontend** | ✅ PASSED | 12 Items | Lolos pengujian API, Header, dan Chat Page. |
