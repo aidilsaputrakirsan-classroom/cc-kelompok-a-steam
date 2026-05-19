@@ -162,32 +162,61 @@ jobs:
 
       - name: 🩺 Automated Health Check
         run: |
-          echo "Waiting 20 seconds for services to boot up..."
-          sleep 20
-          
-          echo "Checking Backend Health..."
           BACKEND_URL="https://cc-kelompok-a-steam-production.up.railway.app/health"
-          echo "Calling $BACKEND_URL..."
-          BACKEND_RESPONSE=$(curl -s $BACKEND_URL)
-          echo "Response: $BACKEND_RESPONSE"
-          
-          if [[ "$BACKEND_RESPONSE" != *"healthy"* ]]; then
+          FRONTEND_URL="https://cc-kelompok-a-steam-production-51bf.up.railway.app"
+          MAX_ATTEMPTS=6
+          SLEEP_BETWEEN_ATTEMPTS=10
+
+          echo "Checking Backend Health..."
+          for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+            echo "Backend health check attempt $attempt/$MAX_ATTEMPTS: $BACKEND_URL"
+            if BACKEND_RESPONSE=$(curl --fail --show-error --silent --location --max-time 10 "$BACKEND_URL"); then
+              echo "Response: $BACKEND_RESPONSE"
+              if python3 -c 'import json, sys; sys.exit(0 if json.loads(sys.argv[1]).get("status") == "healthy" else 1)' "$BACKEND_RESPONSE"; then
+                echo "✅ Backend is HEALTHY!"
+                BACKEND_OK=1
+                break
+              fi
+              echo "Backend response did not report status=healthy."
+            else
+              echo "Backend request failed."
+            fi
+
+            if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+              echo "Waiting $SLEEP_BETWEEN_ATTEMPTS seconds before retrying backend..."
+              sleep "$SLEEP_BETWEEN_ATTEMPTS"
+            fi
+          done
+
+          if [ "${BACKEND_OK:-0}" -ne 1 ]; then
             echo "❌ Backend Health Check FAILED!"
             exit 1
           fi
-          echo "✅ Backend is HEALTHY!"
-          
+
           echo "Checking Frontend Health..."
-          FRONTEND_URL="https://cc-kelompok-a-steam-production-51bf.up.railway.app"
-          echo "Calling $FRONTEND_URL..."
-          FRONTEND_STATUS=$(curl -o /dev/null -s -w "%{http_code}" $FRONTEND_URL)
-          echo "HTTP Status Code: $FRONTEND_STATUS"
-          
-          if [ "$FRONTEND_STATUS" -ne 200 ]; then
-            echo "❌ Frontend Health Check FAILED with status code $FRONTEND_STATUS!"
+          for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+            echo "Frontend health check attempt $attempt/$MAX_ATTEMPTS: $FRONTEND_URL"
+            if FRONTEND_STATUS=$(curl --fail --show-error --silent --location --output /dev/null --write-out "%{http_code}" --max-time 10 "$FRONTEND_URL"); then
+              echo "HTTP Status Code: $FRONTEND_STATUS"
+              if [ "$FRONTEND_STATUS" -eq 200 ]; then
+                echo "✅ Frontend is HEALTHY!"
+                FRONTEND_OK=1
+                break
+              fi
+            else
+              echo "Frontend request failed."
+            fi
+
+            if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+              echo "Waiting $SLEEP_BETWEEN_ATTEMPTS seconds before retrying frontend..."
+              sleep "$SLEEP_BETWEEN_ATTEMPTS"
+            fi
+          done
+
+          if [ "${FRONTEND_OK:-0}" -ne 1 ]; then
+            echo "❌ Frontend Health Check FAILED!"
             exit 1
           fi
-          echo "✅ Frontend is HEALTHY!"
 
       - name: ✅ Deploy complete
         run: |
