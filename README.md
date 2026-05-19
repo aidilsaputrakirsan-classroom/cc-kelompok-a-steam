@@ -98,12 +98,12 @@ Untuk mempermudah workflow pengembangan dan CI/CD, Anda dapat menggunakan perint
 | Minggu | Target                 | Status |
 | :----- | :--------------------- | :----: |
 | 1      | Setup & Hello World    |   ✅   |
-| 2      | REST API + Database    |   ⬜   |
-| 3      | React Frontend         |   ⬜   |
-| 4      | Full-Stack Integration |   ⬜   |
-| 5-7    | Docker & Compose       |   ⬜   |
-| 8      | UTS Demo               |   ⬜   |
-| 9-11   | CI/CD Pipeline         |   ⬜   |
+| 2      | REST API + Database    |   ✅   |
+| 3      | React Frontend         |   ✅   |
+| 4      | Full-Stack Integration |   ✅   |
+| 5-7    | Docker & Compose       |   ✅   |
+| 8      | UTS Demo               |   ✅   |
+| 9-11   | CI/CD Pipeline         |   ✅   |
 | 12-14  | Microservices          |   ⬜   |
 | 15-16  | Final & UAS            |   ⬜   |
 
@@ -131,6 +131,15 @@ Untuk mempermudah workflow pengembangan dan CI/CD, Anda dapat menggunakan perint
 * GitHub Actions workflow
 * Automated testing pada Docker build
 * Backend (17 tests) + Frontend (12 tests)
+
+**🚀 Modul 11: Cloud Deployment & CI/CD Pipeline (Railway)**
+*[Deployment & Rollback Guide](docs/deployment-guide.md)*
+* Pipeline CI/CD otomatis terintegrasi penuh ke cloud Railway.
+* Dilengkapi dengan **Automated Health Check** (pengujian `/health` backend & `200 OK` frontend pada proses deploy).
+* Dilengkapi dengan instruksi **Rollback Manual** untuk memitigasi kegagalan sistem di production.
+* Production URL:
+  * **Frontend:** [https://cc-kelompok-a-steam-production-51bf.up.railway.app](https://cc-kelompok-a-steam-production-51bf.up.railway.app)
+  * **Backend:** [https://cc-kelompok-a-steam-production.up.railway.app](https://cc-kelompok-a-steam-production.up.railway.app)
 
 
 

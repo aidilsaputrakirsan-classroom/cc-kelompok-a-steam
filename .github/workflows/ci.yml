@@ -145,8 +145,37 @@ jobs:
           cd frontend
           railway up --service cc-kelompok-a-steam --detach
 
+      - name: 🩺 Automated Health Check
+        run: |
+          echo "Waiting 20 seconds for services to boot up..."
+          sleep 20
+          
+          echo "Checking Backend Health..."
+          BACKEND_URL="https://cc-kelompok-a-steam-production.up.railway.app/health"
+          echo "Calling $BACKEND_URL..."
+          BACKEND_RESPONSE=$(curl -s $BACKEND_URL)
+          echo "Response: $BACKEND_RESPONSE"
+          
+          if [[ "$BACKEND_RESPONSE" != *"healthy"* ]]; then
+            echo "❌ Backend Health Check FAILED!"
+            exit 1
+          fi
+          echo "✅ Backend is HEALTHY!"
+          
+          echo "Checking Frontend Health..."
+          FRONTEND_URL="https://cc-kelompok-a-steam-production-51bf.up.railway.app"
+          echo "Calling $FRONTEND_URL..."
+          FRONTEND_STATUS=$(curl -o /dev/null -s -w "%{http_code}" $FRONTEND_URL)
+          echo "HTTP Status Code: $FRONTEND_STATUS"
+          
+          if [ "$FRONTEND_STATUS" -ne 200 ]; then
+            echo "❌ Frontend Health Check FAILED with status code $FRONTEND_STATUS!"
+            exit 1
+          fi
+          echo "✅ Frontend is HEALTHY!"
+
       - name: ✅ Deploy complete
         run: |
-          echo "✅ Deployment successful!"
+          echo "✅ Deployment and health checks completed successfully!"
           echo "Backend: https://cc-kelompok-a-steam-production.up.railway.app"
           echo "Frontend: https://cc-kelompok-a-steam-production-51bf.up.railway.app"
