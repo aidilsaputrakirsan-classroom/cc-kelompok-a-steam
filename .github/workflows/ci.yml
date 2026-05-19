@@ -113,3 +113,40 @@ jobs:
         run: |
           echo "✅ All Docker images built successfully!"
           docker images | grep intirupa
+
+  # ================================
+  # JOB 4: Deploy ke Railway
+  # ================================
+  deploy:
+    name: 🚀 Deploy to Railway
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, build-docker]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # ↑ HANYA deploy saat push ke main (bukan saat PR)
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚂 Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: 🚀 Deploy Backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          cd backend
+          railway up --service backend --detach
+
+      - name: 🚀 Deploy Frontend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          cd frontend
+          railway up --service cc-kelompok-a-steam --detach
+
+      - name: ✅ Deploy complete
+        run: |
+          echo "✅ Deployment successful!"
+          echo "Backend: https://cc-kelompok-a-steam-production.up.railway.app"
+          echo "Frontend: https://cc-kelompok-a-steam-production-51bf.up.railway.app"
