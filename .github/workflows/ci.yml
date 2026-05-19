@@ -113,3 +113,113 @@ jobs:
         run: |
           echo "✅ All Docker images built successfully!"
           docker images | grep intirupa
+
+  # ================================
+  # JOB 4: Deploy ke Railway
+  # ================================
+  deploy:
+    name: 🚀 Deploy to Railway
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, build-docker]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # ↑ HANYA deploy saat push ke main (bukan saat PR)
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 🚂 Install Railway CLI
+        run: npm install -g @railway/cli@3.8.7
+
+      - name: 🚀 Deploy Backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Set these repository/environment variables from the Railway dashboard.
+          # Use the target Railway Project ID and Environment ID for this deployment.
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
+        run: |
+          cd backend
+          railway link --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service backend
+          railway up --service backend --detach
+
+      - name: 🚀 Deploy Frontend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Set these repository/environment variables from the Railway dashboard.
+          # Use the same target Railway Project ID and Environment ID used by the backend deploy.
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
+        run: |
+          cd frontend
+          railway link --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service cc-kelompok-a-steam
+          railway up --service cc-kelompok-a-steam --detach
+
+      - name: 🩺 Automated Health Check
+        run: |
+          BACKEND_URL="https://cc-kelompok-a-steam-production.up.railway.app/health"
+          FRONTEND_URL="https://cc-kelompok-a-steam-production-51bf.up.railway.app"
+          MAX_ATTEMPTS=6
+          SLEEP_BETWEEN_ATTEMPTS=10
+
+          echo "Checking Backend Health..."
+          for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+            echo "Backend health check attempt $attempt/$MAX_ATTEMPTS: $BACKEND_URL"
+            if BACKEND_RESPONSE=$(curl --fail --show-error --silent --location --max-time 10 "$BACKEND_URL"); then
+              echo "Response: $BACKEND_RESPONSE"
+              if python3 -c 'import json, sys; sys.exit(0 if json.loads(sys.argv[1]).get("status") == "healthy" else 1)' "$BACKEND_RESPONSE"; then
+                echo "✅ Backend is HEALTHY!"
+                BACKEND_OK=1
+                break
+              fi
+              echo "Backend response did not report status=healthy."
+            else
+              echo "Backend request failed."
+            fi
+
+            if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+              echo "Waiting $SLEEP_BETWEEN_ATTEMPTS seconds before retrying backend..."
+              sleep "$SLEEP_BETWEEN_ATTEMPTS"
+            fi
+          done
+
+          if [ "${BACKEND_OK:-0}" -ne 1 ]; then
+            echo "❌ Backend Health Check FAILED!"
+            exit 1
+          fi
+
+          echo "Checking Frontend Health..."
+          for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+            echo "Frontend health check attempt $attempt/$MAX_ATTEMPTS: $FRONTEND_URL"
+            if FRONTEND_STATUS=$(curl --fail --show-error --silent --location --output /dev/null --write-out "%{http_code}" --max-time 10 "$FRONTEND_URL"); then
+              echo "HTTP Status Code: $FRONTEND_STATUS"
+              if [ "$FRONTEND_STATUS" -eq 200 ]; then
+                echo "✅ Frontend is HEALTHY!"
+                FRONTEND_OK=1
+                break
+              fi
+            else
+              echo "Frontend request failed."
+            fi
+
+            if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+              echo "Waiting $SLEEP_BETWEEN_ATTEMPTS seconds before retrying frontend..."
+              sleep "$SLEEP_BETWEEN_ATTEMPTS"
+            fi
+          done
+
+          if [ "${FRONTEND_OK:-0}" -ne 1 ]; then
+            echo "❌ Frontend Health Check FAILED!"
+            exit 1
+          fi
+
+      - name: ✅ Deploy complete
+        run: |
+          echo "✅ Deployment and health checks completed successfully!"
+          echo "Backend: https://cc-kelompok-a-steam-production.up.railway.app"
+          echo "Frontend: https://cc-kelompok-a-steam-production-51bf.up.railway.app"
