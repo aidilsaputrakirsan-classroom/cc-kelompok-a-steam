@@ -114,7 +114,7 @@ class ChatSessionCreate(BaseModel):
     session_type: str = Field(
         ...,
         examples=["image"],
-        description="Jenis sesi: 'image' (generate gambar) atau 'summarize' (rangkum teks)"
+        description="Jenis sesi: 'image', 'summarize', atau 'ocr'"
     )
     first_message: str = Field(
         ..., min_length=3,
@@ -136,11 +136,16 @@ class ChatSessionCreate(BaseModel):
         examples=["text"],
         description="Jenis sumber teks: 'url', 'text', atau 'file' (hanya untuk session_type='summarize')"
     )
+    # Untuk session_type='ocr'
+    image_data: Optional[str] = Field(
+        default=None,
+        description="Data gambar dalam format Base64 (hanya untuk session_type='ocr')"
+    )
 
     @field_validator("session_type")
     @classmethod
     def validate_session_type(cls, v: str) -> str:
-        allowed = {"image", "summarize"}
+        allowed = {"image", "summarize", "ocr"}
         if v not in allowed:
             raise ValueError(f"session_type harus salah satu dari: {', '.join(allowed)}")
         return v
@@ -175,6 +180,11 @@ class ContinueChatRequest(BaseModel):
     source_type: Optional[str] = Field(
         default="text",
         description="Jenis sumber teks: 'url', 'text', atau 'file' (hanya untuk sesi summarize)"
+    )
+    # Untuk session_type='ocr'
+    image_data: Optional[str] = Field(
+        default=None,
+        description="Data gambar dalam format Base64 (hanya untuk sesi ocr)"
     )
 
 

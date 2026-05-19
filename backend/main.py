@@ -293,6 +293,66 @@ async def create_chat_session(
             )
             raise HTTPException(status_code=502, detail=f"Gemini API error: {error_str[:300]}")
 
+    elif request.session_type == "ocr":
+        if not request.image_data:
+            raise HTTPException(status_code=400, detail="Data gambar (image_data) wajib disertakan untuk sesi OCR.")
+            
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        if not gemini_api_key:
+            raise HTTPException(status_code=503, detail="Gemini API Key belum dikonfigurasi.")
+
+        start_time = time.time()
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=gemini_api_key)
+            model_name = "gemini-3.1-flash-lite-preview"
+            model = genai.GenerativeModel(model_name)
+            
+            # Ekstrak tipe MIME dan data base64 murni
+            image_b64 = request.image_data
+            mime_type = "image/jpeg" # Default fallback
+            if "," in image_b64:
+                header, image_b64 = image_b64.split(",", 1)
+                # Contoh header: data:image/png;base64
+                if ":" in header and ";" in header:
+                    mime_type = header.split(":")[1].split(";")[0]
+
+            image_bytes = base64.b64decode(image_b64)
+            image_part = {
+                "mime_type": mime_type,
+                "data": image_bytes
+            }
+            
+            prompt = request.first_message
+            if prompt == "" or len(prompt) < 3:
+                prompt = "Tolong ekstrak semua teks yang ada di dalam gambar ini secara presisi dan rapi."
+
+            response = await model.generate_content_async([prompt, image_part])
+            ocr_text = response.text
+            processing_time = round(time.time() - start_time, 2)
+
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=ocr_text,
+                content_type="text",
+                metadata={"model": model_name, "processing_time": processing_time},
+            )
+            crud.increment_api_used(db=db, user_id=current_user.id)
+
+        except Exception as e:
+            error_str = str(e)
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=f"[Gagal membaca dokumen: {error_str[:200]}]",
+                content_type="text",
+                metadata={"error": error_str[:300]},
+            )
+            raise HTTPException(status_code=502, detail=f"Gemini API error: {error_str[:300]}")
+
     # Refresh dan kembalikan sesi lengkap
     db.refresh(session)
     return session
@@ -452,6 +512,65 @@ async def continue_chat_session(
                 session_id=session.id,
                 role="assistant",
                 content=f"[Gagal merangkum: {error_str[:200]}]",
+                content_type="text",
+                metadata={"error": error_str[:300]},
+            )
+            raise HTTPException(status_code=502, detail=f"Gemini API error: {error_str[:300]}")
+
+    elif session.session_type == "ocr":
+        if not request.image_data:
+            raise HTTPException(status_code=400, detail="Data gambar (image_data) wajib disertakan untuk sesi OCR.")
+            
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        if not gemini_api_key:
+            raise HTTPException(status_code=503, detail="Gemini API Key belum dikonfigurasi.")
+
+        start_time = time.time()
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=gemini_api_key)
+            model_name = "gemini-3.1-flash-lite-preview"
+            model = genai.GenerativeModel(model_name)
+            
+            # Ekstrak tipe MIME dan data base64 murni
+            image_b64 = request.image_data
+            mime_type = "image/jpeg"
+            if "," in image_b64:
+                header, image_b64 = image_b64.split(",", 1)
+                if ":" in header and ";" in header:
+                    mime_type = header.split(":")[1].split(";")[0]
+
+            image_bytes = base64.b64decode(image_b64)
+            image_part = {
+                "mime_type": mime_type,
+                "data": image_bytes
+            }
+            
+            prompt = request.message
+            if prompt == "" or len(prompt) < 3:
+                prompt = "Tolong ekstrak semua teks yang ada di dalam dokumen ini."
+
+            response = await model.generate_content_async([prompt, image_part])
+            ocr_text = response.text
+            processing_time = round(time.time() - start_time, 2)
+
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=ocr_text,
+                content_type="text",
+                metadata={"model": model_name, "processing_time": processing_time},
+            )
+            crud.increment_api_used(db=db, user_id=current_user.id)
+
+        except Exception as e:
+            error_str = str(e)
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=f"[Gagal membaca dokumen: {error_str[:200]}]",
                 content_type="text",
                 metadata={"error": error_str[:300]},
             )
