@@ -36,7 +36,12 @@ function App() {
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   // ==================== APP STATE ====================
-  const [activeTab, setActiveTab] = useState("about-us")
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem("inti_active_tab") || "about-us")
+  
+  useEffect(() => {
+    localStorage.setItem("inti_active_tab", activeTab)
+  }, [activeTab])
+
   const [items, setItems] = useState([])
   const [totalItems, setTotalItems] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -67,19 +72,19 @@ function App() {
   }, [])
 
   // Restore session dari localStorage saat app pertama load
-  // useEffect(() => {
-  //   const token = getToken()
-  //   if (token && !isAuthenticated) {
-  //     getMe()
-  //       .then((userData) => {
-  //         setUser(userData)
-  //         setIsAuthenticated(true)
-  //       })
-  //       .catch(() => {
-  //         clearToken() // Token expired atau invalid
-  //       })
-  //   }
-  // }, [])
+  useEffect(() => {
+    const token = getToken()
+    if (token && !isAuthenticated) {
+      getMe()
+        .then((userData) => {
+          setUser(userData)
+          setIsAuthenticated(true)
+        })
+        .catch(() => {
+          clearToken() // Token expired atau invalid
+        })
+    }
+  }, [])
 
   useEffect(() => {
     if (isAuthenticated) {

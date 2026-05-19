@@ -182,14 +182,15 @@ async def create_chat_session(
         session_type=request.session_type,
     )
 
-    # Simpan pesan user
-    crud.add_chat_message(
-        db=db,
-        session_id=session.id,
-        role="user",
-        content=request.first_message,
-        content_type="text",
-    )
+    # Simpan pesan teks user (jika bukan OCR, simpan di awal. Jika OCR, simpan setelah gambar)
+    if request.session_type != "ocr":
+        crud.add_chat_message(
+            db=db,
+            session_id=session.id,
+            role="user",
+            content=request.first_message,
+            content_type="text",
+        )
 
     # Proses AI sesuai session_type
     if request.session_type == "image":
@@ -293,6 +294,86 @@ async def create_chat_session(
             )
             raise HTTPException(status_code=502, detail=f"Gemini API error: {error_str[:300]}")
 
+    elif request.session_type == "ocr":
+        if not request.image_data:
+            raise HTTPException(status_code=400, detail="Data gambar (image_data) wajib disertakan untuk sesi OCR.")
+            
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        if not gemini_api_key:
+            raise HTTPException(status_code=503, detail="Gemini API Key belum dikonfigurasi.")
+
+        start_time = time.time()
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=gemini_api_key)
+            model_name = "gemini-3.1-flash-lite-preview"
+            model = genai.GenerativeModel(model_name)
+            
+            # Ekstrak tipe MIME dan data base64 murni
+            image_b64 = request.image_data
+            mime_type = "image/jpeg" # Default fallback
+            if "," in image_b64:
+                header, image_b64 = image_b64.split(",", 1)
+                # Contoh header: data:image/png;base64
+                if ":" in header and ";" in header:
+                    mime_type = header.split(":")[1].split(";")[0]
+
+            image_bytes = base64.b64decode(image_b64)
+            image_part = {
+                "mime_type": mime_type,
+                "data": image_bytes
+            }
+            
+            # Simpan gambar yang diupload ke database (agar tampil di chat UI user)
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="user",
+                content=image_b64,
+                content_type="image_base64",
+                metadata={"mime_type": mime_type},
+            )
+            
+            # Simpan pesan teks instruksi setelah gambar (jika ada isinya)
+            if request.first_message and request.first_message.strip():
+                crud.add_chat_message(
+                    db=db,
+                    session_id=session.id,
+                    role="user",
+                    content=request.first_message,
+                    content_type="text",
+                )
+            
+            prompt = request.first_message
+            if prompt == "" or len(prompt) < 3:
+                prompt = "Tolong ekstrak semua teks yang ada di dalam gambar ini secara presisi dan rapi."
+
+            response = await model.generate_content_async([prompt, image_part])
+            ocr_text = response.text
+            processing_time = round(time.time() - start_time, 2)
+
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=ocr_text,
+                content_type="text",
+                metadata={"model": model_name, "processing_time": processing_time},
+            )
+            crud.increment_api_used(db=db, user_id=current_user.id)
+
+        except Exception as e:
+            error_str = str(e)
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=f"[Gagal membaca dokumen: {error_str[:200]}]",
+                content_type="text",
+                metadata={"error": error_str[:300]},
+            )
+            raise HTTPException(status_code=502, detail=f"Gemini API error: {error_str[:300]}")
+
     # Refresh dan kembalikan sesi lengkap
     db.refresh(session)
     return session
@@ -347,14 +428,15 @@ async def continue_chat_session(
     if not session:
         raise HTTPException(status_code=404, detail="Sesi tidak ditemukan.")
 
-    # Simpan pesan user
-    crud.add_chat_message(
-        db=db,
-        session_id=session.id,
-        role="user",
-        content=request.message,
-        content_type="text",
-    )
+    # Simpan pesan teks user (jika bukan OCR, simpan di awal. Jika OCR, simpan setelah gambar)
+    if session.session_type != "ocr":
+        crud.add_chat_message(
+            db=db,
+            session_id=session.id,
+            role="user",
+            content=request.message,
+            content_type="text",
+        )
 
     # Proses AI sesuai session_type
     if session.session_type == "image":
@@ -452,6 +534,85 @@ async def continue_chat_session(
                 session_id=session.id,
                 role="assistant",
                 content=f"[Gagal merangkum: {error_str[:200]}]",
+                content_type="text",
+                metadata={"error": error_str[:300]},
+            )
+            raise HTTPException(status_code=502, detail=f"Gemini API error: {error_str[:300]}")
+
+    elif session.session_type == "ocr":
+        if not request.image_data:
+            raise HTTPException(status_code=400, detail="Data gambar (image_data) wajib disertakan untuk sesi OCR.")
+            
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        if not gemini_api_key:
+            raise HTTPException(status_code=503, detail="Gemini API Key belum dikonfigurasi.")
+
+        start_time = time.time()
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=gemini_api_key)
+            model_name = "gemini-3.1-flash-lite-preview"
+            model = genai.GenerativeModel(model_name)
+            
+            # Ekstrak tipe MIME dan data base64 murni
+            image_b64 = request.image_data
+            mime_type = "image/jpeg"
+            if "," in image_b64:
+                header, image_b64 = image_b64.split(",", 1)
+                if ":" in header and ";" in header:
+                    mime_type = header.split(":")[1].split(";")[0]
+
+            image_bytes = base64.b64decode(image_b64)
+            image_part = {
+                "mime_type": mime_type,
+                "data": image_bytes
+            }
+            
+            # Simpan gambar yang diupload ke database (agar tampil di chat UI user)
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="user",
+                content=image_b64,
+                content_type="image_base64",
+                metadata={"mime_type": mime_type},
+            )
+            
+            # Simpan pesan teks instruksi setelah gambar (jika ada isinya)
+            if request.message and request.message.strip():
+                crud.add_chat_message(
+                    db=db,
+                    session_id=session.id,
+                    role="user",
+                    content=request.message,
+                    content_type="text",
+                )
+            
+            prompt = request.message
+            if prompt == "" or len(prompt) < 3:
+                prompt = "Tolong ekstrak semua teks yang ada di dalam dokumen ini."
+
+            response = await model.generate_content_async([prompt, image_part])
+            ocr_text = response.text
+            processing_time = round(time.time() - start_time, 2)
+
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=ocr_text,
+                content_type="text",
+                metadata={"model": model_name, "processing_time": processing_time},
+            )
+            crud.increment_api_used(db=db, user_id=current_user.id)
+
+        except Exception as e:
+            error_str = str(e)
+            crud.add_chat_message(
+                db=db,
+                session_id=session.id,
+                role="assistant",
+                content=f"[Gagal membaca dokumen: {error_str[:200]}]",
                 content_type="text",
                 metadata={"error": error_str[:300]},
             )

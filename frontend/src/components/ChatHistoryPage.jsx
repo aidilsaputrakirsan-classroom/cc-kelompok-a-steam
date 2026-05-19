@@ -34,6 +34,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
   const [loadingSessions, setLoadingSessions] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [sending, setSending] = useState(false)
+  const hasRestoredSession = useRef(false)
 
   // New session modal
   const [showNewModal, setShowNewModal] = useState(false)
@@ -41,11 +42,15 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
   const [newTitle, setNewTitle] = useState("")
   const [newMessage, setNewMessage] = useState("")
   const [newModel, setNewModel] = useState(MODELS[0].id)
+  const [newImageBase64, setNewImageBase64] = useState(null)
+  const [newImageFile, setNewImageFile] = useState(null)
   const [creatingSession, setCreatingSession] = useState(false)
 
   // Continue input
   const [continueMsg, setContinueMsg] = useState("")
   const [continueModel, setContinueModel] = useState(MODELS[0].id)
+  const [continueImageBase64, setContinueImageBase64] = useState(null)
+  const [continueImageFile, setContinueImageFile] = useState(null)
 
   // Markdown mode state
   const [inputMode, setInputMode] = useState("plain")       // "plain" | "markdown"
@@ -62,6 +67,38 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
 
   const messagesEndRef = useRef(null)
 
+  // Helper untuk membaca file ke base64
+  const handleFileSelect = (e, setBase64, setFileObj) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const isImage = file.type.startsWith('image/')
+    const isPdf = file.type === 'application/pdf'
+
+    if (!isImage && !isPdf) {
+      showToast("Hanya format gambar dan PDF yang didukung.", "error")
+      e.target.value = null
+      return
+    }
+
+    if (isImage && file.size > 2 * 1024 * 1024) {
+      showToast("Ukuran gambar maksimal 2MB.", "error")
+      e.target.value = null
+      return
+    }
+
+    if (isPdf && file.size > 5 * 1024 * 1024) {
+      showToast("Ukuran dokumen PDF maksimal 5MB.", "error")
+      e.target.value = null
+      return
+    }
+
+    setFileObj(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setBase64(ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
   // ── Load session list ──
   const loadSessions = async () => {
     setLoadingSessions(true)
@@ -76,6 +113,40 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
   }
 
   useEffect(() => { loadSessions() }, [])
+
+  // ── Disable body scroll when modal is open ──
+  useEffect(() => {
+    if (showNewModal) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showNewModal])
+
+  // ── Save active session to localStorage ──
+  useEffect(() => {
+    if (activeSession) {
+      localStorage.setItem("inti_active_session_id", activeSession.id)
+    } else {
+      localStorage.removeItem("inti_active_session_id")
+    }
+  }, [activeSession])
+
+  // ── Restore active session after sessions list loaded (only once) ──
+  useEffect(() => {
+    if (hasRestoredSession.current || sessions.length === 0) return
+    hasRestoredSession.current = true
+    const savedId = localStorage.getItem("inti_active_session_id")
+    if (!savedId) return
+    if (sessions.some(s => s.id.toString() === savedId)) {
+      openSession(Number(savedId))
+    } else {
+      localStorage.removeItem("inti_active_session_id")
+    }
+  }, [sessions])
 
   // ── Auto-scroll to bottom on new messages ──
   useEffect(() => {
@@ -98,22 +169,28 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
 
   // ── Create new session ──
   const handleCreateSession = async () => {
-    if (!newMessage.trim()) {
+    if (newType !== "ocr" && !newMessage.trim()) {
       showToast("Pesan pertama tidak boleh kosong.", "error")
+      return
+    }
+    if (newType === "ocr" && !newImageBase64) {
+      showToast("Harap pilih gambar untuk di-scan.", "error")
       return
     }
     setCreatingSession(true)
     try {
       const payload = {
-        title: newTitle.trim() || (newType === "image" ? "Sesi Gambar Baru" : "Sesi Rangkum Baru"),
+        title: newTitle.trim() || (newType === "image" ? "Sesi Gambar Baru" : newType === "ocr" ? "Sesi OCR Dokumen" : "Sesi Rangkum Baru"),
         session_type: newType,
-        first_message: newMessage.trim(),
-        ...(newType === "image" ? { model: newModel } : { source_type: "text" }),
+        first_message: newMessage.trim() || (newType === "ocr" ? "Tolong ekstrak teks dokumen ini." : ""),
+        ...(newType === "image" ? { model: newModel } : newType === "ocr" ? { image_data: newImageBase64 } : { source_type: "text" }),
       }
       const created = await createChatSession(payload)
       setShowNewModal(false)
       setNewTitle("")
       setNewMessage("")
+      setNewImageBase64(null)
+      setNewImageFile(null)
       await loadSessions()
       setActiveSession(created)
       showToast("Sesi baru berhasil dibuat! ✨", "success")
@@ -126,17 +203,26 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
 
   // ── Continue session ──
   const handleContinue = async () => {
-    if (!continueMsg.trim() || !activeSession) return
+    const isOcr = activeSession?.session_type === "ocr"
+    if (!activeSession) return
+    if (!isOcr && !continueMsg.trim()) return
+    if (isOcr && !continueImageBase64) {
+      showToast("Harap upload gambar dokumen terlebih dahulu.", "error")
+      return
+    }
+    
     setSending(true)
     try {
       const payload = {
-        message: continueMsg.trim(),
-        ...(activeSession.session_type === "image" ? { model: continueModel } : { source_type: "text" }),
+        message: continueMsg.trim() || (isOcr ? "Tolong ekstrak teks dokumen ini." : ""),
+        ...(activeSession.session_type === "image" ? { model: continueModel } : activeSession.session_type === "ocr" ? { image_data: continueImageBase64 } : { source_type: "text" }),
       }
       const updated = await continueChatSession(activeSession.id, payload)
       setActiveSession(updated)
       setContinueMsg("")
-      showToast("Pesan terkirim!", "success")
+      setContinueImageBase64(null)
+      setContinueImageFile(null)
+      showToast("Berhasil diproses!", "success")
     } catch (err) {
       showToast("Gagal mengirim: " + err.message, "error")
     } finally {
@@ -230,7 +316,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                   onClick={() => openSession(session.id)}
                 >
                   <div style={s.sessionIcon}>
-                    {session.session_type === "image" ? "🖼️" : "📝"}
+                    {session.session_type === "image" ? "🖼️" : session.session_type === "ocr" ? "📄" : "📝"}
                   </div>
                   <div style={s.sessionInfo}>
                     {renamingId === session.id ? (
@@ -248,7 +334,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                     )}
                     <div style={s.sessionMeta}>
                       <span style={s.sessionType}>
-                        {session.session_type === "image" ? "Image" : "Summarize"}
+                        {session.session_type === "image" ? "Image" : session.session_type === "ocr" ? "OCR" : "Summarize"}
                       </span>
                       <span style={s.sessionCount}>{session.message_count} pesan</span>
                       <span style={s.sessionDate}>{formatDate(session.updated_at)}</span>
@@ -294,7 +380,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
               <div style={s.chatHeader}>
                 <div>
                   <p style={s.chatHeaderLabel}>
-                    {activeSession.session_type === "image" ? "🖼️ Image Generation" : "📝 Text Summarize"}
+                    {activeSession.session_type === "image" ? "🖼️ Image Generation" : activeSession.session_type === "ocr" ? "📄 Document OCR" : "📝 Text Summarize"}
                   </p>
                   <h3 style={s.chatHeaderTitle}>{activeSession.title}</h3>
                 </div>
@@ -319,19 +405,21 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                             alt="Generated"
                             style={s.msgImage}
                           />
-                          <div style={s.imgActions}>
-                            <button
-                              style={s.btnDownload}
-                              onClick={() => {
-                                const a = document.createElement("a")
-                                a.href = `data:image/png;base64,${msg.content}`
-                                a.download = `inti-rupa-${msg.id}.png`
-                                a.click()
-                              }}
-                            >⬇️ Download</button>
-                          </div>
+                          {msg.role !== "user" && (
+                            <div style={s.imgActions}>
+                              <button
+                                style={s.btnDownload}
+                                onClick={() => {
+                                  const a = document.createElement("a")
+                                  a.href = `data:image/png;base64,${msg.content}`
+                                  a.download = `inti-rupa-${msg.id}.png`
+                                  a.click()
+                                }}
+                              >⬇️ Download</button>
+                            </div>
+                          )}
                         </div>
-                      ) : msg.role === "assistant" && activeSession.session_type === "summarize" ? (
+                      ) : msg.role === "assistant" && (activeSession.session_type === "summarize" || activeSession.session_type === "ocr") ? (
                         <div className="markdown-body" style={s.markdownBody}>
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                         </div>
@@ -424,19 +512,37 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                       placeholder={
                         activeSession.session_type === "image"
                           ? "Tulis prompt gambar baru..."
-                          : inputMode === "markdown"
-                            ? "# Judul\n\n## Bagian\n\n- poin satu\n- poin dua"
-                            : "Masukkan teks baru yang ingin dirangkum..."
+                          : activeSession.session_type === "ocr"
+                            ? "Instruksi tambahan untuk dokumen ini..."
+                            : inputMode === "markdown"
+                              ? "# Judul\n\n## Bagian\n\n- poin satu\n- poin dua"
+                              : "Masukkan teks baru yang ingin dirangkum..."
                       }
                       style={s.inputTextarea}
                       rows={2}
                       disabled={sending}
                     />
                   )}
+
+                  {activeSession.session_type === "ocr" && (
+                    <div style={{ flexShrink: 0 }}>
+                      <input 
+                        type="file" 
+                        id="chatOcrUpload" 
+                        accept="image/*,application/pdf" 
+                        style={{ display: "none" }}
+                        onChange={e => handleFileSelect(e, setContinueImageBase64, setContinueImageFile)} 
+                      />
+                      <label htmlFor="chatOcrUpload" style={s.btnUpload}>
+                        {continueImageFile ? "📄 " + continueImageFile.name.slice(0, 10) + "..." : "📎 Pilih File"}
+                      </label>
+                    </div>
+                  )}
+
                   <button
-                    style={{ ...s.btnSend, ...(sending || !continueMsg.trim() ? s.btnDisabled : {}) }}
+                    style={{ ...s.btnSend, ...(sending || (!continueMsg.trim() && activeSession.session_type !== "ocr") || (activeSession.session_type === "ocr" && !continueImageBase64) ? s.btnDisabled : {}) }}
                     onClick={handleContinue}
-                    disabled={sending || !continueMsg.trim()}
+                    disabled={sending || (!continueMsg.trim() && activeSession.session_type !== "ocr") || (activeSession.session_type === "ocr" && !continueImageBase64)}
                   >
                     {sending ? <Spinner size={18} color="#111" /> : "Kirim ↑"}
                   </button>
@@ -465,6 +571,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
               {[
                 { val: "image", icon: "🖼️", label: "Image Generator", desc: "Generate gambar dari teks prompt" },
                 { val: "summarize", icon: "📝", label: "Text Summarizer", desc: "Rangkum teks panjang jadi ringkasan" },
+                { val: "ocr", icon: "📄", label: "Document OCR", desc: "Ekstrak teks dari foto dokumen" },
               ].map(t => (
                 <button
                   key={t.val}
@@ -507,7 +614,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
             <div style={s.modalField}>
               <div style={s.modalFieldHeader}>
                 <label style={s.modalFieldLabel}>
-                  {newType === "image" ? "Prompt Gambar Pertama" : "Teks yang Ingin Dirangkum"}
+                  {newType === "image" ? "Prompt Gambar Pertama" : newType === "ocr" ? "Instruksi Ekstrak (Opsional)" : "Teks yang Ingin Dirangkum"}
                 </label>
                 {newType === "summarize" && (
                   <div style={s.modeToggleRow}>
@@ -554,9 +661,11 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                   placeholder={
                     newType === "image"
                       ? "Contoh: a futuristic city at night, neon lights, cyberpunk style"
-                      : newMsgInputMode === "markdown"
-                        ? "# Judul Artikel\n\n## Bagian Utama\n\n- poin satu\n- poin dua\n\nIsi teks panjang di sini..."
-                        : "Tempel teks panjang yang ingin dirangkum di sini..."
+                      : newType === "ocr"
+                        ? "Contoh: Hanya ekstrak nama dan total harga saja (kosongkan jika ingin mengekstrak semua teks)"
+                        : newMsgInputMode === "markdown"
+                          ? "# Judul Artikel\n\n## Bagian Utama\n\n- poin satu\n- poin dua\n\nIsi teks panjang di sini..."
+                          : "Tempel teks panjang yang ingin dirangkum di sini..."
                   }
                   style={{ ...s.modalInput, minHeight: "110px", resize: "vertical", fontFamily: newMsgInputMode === "markdown" ? "monospace" : "inherit" }}
                   rows={5}
@@ -564,6 +673,19 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                 />
               )}
             </div>
+
+            {newType === "ocr" && (
+              <div style={s.modalField}>
+                <label style={s.modalFieldLabel}>Upload Dokumen/Gambar (Maks. 5MB PDF, 2MB Gambar)</label>
+                <input 
+                  type="file" 
+                  accept="image/*,application/pdf" 
+                  style={{...s.modalInput, padding: "0.5rem"}}
+                  onChange={e => handleFileSelect(e, setNewImageBase64, setNewImageFile)}
+                  disabled={creatingSession}
+                />
+              </div>
+            )}
 
             <div style={s.modalActions}>
               <button
@@ -692,12 +814,12 @@ const s = {
 
   // Modal
   modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", display: "grid", placeItems: "center", zIndex: 999, padding: "1rem" },
-  modal: { width: "100%", maxWidth: "520px", borderRadius: "28px", background: "rgba(31, 41, 77, 0.98)", border: "1px solid rgba(255, 156, 60, 0.18)", boxShadow: "0 40px 100px rgba(0,0,0,0.5)", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.25rem" },
+  modal: { width: "100%", maxWidth: "520px", maxHeight: "90vh", overflowY: "auto", borderRadius: "28px", background: "rgba(31, 41, 77, 0.98)", border: "1px solid rgba(255, 156, 60, 0.18)", boxShadow: "0 40px 100px rgba(0,0,0,0.5)", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.25rem" },
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
   modalLabel: { margin: 0, color: "#f2c29b", fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 },
   modalTitle: { margin: "0.3rem 0 0", fontSize: "1.3rem", color: "#fff8f0", fontWeight: 800 },
   btnClose: { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", width: "36px", height: "36px", cursor: "pointer", color: "#edf2ff", fontWeight: 700, display: "grid", placeItems: "center" },
-  typeGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" },
+  typeGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem" },
   typeCard: { padding: "1rem", borderRadius: "18px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#f2ede8", textAlign: "left", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.35rem" },
   typeCardActive: { background: "linear-gradient(135deg, rgba(255,156,60,0.16), rgba(255,255,255,0.08))", borderColor: "rgba(255,156,60,0.32)", boxShadow: "0 8px 24px rgba(255,141,61,0.12)" },
   typeIcon: { fontSize: "1.5rem" },
@@ -710,4 +832,5 @@ const s = {
   btnCreate: { flex: 1, minHeight: "50px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#111827", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" },
   btnCancelModal: { minHeight: "50px", borderRadius: "18px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.08)", color: "#f7ece1", padding: "0 1.4rem", cursor: "pointer", fontWeight: 700 },
   btnDownload: { borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#111827", padding: "0.6rem 1rem", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem" },
+  btnUpload: { cursor: "pointer", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "18px", padding: "0 1rem", color: "#f3e7d7", fontSize: "0.85rem", display: "grid", placeItems: "center", minHeight: "52px", fontWeight: 600, whiteSpace: "nowrap" }
 }
