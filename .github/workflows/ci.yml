@@ -134,7 +134,7 @@ jobs:
           node-version: "22"
 
       - name: 🚂 Install Railway CLI
-        run: npm install -g @railway/cli@4.5.2
+        run: npm install -g @railway/cli@3.22.0
 
       - name: 🚀 Deploy Backend
         env:
