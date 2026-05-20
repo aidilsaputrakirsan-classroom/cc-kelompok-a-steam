@@ -134,25 +134,31 @@ jobs:
           node-version: "22"
 
       - name: 🚂 Install Railway CLI
-        run: npm install -g @railway/cli@3
+        run: npm install -g @railway/cli@3.8.7
 
       - name: 🚀 Deploy Backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Set these repository/environment variables from the Railway dashboard.
+          # Use the target Railway Project ID and Environment ID for this deployment.
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
           cd backend
-          railway up --token "$RAILWAY_TOKEN" --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service backend --detach
+          railway link --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service backend
+          railway up --service backend --detach
 
       - name: 🚀 Deploy Frontend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Set these repository/environment variables from the Railway dashboard.
+          # Use the same target Railway Project ID and Environment ID used by the backend deploy.
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
           cd frontend
-          railway up --token "$RAILWAY_TOKEN" --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service cc-kelompok-a-steam --detach
+          railway link --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service cc-kelompok-a-steam
+          railway up --service cc-kelompok-a-steam --detach
 
       - name: 🩺 Automated Health Check
         run: |
