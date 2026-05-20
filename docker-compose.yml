@@ -1,84 +1,122 @@
-# ============================================================
-# Docker Compose — Inti Rupa Cloud App
-# Komputasi Awan — SI ITK
-# ============================================================
-# Usage:
-#   docker compose up -d          # Start semua services
-#   docker compose down            # Stop & remove
-#   docker compose logs -f         # Lihat logs
-#   docker compose ps              # Status services
-# ============================================================
+# ==============================================
+# Docker Compose — Microservices Architecture
+# Inti Rupa Cloud App
+# ==============================================
 
 services:
-  # ==================== DATABASE ====================
-  db:
+  # ================================
+  # DATABASES (Database per Service)
+  # ================================
+  auth-db:
     image: postgres:16-alpine
-    container_name: intirupa-db
-    restart: unless-stopped
+    container_name: intirupa-auth-db
     environment:
+      POSTGRES_DB: auth_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: intirupa
     ports:
       - "5433:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - auth_db_data:/var/lib/postgresql/data
     networks:
       - intirupa
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d intirupa"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
+      interval: 5s
+      timeout: 3s
       retries: 5
-      start_period: 10s
 
-  # ==================== BACKEND ====================
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    image: intirupa-backend
-    container_name: intirupa-backend
-    restart: unless-stopped
-    env_file:
-      - ./backend/.env.docker
+  ai-db:
+    image: postgres:16-alpine
+    container_name: intirupa-ai-db
+    environment:
+      POSTGRES_DB: ai_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "8000:8000"
+      - "5435:5432"
+    volumes:
+      - ai_db_data:/var/lib/postgresql/data
     networks:
       - intirupa
-    depends_on:
-      db:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
-  # ==================== FRONTEND ====================
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: http://localhost:8000
-    image: intirupa-frontend
-    container_name: intirupa-frontend
-    restart: unless-stopped
-    ports:
-      - "3000:80"
+  # ================================
+  # BACKEND SERVICES
+  # ================================
+  auth-service:
+    build: ./services/auth-service
+    container_name: intirupa-auth-service
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@auth-db:5432/auth_db
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      CORS_ORIGINS: "http://localhost,http://localhost:5173"
+    depends_on:
+      auth-db:
+        condition: service_healthy
     networks:
       - intirupa
+    restart: unless-stopped
+
+  ai-service:
+    build: ./services/ai-service
+    container_name: intirupa-ai-service
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@ai-db:5432/ai_db
+      AUTH_SERVICE_URL: http://auth-service:8001
+      CORS_ORIGINS: "http://localhost,http://localhost:5173"
     depends_on:
-      - backend
+      ai-db:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    networks:
+      - intirupa
+    restart: unless-stopped
 
-# ==================== VOLUMES ====================
+  # ================================
+  # FRONTEND
+  # ================================
+  frontend:
+    build: 
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost
+    container_name: intirupa-frontend
+    environment:
+      VITE_API_URL: http://localhost
+    networks:
+      - intirupa
+    restart: unless-stopped
+
+  # ================================
+  # API GATEWAY
+  # ================================
+  gateway:
+    image: nginx:alpine
+    container_name: intirupa-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./services/gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - auth-service
+      - ai-service
+      - frontend
+    networks:
+      - intirupa
+    restart: unless-stopped
+
 volumes:
-  pgdata:
-    name: intirupa
+  auth_db_data:
+  ai_db_data:
 
-# ==================== NETWORKS ====================
 networks:
   intirupa:
     name: intirupa
