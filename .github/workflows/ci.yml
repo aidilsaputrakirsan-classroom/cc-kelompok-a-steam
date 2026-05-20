@@ -143,7 +143,8 @@ jobs:
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
           cd backend
-          railway link --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service backend
+          # In Railway CLI v4, project ID is a positional argument (not --project flag)
+          railway link "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service backend
           railway up --service backend --detach
 
       - name: 🚀 Deploy Frontend
@@ -153,7 +154,8 @@ jobs:
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
           cd frontend
-          railway link --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service cc-kelompok-a-steam
+          # In Railway CLI v4, project ID is a positional argument (not --project flag)
+          railway link "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service cc-kelompok-a-steam
           railway up --service cc-kelompok-a-steam --detach
 
       - name: 🩺 Automated Health Check
