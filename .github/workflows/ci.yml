@@ -140,17 +140,19 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
           cd backend
-          railway up --project "$RAILWAY_PROJECT_ID" --service backend --detach
+          railway up --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service backend --detach
 
       - name: 🚀 Deploy Frontend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
           cd frontend
-          railway up --project "$RAILWAY_PROJECT_ID" --service cc-kelompok-a-steam --detach
+          railway up --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service cc-kelompok-a-steam --detach
 
       - name: 🩺 Automated Health Check
         run: |
