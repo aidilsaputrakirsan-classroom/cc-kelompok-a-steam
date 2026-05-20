@@ -156,7 +156,7 @@ jobs:
           cd frontend
           # Railway CLI v4 reads RAILWAY_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_ENVIRONMENT_ID
           # automatically from env vars — no `railway link` needed
-          railway up --service cc-kelompok-a-steam --detach
+          railway up --service frontend --detach
 
       - name: 🩺 Automated Health Check
         run: |
