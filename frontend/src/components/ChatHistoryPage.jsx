@@ -401,7 +401,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                       {msg.content_type === "image_base64" ? (
                         <div>
                           <img
-                            src={`data:image/png;base64,${msg.content}`}
+                            src={msg.content.startsWith("data:image/") ? msg.content : `data:image/png;base64,${msg.content}`}
                             alt="Generated"
                             style={s.msgImage}
                           />
@@ -411,7 +411,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                                 style={s.btnDownload}
                                 onClick={() => {
                                   const a = document.createElement("a")
-                                  a.href = `data:image/png;base64,${msg.content}`
+                                  a.href = msg.content.startsWith("data:image/") ? msg.content : `data:image/png;base64,${msg.content}`
                                   a.download = `inti-rupa-${msg.id}.png`
                                   a.click()
                                 }}
