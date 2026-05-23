@@ -255,8 +255,9 @@ async def create_chat_session(
         start_time = time.time()
         try:
             import google.generativeai as genai
+            import asyncio
             genai.configure(api_key=gemini_api_key)
-            model_name = "gemini-3.1-flash-lite-preview"
+            model_name = "gemini-3.1-flash-lite"
             model = genai.GenerativeModel(model_name)
             prompt_template = (
                 "Tolong rangkum teks berikut dalam bahasa Indonesia secara ringkas namun informatif.\n"
@@ -268,7 +269,7 @@ async def create_chat_session(
                 "Teks yang dirangkum:\n"
             )
             prompt = prompt_template + request.first_message
-            response = await model.generate_content_async(prompt)
+            response = await asyncio.to_thread(model.generate_content, prompt)
             summary_text = response.text
             processing_time = round(time.time() - start_time, 2)
 
@@ -305,8 +306,9 @@ async def create_chat_session(
         start_time = time.time()
         try:
             import google.generativeai as genai
+            import asyncio
             genai.configure(api_key=gemini_api_key)
-            model_name = "gemini-3.1-flash-lite-preview"
+            model_name = "gemini-3.1-flash-lite"
             model = genai.GenerativeModel(model_name)
             
             # Ekstrak tipe MIME dan data base64 murni
@@ -348,7 +350,7 @@ async def create_chat_session(
             if prompt == "" or len(prompt) < 3:
                 prompt = "Tolong ekstrak semua teks yang ada di dalam gambar ini secara presisi dan rapi."
 
-            response = await model.generate_content_async([prompt, image_part])
+            response = await asyncio.to_thread(model.generate_content, [prompt, image_part])
             ocr_text = response.text
             processing_time = round(time.time() - start_time, 2)
 
@@ -500,8 +502,9 @@ async def continue_chat_session(
         start_time = time.time()
         try:
             import google.generativeai as genai
+            import asyncio
             genai.configure(api_key=gemini_api_key)
-            model_name = "gemini-3.1-flash-lite-preview"
+            model_name = "gemini-3.1-flash-lite"
             model = genai.GenerativeModel(model_name)
             prompt_template = (
                 "Tolong rangkum teks berikut dalam bahasa Indonesia secara ringkas namun informatif.\n"
@@ -513,7 +516,7 @@ async def continue_chat_session(
                 "Teks yang dirangkum:\n"
             )
             prompt = prompt_template + request.message
-            response = await model.generate_content_async(prompt)
+            response = await asyncio.to_thread(model.generate_content, prompt)
             summary_text = response.text
             processing_time = round(time.time() - start_time, 2)
 
@@ -550,8 +553,9 @@ async def continue_chat_session(
         start_time = time.time()
         try:
             import google.generativeai as genai
+            import asyncio
             genai.configure(api_key=gemini_api_key)
-            model_name = "gemini-3.1-flash-lite-preview"
+            model_name = "gemini-3.1-flash-lite"
             model = genai.GenerativeModel(model_name)
             
             # Ekstrak tipe MIME dan data base64 murni
@@ -592,7 +596,7 @@ async def continue_chat_session(
             if prompt == "" or len(prompt) < 3:
                 prompt = "Tolong ekstrak semua teks yang ada di dalam dokumen ini."
 
-            response = await model.generate_content_async([prompt, image_part])
+            response = await asyncio.to_thread(model.generate_content, [prompt, image_part])
             ocr_text = response.text
             processing_time = round(time.time() - start_time, 2)
 
