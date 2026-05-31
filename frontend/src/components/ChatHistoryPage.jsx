@@ -562,7 +562,11 @@ export default function ChatHistoryPage({ showToast }) {
                 <p style={s.modalLabel}>Buat Sesi Baru di Inti Studio</p>
                 <h3 style={s.modalTitle}>Pilih jenis aktivitas & mulai</h3>
               </div>
-              <button style={s.btnClose} onClick={() => setShowNewModal(false)} disabled={creatingSession}>✕</button>
+              <button style={s.btnClose} onClick={() => setShowNewModal(false)} disabled={creatingSession}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 13L13 1M1 1L13 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
             </div>
 
             {/* Type selector */}
@@ -817,7 +821,7 @@ const s = {
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
   modalLabel: { margin: 0, color: "#f2c29b", fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 },
   modalTitle: { margin: "0.3rem 0 0", fontSize: "1.3rem", color: "#fff8f0", fontWeight: 800 },
-  btnClose: { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", width: "36px", height: "36px", cursor: "pointer", color: "#edf2ff", fontWeight: 700, display: "grid", placeItems: "center" },
+  btnClose: { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", width: "36px", height: "36px", cursor: "pointer", color: "#edf2ff", fontWeight: 700, display: "grid", placeItems: "center", padding: 0 },
   typeGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem" },
   typeCard: { padding: "1rem", borderRadius: "18px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#f2ede8", textAlign: "left", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.35rem" },
   typeCardActive: { background: "linear-gradient(135deg, rgba(255,156,60,0.16), rgba(255,255,255,0.08))", borderColor: "rgba(255,156,60,0.32)", boxShadow: "0 8px 24px rgba(255,141,61,0.12)" },
