@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 function SearchBar({ onSearch }) {
   const [query, setQuery] = useState("")
@@ -13,10 +13,6 @@ function SearchBar({ onSearch }) {
     onSearch("")
   }
 
-  const sortByName = () => {
-    const sorted= [...items].sort((a, b) => a.name.localeCompare(b.name));
-    setItems(sorted);
-  }
 
   return (
     <form onSubmit={handleSubmit} style={styles.form}>

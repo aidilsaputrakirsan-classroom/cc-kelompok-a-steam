@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import Spinner from "./Spinner"
@@ -28,7 +28,7 @@ function formatTime(iso) {
   return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
 }
 
-export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
+export default function ChatHistoryPage({ showToast }) {
   const [sessions, setSessions] = useState([])
   const [activeSession, setActiveSession] = useState(null)
   const [loadingSessions, setLoadingSessions] = useState(true)
@@ -43,7 +43,6 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
   const [newMessage, setNewMessage] = useState("")
   const [newModel, setNewModel] = useState(MODELS[0].id)
   const [newImageBase64, setNewImageBase64] = useState(null)
-  const [newImageFile, setNewImageFile] = useState(null)
   const [creatingSession, setCreatingSession] = useState(false)
 
   // Continue input
@@ -68,7 +67,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
   const messagesEndRef = useRef(null)
 
   // Helper untuk membaca file ke base64
-  const handleFileSelect = (e, setBase64, setFileObj) => {
+  const handleFileSelect = (e, setBase64) => {
     const file = e.target.files[0]
     if (!file) return
 
@@ -93,14 +92,13 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
       return
     }
 
-    setFileObj(file)
     const reader = new FileReader()
     reader.onload = (ev) => setBase64(ev.target.result)
     reader.readAsDataURL(file)
   }
 
   // ── Load session list ──
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     setLoadingSessions(true)
     try {
       const data = await getChatSessions()
@@ -110,9 +108,9 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
     } finally {
       setLoadingSessions(false)
     }
-  }
+  }, [showToast])
 
-  useEffect(() => { loadSessions() }, [])
+  useEffect(() => { loadSessions() }, [loadSessions])
 
   // ── Disable body scroll when modal is open ──
   useEffect(() => {
@@ -135,6 +133,27 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
     }
   }, [activeSession])
 
+
+
+  // ── Auto-scroll to bottom on new messages ──
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [activeSession?.messages])
+
+  // ── Open a session ──
+  const openSession = useCallback(async (id) => {
+    setLoadingDetail(true)
+    try {
+      const data = await getChatSessionById(id)
+      setActiveSession(data)
+      setContinueMsg("")
+    } catch {
+      showToast("Gagal memuat sesi.", "error")
+    } finally {
+      setLoadingDetail(false)
+    }
+  }, [showToast])
+
   // ── Restore active session after sessions list loaded (only once) ──
   useEffect(() => {
     if (hasRestoredSession.current || sessions.length === 0) return
@@ -146,26 +165,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
     } else {
       localStorage.removeItem("inti_active_session_id")
     }
-  }, [sessions])
-
-  // ── Auto-scroll to bottom on new messages ──
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [activeSession?.messages])
-
-  // ── Open a session ──
-  const openSession = async (id) => {
-    setLoadingDetail(true)
-    try {
-      const data = await getChatSessionById(id)
-      setActiveSession(data)
-      setContinueMsg("")
-    } catch {
-      showToast("Gagal memuat sesi.", "error")
-    } finally {
-      setLoadingDetail(false)
-    }
-  }
+  }, [sessions, openSession])
 
   // ── Create new session ──
   const handleCreateSession = async () => {
@@ -190,7 +190,6 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
       setNewTitle("")
       setNewMessage("")
       setNewImageBase64(null)
-      setNewImageFile(null)
       await loadSessions()
       setActiveSession(created)
       showToast("Sesi baru berhasil dibuat! ✨", "success")
@@ -681,7 +680,7 @@ export default function ChatHistoryPage({ showToast, activeTab, onSelectTab }) {
                   type="file" 
                   accept="image/*,application/pdf" 
                   style={{...s.modalInput, padding: "0.5rem"}}
-                  onChange={e => handleFileSelect(e, setNewImageBase64, setNewImageFile)}
+                  onChange={e => handleFileSelect(e, setNewImageBase64)}
                   disabled={creatingSession}
                 />
               </div>

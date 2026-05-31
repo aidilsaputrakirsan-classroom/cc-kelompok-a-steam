@@ -10,14 +10,10 @@ import AboutUs from "./components/AboutUs"
 import { useToast } from "./hooks/useToast"
 import {
   fetchItems,
-  createItem,
-  updateItem,
-  deleteItem,
   checkHealth,
   login,
   register,
   getMe,
-  setToken,
   clearToken,
   getToken,
 } from "./services/api"
@@ -42,33 +38,27 @@ function App() {
     localStorage.setItem("inti_active_tab", activeTab)
   }, [activeTab])
 
-  const [items, setItems] = useState([])
-  const [totalItems, setTotalItems] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [isConnected, setIsConnected] = useState(false)
-  const [editingItem, setEditingItem] = useState(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [deletingItems, setDeletingItems] = useState(new Set())
+
+
+  // ==================== AUTH HANDLERS ====================
+  const handleLogout = useCallback(() => {
+    setShowLogoutModal(true)
+  }, [])
 
   // ==================== LOAD DATA ====================
   const loadItems = useCallback(async (search = "") => {
-    setLoading(true)
     try {
-      const data = await fetchItems(search)
-      setItems(data.items)
-      setTotalItems(data.total)
+      await fetchItems(search)
     } catch (err) {
       if (err.message === "UNAUTHORIZED") {
         handleLogout()
       }
       console.error("Error loading items:", err)
-    } finally {
-      setLoading(false)
     }
-  }, [])
+  }, [handleLogout])
 
   useEffect(() => {
-    checkHealth().then(setIsConnected)
+    checkHealth().catch(() => {})
   }, [])
 
   // Restore session dari localStorage saat app pertama load
@@ -84,10 +74,11 @@ function App() {
           clearToken() // Token expired atau invalid
         })
     }
-  }, [])
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (isAuthenticated) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadItems()
     }
   }, [isAuthenticated, loadItems])
@@ -130,68 +121,16 @@ function App() {
     }
   }
 
-  const handleLogout = () => {
-    setShowLogoutModal(true)
-  }
+
 
   const performLogout = () => {
     setShowLogoutModal(false)
     clearToken()
     setUser(null)
     setIsAuthenticated(false)
-    setItems([])
-    setTotalItems(0)
-    setEditingItem(null)
-    setSearchQuery("")
   }
 
-  // ==================== ITEM HANDLERS ====================
-  const handleSubmit = async (itemData, editId) => {
-    try {
-      if (editId) {
-        await updateItem(editId, itemData)
-        showToast("Item berhasil diperbarui!", "success")
-        setEditingItem(null)
-      } else {
-        await createItem(itemData)
-        showToast("Item berhasil ditambahkan!", "success")
-      }
-      loadItems(searchQuery)
-    } catch (err) {
-      if (err.message === "UNAUTHORIZED") handleLogout()
-      else showToast("Gagal menyimpan item: " + err.message, "error")
-    }
-  }
 
-  const handleEdit = (item) => {
-    setEditingItem(item)
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
-
-  const handleDelete = async (id) => {
-    const item = items.find((i) => i.id === id)
-    if (!window.confirm(`Yakin ingin menghapus "${item?.name}"?`)) return
-    setDeletingItems((prev) => new Set(prev).add(id))
-    try {
-      await deleteItem(id)
-      showToast("Item berhasil dihapus!", "success")
-      loadItems(searchQuery)
-    } catch (err) {
-      if (err.message === "UNAUTHORIZED") handleLogout()
-      else showToast("Gagal menghapus: " + err.message, "error")
-    } finally {
-      setDeletingItems((prev) => {
-        const newSet = new Set(prev)
-        newSet.delete(id)
-        return newSet
-      })
-    }
-  }
-
-  const handleSearch = (query) => {
-    setSearchQuery(query)
-    loadItems(query)
-  }
 
   // ==================== RENDER ====================
   if (!isAuthenticated) {
@@ -208,8 +147,6 @@ function App() {
     <div style={styles.app}>
       <div style={styles.container}>
         <Header
-          totalItems={totalItems}
-          isConnected={isConnected}
           user={user}
           onLogout={handleLogout}
         />

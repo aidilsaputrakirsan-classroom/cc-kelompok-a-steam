@@ -19,6 +19,17 @@ describe('ChatHistoryPage Component', () => {
   // Reset mock sebelum setiap pengujian agar tidak saling bertabrakan
   beforeEach(() => {
     vi.resetAllMocks()
+    
+    const localStorageMock = (() => {
+      let store = {};
+      return {
+        getItem(key) { return store[key] || null; },
+        setItem(key, value) { store[key] = value.toString(); },
+        removeItem(key) { delete store[key]; },
+        clear() { store = {}; }
+      };
+    })();
+    Object.defineProperty(window, 'localStorage', { value: localStorageMock });
   })
 
   it('menampilkan status kosong jika user belum pernah membuat sesi chat', async () => {

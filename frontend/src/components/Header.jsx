@@ -1,4 +1,4 @@
-function Header({ totalItems, isConnected, user, onLogout }) {
+function Header({ user, onLogout }) {
   return (
     <header style={styles.header}>
       <div style={styles.left}>
