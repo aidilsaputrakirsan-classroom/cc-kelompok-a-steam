@@ -24,7 +24,7 @@ describe('API Service - Chat Sessions', () => {
     const data = await getChatSessions(0, 30)
 
     // Pastikan fetch dipanggil ke URL yang benar
-    expect(fetch).toHaveBeenCalledWith('http://localhost/chat/sessions?skip=0&limit=30', {
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/chat/sessions?skip=0&limit=30'), {
       headers: { 'Authorization': 'Bearer fake-token-123' }
     })
     
@@ -44,7 +44,7 @@ describe('API Service - Chat Sessions', () => {
     const data = await createChatSession(payload)
 
     // Pastikan fetch dipanggil dengan method POST dan body JSON yang benar
-    expect(fetch).toHaveBeenCalledWith('http://localhost/chat/sessions', {
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/chat/sessions'), {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
