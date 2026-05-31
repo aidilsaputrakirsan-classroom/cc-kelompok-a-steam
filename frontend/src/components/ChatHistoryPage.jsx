@@ -35,6 +35,8 @@ export default function ChatHistoryPage({ showToast }) {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [sending, setSending] = useState(false)
   const hasRestoredSession = useRef(false)
+  const abortControllerRef = useRef(null)
+  const [optimisticMsg, setOptimisticMsg] = useState(null)
 
   // New session modal
   const [showNewModal, setShowNewModal] = useState(false)
@@ -210,22 +212,55 @@ export default function ChatHistoryPage({ showToast }) {
       return
     }
     
+    const originalMsg = continueMsg.trim()
+    const currentBase64 = continueImageBase64
+    const isImage = activeSession?.session_type === "image"
+
+    setOptimisticMsg({
+      id: "optimistic-" + Date.now(),
+      role: "user",
+      content: isOcr && !originalMsg ? "Tolong ekstrak teks dokumen ini." : (isOcr ? originalMsg : originalMsg),
+      content_type: isOcr ? "image_base64" : "text",
+      created_at: new Date().toISOString()
+    })
+
+    abortControllerRef.current = new AbortController()
     setSending(true)
+    setContinueMsg("")
+    setContinueImageBase64(null)
+    setContinueImageFile(null)
+
     try {
       const payload = {
-        message: continueMsg.trim() || (isOcr ? "Tolong ekstrak teks dokumen ini." : ""),
-        ...(activeSession.session_type === "image" ? { model: continueModel } : activeSession.session_type === "ocr" ? { image_data: continueImageBase64 } : { source_type: "text" }),
+        message: originalMsg || (isOcr ? "Tolong ekstrak teks dokumen ini." : ""),
+        ...(activeSession.session_type === "image" ? { model: continueModel } : activeSession.session_type === "ocr" ? { image_data: currentBase64 } : { source_type: "text" }),
       }
-      const updated = await continueChatSession(activeSession.id, payload)
+      const updated = await continueChatSession(activeSession.id, payload, { signal: abortControllerRef.current.signal })
       setActiveSession(updated)
-      setContinueMsg("")
-      setContinueImageBase64(null)
-      setContinueImageFile(null)
+      setOptimisticMsg(null)
       showToast("Berhasil diproses!", "success")
     } catch (err) {
-      showToast("Gagal mengirim: " + err.message, "error")
+      if (err.name === 'AbortError') {
+        showToast("Proses dibatalkan.", "error")
+        setContinueMsg(originalMsg)
+        if (isOcr) setContinueImageBase64(currentBase64)
+      } else {
+        showToast("Gagal mengirim: " + err.message, "error")
+        setContinueMsg(originalMsg)
+        if (isOcr) setContinueImageBase64(currentBase64)
+      }
+      setOptimisticMsg(null)
     } finally {
       setSending(false)
+      abortControllerRef.current = null
+    }
+  }
+
+  const handleSendOrStop = () => {
+    if (sending) {
+      if (abortControllerRef.current) abortControllerRef.current.abort()
+    } else {
+      handleContinue()
     }
   }
 
@@ -276,6 +311,15 @@ export default function ChatHistoryPage({ showToast }) {
   // ─────────────────────────────────────────────────────────
   return (
     <div style={s.pageWrapper}>
+      <style>{`
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up {
+          animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
       {/* HERO */}
       <div style={s.hero}>
         <div style={s.heroTextBlock}>
@@ -429,15 +473,23 @@ export default function ChatHistoryPage({ showToast }) {
                     </div>
                   </div>
                 ))}
-                {sending && (
-                  <div style={s.msgRow}>
-                    <div style={s.msgAvatar}>🤖</div>
-                    <div style={s.msgBubble}>
-                      <div style={s.typingDots}>
-                        <Spinner size={16} color="#ffb26c" />
-                        <span style={{ marginLeft: "0.5rem", color: "#f0d8b5" }}>AI sedang memproses...</span>
-                      </div>
+                {optimisticMsg && (
+                  <div
+                    key={optimisticMsg.id}
+                    className="animate-slide-up"
+                    style={{ ...s.msgRow, ...s.msgRowUser }}
+                  >
+                    <div style={s.msgAvatarUser}>👤</div>
+                    <div style={{ ...s.msgBubble, ...s.msgBubbleUser }}>
+                      <p style={s.msgText}>{optimisticMsg.content}</p>
+                      <span style={s.msgTime}>{formatTime(optimisticMsg.created_at)}</span>
                     </div>
+                  </div>
+                )}
+                {sending && (
+                  <div className="animate-slide-up" style={{ alignSelf: "flex-end", display: "flex", alignItems: "center", gap: "0.5rem", opacity: 0.8, paddingRight: "3rem", marginTop: "-0.5rem" }}>
+                    <Spinner size={16} color="#ffb26c" />
+                    <span style={{ fontSize: "0.85rem", color: "#f0d8b5", fontStyle: "italic" }}>AI sedang memproses...</span>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
@@ -539,11 +591,15 @@ export default function ChatHistoryPage({ showToast }) {
                   )}
 
                   <button
-                    style={{ ...s.btnSend, ...(sending || (!continueMsg.trim() && activeSession.session_type !== "ocr") || (activeSession.session_type === "ocr" && !continueImageBase64) ? s.btnDisabled : {}) }}
-                    onClick={handleContinue}
-                    disabled={sending || (!continueMsg.trim() && activeSession.session_type !== "ocr") || (activeSession.session_type === "ocr" && !continueImageBase64)}
+                    style={{ ...s.btnSend, ...(sending ? s.btnStop : (!continueMsg.trim() && activeSession.session_type !== "ocr") || (activeSession.session_type === "ocr" && !continueImageBase64) ? s.btnDisabled : {}) }}
+                    onClick={handleSendOrStop}
+                    disabled={!sending && ((!continueMsg.trim() && activeSession.session_type !== "ocr") || (activeSession.session_type === "ocr" && !continueImageBase64))}
                   >
-                    {sending ? <Spinner size={18} color="#111" /> : "Kirim ↑"}
+                    {sending ? (
+                      <>⏹ Batal</>
+                    ) : (
+                      <>Kirim ↑</>
+                    )}
                   </button>
                 </div>
                 <p style={s.inputHint}>Enter untuk kirim · Shift+Enter untuk baris baru</p>
@@ -782,9 +838,10 @@ const s = {
   // Input area
   inputArea: { padding: "1.25rem 1.75rem", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", gap: "0.75rem" },
   modelSelect: { width: "fit-content", padding: "0.6rem 0.9rem", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.07)", color: "#f7ede2", outline: "none", fontSize: "0.85rem" },
-  inputRow: { display: "flex", gap: "0.75rem", alignItems: "flex-end" },
+  inputRow: { display: "flex", gap: "0.75rem", alignItems: "flex-start" },
   inputTextarea: { flex: 1, padding: "0.85rem 1rem", borderRadius: "18px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)", color: "#f8f5ef", outline: "none", resize: "none", fontSize: "0.95rem", lineHeight: 1.6 },
-  btnSend: { minWidth: "90px", minHeight: "52px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#111827", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" },
+  btnSend: { minWidth: "90px", height: "52px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#111827", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" },
+  btnStop: { background: "linear-gradient(135deg, #ef4444, #be123c)", color: "#ffffff", boxShadow: "0 4px 15px rgba(225, 29, 72, 0.3)" },
   btnDisabled: { opacity: 0.55, cursor: "not-allowed" },
   inputHint: { margin: 0, fontSize: "0.75rem", color: "#6b7394" },
 

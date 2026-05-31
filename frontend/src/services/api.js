@@ -170,7 +170,7 @@ export async function getChatSessionById(id) {
   return handleResponse(response)
 }
 
-export async function continueChatSession(id, payload) {
+export async function continueChatSession(id, payload, options = {}) {
   const response = await fetch(`${API_URL}/chat/sessions/${id}/continue`, {
     method: "POST",
     headers: {
@@ -178,6 +178,7 @@ export async function continueChatSession(id, payload) {
       ...authHeaders(),
     },
     body: JSON.stringify(payload),
+    signal: options.signal,
   })
   return handleResponse(response)
 }
