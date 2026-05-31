@@ -9,7 +9,6 @@ import ChatHistoryPage from "./components/ChatHistoryPage"
 import AboutUs from "./components/AboutUs"
 import { useToast } from "./hooks/useToast"
 import {
-  fetchItems,
   checkHealth,
   login,
   register,
@@ -45,17 +44,7 @@ function App() {
     setShowLogoutModal(true)
   }, [])
 
-  // ==================== LOAD DATA ====================
-  const loadItems = useCallback(async (search = "") => {
-    try {
-      await fetchItems(search)
-    } catch (err) {
-      if (err.message === "UNAUTHORIZED") {
-        handleLogout()
-      }
-      console.error("Error loading items:", err)
-    }
-  }, [handleLogout])
+
 
   useEffect(() => {
     checkHealth().catch(() => {})
@@ -76,12 +65,7 @@ function App() {
     }
   }, [isAuthenticated])
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      loadItems()
-    }
-  }, [isAuthenticated, loadItems])
+
 
   // ==================== AUTH HANDLERS ====================
   const handleLogin = async (email, password) => {
@@ -177,8 +161,6 @@ function App() {
         {activeTab === "chat-history" ? (
           <ChatHistoryPage
             showToast={showToast}
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
           />
         ) : (
           <AboutUs />
