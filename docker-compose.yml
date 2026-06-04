@@ -94,6 +94,12 @@ services:
     networks:
       - intirupa
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
   # ================================
   # API GATEWAY
@@ -106,9 +112,12 @@ services:
     volumes:
       - ./services/gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - auth-service
-      - ai-service
-      - frontend
+      auth-service:
+        condition: service_started
+      ai-service:
+        condition: service_started
+      frontend:
+        condition: service_healthy
     networks:
       - intirupa
     restart: unless-stopped
