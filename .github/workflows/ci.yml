@@ -160,12 +160,71 @@ jobs:
           docker images | grep intirupa
 
   # ================================
+  # JOB 3b: Integration Tests
+  # ================================
+  integration-test:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-ai-service, test-frontend]
+    # Hanya jalankan integration test saat push/PR ke main
+    # (membutuhkan secrets agar services bisa start)
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Start all services
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+          SECRET_KEY: ci-test-secret-key
+        run: |
+          # Buat .env sementara agar docker compose bisa start
+          echo "GEMINI_API_KEY=${GEMINI_API_KEY}" > .env
+          echo "HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}" >> .env
+          echo "SECRET_KEY=${SECRET_KEY}" >> .env
+          docker compose up -d --build
+
+      - name: ⏳ Tunggu semua services siap
+        run: |
+          echo "Menunggu services ready..."
+          sleep 20
+          # Retry health check gateway sampai berhasil
+          for i in $(seq 1 10); do
+            if curl --silent --fail http://localhost/health; then
+              echo "✅ Gateway siap!"
+              break
+            fi
+            echo "Attempt $i: Gateway belum siap, tunggu 5 detik..."
+            sleep 5
+          done
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 📥 Install test dependencies
+        run: pip install httpx pytest
+
+      - name: 🧪 Jalankan Integration Tests
+        env:
+          GATEWAY_URL: "http://localhost"
+        run: |
+          pytest tests/integration/ -v --tb=short
+
+      - name: 🛑 Stop all services
+        if: always()
+        run: docker compose down -v
+
+  # ================================
   # JOB 4: Deploy ke Railway
   # ================================
   deploy:
     name: 🚀 Deploy to Railway
     runs-on: ubuntu-latest
-    needs: [test-backend, test-ai-service, test-frontend, build-docker]
+    needs: [test-backend, test-ai-service, test-frontend, build-docker, integration-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     # ↑ HANYA deploy saat push ke main (bukan saat PR)
 

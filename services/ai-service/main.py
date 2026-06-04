@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from sqlalchemy import func, text
 from contextlib import asynccontextmanager
 
 from database import engine, get_db, Base
@@ -15,7 +16,7 @@ from schemas import (
     ChatMessageResponse, ChatSessionResponse, ChatSessionListItem,
     AVAILABLE_MODELS,
 )
-from auth_client import verify_token_with_auth_service, increment_api_used_in_auth_service
+from auth_client import verify_token_with_auth_service, increment_api_used_in_auth_service, auth_circuit
 import crud
 from huggingface_hub import AsyncInferenceClient
 
@@ -44,15 +45,53 @@ app.add_middleware(
 )
 
 @app.get("/health")
-def health_check():
-    return {"status": "healthy", "service": "ai-service", "version": "2.0.0"}
+def health_check(db: Session = Depends(get_db)):
+    """
+    Aggregated health check — menampilkan status semua dependency.
+    status: 'healthy' | 'degraded' | 'unhealthy'
+    """
+    # Cek status circuit breaker ke Auth Service
+    cb_status = auth_circuit.get_status()
+
+    # Cek koneksi ke database AI
+    db_status = "connected"
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        db_status = "disconnected"
+
+    # Tentukan overall status
+    overall = "healthy"
+    if cb_status["state"] != "CLOSED":
+        overall = "degraded"
+    if db_status != "connected":
+        overall = "unhealthy"
+
+    return {
+        "status": overall,
+        "service": "ai-service",
+        "version": "2.1.0",
+        "dependencies": {
+            "auth-service": {
+                "status": "available" if cb_status["state"] == "CLOSED" else "unavailable",
+                "circuit_breaker": cb_status,
+            },
+            "database": {
+                "status": db_status,
+            },
+        },
+    }
+
 
 @app.get("/stats")
 def get_user_stats(
     user: dict = Depends(verify_token_with_auth_service),
     db: Session = Depends(get_db),
 ):
-    from sqlalchemy import func
+    """
+    Statistik penggunaan AI milik user yang sedang login.
+    Memerlukan token autentikasi yang valid.
+    """
     user_id = user["user_id"]
     total_images = db.query(func.count(ImageGeneration.id)).filter(ImageGeneration.user_id == user_id).scalar() or 0
     total_summaries = db.query(func.count(TextSummarization.id)).filter(TextSummarization.user_id == user_id).scalar() or 0
@@ -66,6 +105,67 @@ def get_user_stats(
             "total_image_captions": total_captions,
             "total_api_calls": total_images + total_summaries + total_captions,
         }
+    }
+
+
+@app.get("/stats/degraded")
+def get_stats_degraded(db: Session = Depends(get_db)):
+    """
+    Degraded mode endpoint untuk /stats.
+    Hanya dapat diakses saat circuit breaker ke Auth Service OPEN.
+    Return data agregat (tanpa info user spesifik) agar service tetap berguna.
+    """
+    cb_status = auth_circuit.get_status()
+    if cb_status["state"] == "CLOSED":
+        raise HTTPException(
+            status_code=400,
+            detail="Auth Service sedang normal. Gunakan endpoint /stats dengan token."
+        )
+
+    # Statistik global (tanpa filter user — karena tidak bisa verifikasi token)
+    total_images = db.query(func.count(ImageGeneration.id)).scalar() or 0
+    total_summaries = db.query(func.count(TextSummarization.id)).scalar() or 0
+    total_captions = db.query(func.count(ImageCaption.id)).scalar() or 0
+    total_sessions = db.query(func.count(ChatSession.id)).scalar() or 0
+
+    return {
+        "mode": "degraded",
+        "message": "Auth Service sedang tidak tersedia. Menampilkan statistik global sementara.",
+        "auth_circuit_state": cb_status["state"],
+        "global_stats": {
+            "total_image_generations": total_images,
+            "total_text_summarizations": total_summaries,
+            "total_image_captions": total_captions,
+            "total_chat_sessions": total_sessions,
+            "total_api_calls": total_images + total_summaries + total_captions,
+        },
+    }
+
+
+@app.get("/stats/public")
+def get_public_stats(db: Session = Depends(get_db)):
+    """
+    Public stats endpoint — tidak membutuhkan autentikasi.
+    Menampilkan statistik penggunaan platform Intirupa secara agregat.
+    Analog dengan GET /items/public di modul 13.
+    """
+    total_images = db.query(func.count(ImageGeneration.id)).scalar() or 0
+    total_summaries = db.query(func.count(TextSummarization.id)).scalar() or 0
+    total_captions = db.query(func.count(ImageCaption.id)).scalar() or 0
+    total_sessions = db.query(func.count(ChatSession.id)).scalar() or 0
+    total_users_served = db.query(ImageGeneration.user_id).distinct().count()
+
+    return {
+        "platform": "Intirupa AI",
+        "message": "Statistik penggunaan platform secara publik.",
+        "stats": {
+            "total_image_generations": total_images,
+            "total_text_summarizations": total_summaries,
+            "total_image_captions": total_captions,
+            "total_chat_sessions": total_sessions,
+            "total_api_calls": total_images + total_summaries + total_captions,
+            "total_users_served": total_users_served,
+        },
     }
 
 @app.post("/chat/sessions", response_model=ChatSessionResponse, status_code=201)
