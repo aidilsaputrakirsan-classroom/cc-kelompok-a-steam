@@ -34,7 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
+@app.get("/auth/health")
 def health_check():
     return {"status": "healthy", "service": "auth-service", "version": "2.0.0"}
 

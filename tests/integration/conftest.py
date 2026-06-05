@@ -36,7 +36,7 @@ def test_user(gateway_url):
     Return credentials + token yang bisa dipakai semua test.
     """
     timestamp = int(time.time())
-    email = f"integration-test-{timestamp}@intirupa.test"
+    email = f"integration-test-{timestamp}@intirupa.com"
     password = "IntegrationTest123"
     username = f"testuser{timestamp}"
     full_name = "Integration Test User"

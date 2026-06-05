@@ -64,7 +64,7 @@ def test_ai_service_health(gateway_url):
 def test_register_login_flow(gateway_url):
     """Alur lengkap register → login → dapat token JWT yang valid."""
     import time
-    email = f"flow-test-{int(time.time())}@intirupa.test"
+    email = f"flow-test-{int(time.time())}@intirupa.com"
 
     # Register
     resp = httpx.post(
