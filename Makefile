@@ -1,4 +1,4 @@
-.PHONY: lint test pr-check up down logs build clean
+.PHONY: lint test pr-check up down logs build clean restart
 
 # Menjalankan linter untuk menjaga kualitas kode
 lint:
@@ -44,3 +44,7 @@ clean:
 	docker compose down -v
 	@echo "Membersihkan resource docker yang tidak terpakai..."
 	docker system prune -f
+
+# Melakukan restart semua services
+restart:
+	docker compose restart

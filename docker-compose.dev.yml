@@ -1,0 +1,19 @@
+services:
+  auth-service:
+    volumes:
+      - ./services/auth-service:/app
+    environment:
+      - FLASK_ENV=development
+
+  ai-service:
+    volumes:
+      - ./services/ai-service:/app
+    environment:
+      - FLASK_ENV=development
+
+  frontend:
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development

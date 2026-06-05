@@ -20,6 +20,12 @@ services:
       - auth_db_data:/var/lib/postgresql/data
     networks:
       - intirupa
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
       interval: 5s
@@ -39,6 +45,12 @@ services:
       - ai_db_data:/var/lib/postgresql/data
     networks:
       - intirupa
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d ai_db"]
       interval: 5s
@@ -61,6 +73,16 @@ services:
     networks:
       - intirupa
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/auth/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   ai-service:
     build: ./services/ai-service
@@ -75,10 +97,20 @@ services:
       ai-db:
         condition: service_healthy
       auth-service:
-        condition: service_started
+        condition: service_healthy
     networks:
       - intirupa
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # ================================
   # FRONTEND
@@ -94,6 +126,11 @@ services:
     networks:
       - intirupa
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://127.0.0.1/ || exit 1"]
       interval: 5s
@@ -113,14 +150,19 @@ services:
       - ./services/gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       auth-service:
-        condition: service_started
+        condition: service_healthy
       ai-service:
-        condition: service_started
+        condition: service_healthy
       frontend:
         condition: service_healthy
     networks:
       - intirupa
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
 
 volumes:
   auth_db_data:
