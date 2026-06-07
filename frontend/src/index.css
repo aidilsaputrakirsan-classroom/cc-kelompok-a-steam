@@ -11,19 +11,49 @@
   --color-inti-text-deep: #9aa0b8;
 }
 
+/* ===== DARK / LIGHT MODE DESIGN TOKENS ===== */
 :root {
+  /* Dark mode tokens (default) */
+  --bg-app: #060913;
+  --bg-app-gradient: radial-gradient(circle at top left, rgba(136, 115, 255, 0.16), transparent 24%),
+                     radial-gradient(circle at bottom right, rgba(255, 184, 130, 0.18), transparent 24%),
+                     #060913;
+  --bg-card: rgba(26, 31, 53, 0.80);
+  --bg-card-border: rgba(255, 255, 255, 0.08);
+  --bg-header: linear-gradient(135deg, rgba(255, 164, 82, 0.14), rgba(25, 39, 76, 0.92));
+  --bg-header-border: rgba(255, 156, 60, 0.12);
+  --text-primary: #edf2ff;
+  --text-muted: #9aa0b8;
+  --text-body: #c5cae4;
+  --toggle-bg: rgba(255, 255, 255, 0.08);
+  --toggle-border: rgba(255, 255, 255, 0.15);
+  --toggle-icon: "🌙";
+  --toggle-text: "Light Mode";
+
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Light mode — activated by html.light class */
+html.light {
+  --bg-app: #f0f4ff;
+  --bg-app-gradient: radial-gradient(circle at top left, rgba(136, 115, 255, 0.08), transparent 24%),
+                     radial-gradient(circle at bottom right, rgba(255, 143, 72, 0.10), transparent 24%),
+                     #f0f4ff;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-card-border: rgba(0, 0, 0, 0.08);
+  --bg-header: linear-gradient(135deg, rgba(255, 164, 82, 0.18), rgba(238, 244, 255, 0.92));
+  --bg-header-border: rgba(255, 143, 72, 0.20);
+  --text-primary: #1a1f3c;
+  --text-muted: #4a5080;
+  --text-body: #2e3460;
+  --toggle-bg: rgba(0, 0, 0, 0.06);
+  --toggle-border: rgba(0, 0, 0, 0.12);
 }
 
 a {
@@ -40,6 +70,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background 0.35s ease, color 0.35s ease;
 }
 
 h1 {
@@ -66,17 +97,33 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* ===== DARK MODE TOGGLE BUTTON ===== */
+.dark-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--toggle-border);
+  background: var(--toggle-bg);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+.dark-mode-toggle:hover {
+  border-color: rgba(255, 143, 72, 0.5);
+  background: rgba(255, 143, 72, 0.12);
+  color: #ff8f48;
+  transform: scale(1.04);
+}
+
+html.light .dark-mode-toggle:hover {
+  background: rgba(255, 143, 72, 0.10);
 }
 
 /* ===== MARKDOWN BODY STYLES ===== */

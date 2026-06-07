@@ -37,6 +37,24 @@ function App() {
     localStorage.setItem("inti_active_tab", activeTab)
   }, [activeTab])
 
+  // ==================== DARK MODE ====================
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem("inti_dark_mode")
+    // Default: dark mode aktif
+    return saved !== null ? saved === "true" : true
+  })
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.remove("light")
+    } else {
+      document.documentElement.classList.add("light")
+    }
+    localStorage.setItem("inti_dark_mode", String(isDark))
+  }, [isDark])
+
+  const toggleDark = useCallback(() => setIsDark((prev) => !prev), [])
+
 
 
   // ==================== AUTH HANDLERS ====================
@@ -128,11 +146,13 @@ function App() {
   }
 
   return (
-    <div style={styles.app}>
+    <div style={{ ...styles.app, background: "var(--bg-app-gradient)" }}>
       <div style={styles.container}>
         <Header
           user={user}
           onLogout={handleLogout}
+          isDark={isDark}
+          onToggleDark={toggleDark}
         />
 
         <div className="flex gap-3 flex-wrap mb-6">

@@ -1,16 +1,20 @@
 .PHONY: lint test pr-check up down logs build clean restart
 
-# Menjalankan linter untuk menjaga kualitas kode
+# Menjalankan linter untuk menjaga kualitas kode (frontend ESLint)
 lint:
 	@echo "Menjalankan linter..."
-	@echo "[!] Linter backend (placeholder)"
-	@echo "[!] Linter frontend (placeholder)"
+	cd frontend && npm run lint
 	@echo "Linting selesai."
 
-# Menjalankan automated tests
+# Menjalankan automated tests untuk backend, ai-service, dan frontend
 test:
 	@echo "Menjalankan testing..."
-	@echo "[!] Unit test (placeholder)"
+	@echo "--- Backend Tests ---"
+	cd backend && pytest
+	@echo "--- AI Service Tests ---"
+	cd services/ai-service && pytest tests/ -v --tb=short
+	@echo "--- Frontend Tests ---"
+	cd frontend && npm test
 	@echo "Testing selesai."
 
 # Simulasi PR Check: Linter, Test, dan Build Docker Image

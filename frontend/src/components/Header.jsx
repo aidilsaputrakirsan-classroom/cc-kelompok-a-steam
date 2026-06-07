@@ -1,16 +1,32 @@
-function Header({ user, onLogout }) {
+function Header({ user, onLogout, isDark, onToggleDark }) {
   return (
-    <header style={styles.header}>
+    <header style={{
+      ...styles.header,
+      background: "var(--bg-header)",
+      borderColor: "var(--bg-header-border)",
+      color: "var(--text-primary)",
+    }}>
       <div style={styles.left}>
         <div style={styles.logo}>
           <span style={styles.icon}>✨</span>
           <div>
-            <h1 style={styles.title}>Inti Rupa</h1>
-            <p style={styles.subtitle}>AI Platform — Komputasi Awan ITK</p>
+            <h1 style={{ ...styles.title, color: "var(--text-primary)" }}>Inti Rupa</h1>
+            <p style={{ ...styles.subtitle, color: "var(--text-muted)" }}>AI Platform — Komputasi Awan ITK</p>
           </div>
         </div>
       </div>
       <div style={styles.right}>
+        {/* Dark Mode Toggle */}
+        <button
+          id="dark-mode-toggle"
+          className="dark-mode-toggle"
+          onClick={onToggleDark}
+          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          <span style={{ fontSize: "1.1rem" }}>{isDark ? "☀️" : "🌙"}</span>
+          <span>{isDark ? "Light" : "Dark"}</span>
+        </button>
 
         {user && (
           <div style={styles.user}>

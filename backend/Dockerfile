@@ -16,7 +16,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Install python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --index-url https://pypi.tuna.tsinghua.edu.cn/simple --default-timeout=100 --retries 5 -r requirements.txt
 
 # Strip unused files to save space
 RUN find /opt/venv -type d -name "tests" -exec rm -rf {} + || true && \
