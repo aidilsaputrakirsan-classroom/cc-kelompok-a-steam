@@ -180,19 +180,19 @@ function MetricsSummary({ authMetrics, itemsMetrics }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricBox
           label="Auth Requests"
-          value={authMetrics?.request_count || 0}
+          value={authMetrics?.total_requests || 0}
         />
         <MetricBox
           label="AI Requests"
-          value={itemsMetrics?.request_count || 0}
+          value={itemsMetrics?.total_requests || 0}
         />
         <MetricBox
           label="Avg Auth Latency"
-          value={authMetrics?.avg_response_time ? `${authMetrics.avg_response_time.toFixed(0)}ms` : 'N/A'}
+          value={authMetrics?.latency?.avg_ms ? `${authMetrics.latency.avg_ms.toFixed(0)}ms` : 'N/A'}
         />
         <MetricBox
           label="Avg AI Latency"
-          value={itemsMetrics?.avg_response_time ? `${itemsMetrics.avg_response_time.toFixed(0)}ms` : 'N/A'}
+          value={itemsMetrics?.latency?.avg_ms ? `${itemsMetrics.latency.avg_ms.toFixed(0)}ms` : 'N/A'}
         />
       </div>
     </div>
