@@ -69,6 +69,7 @@ services:
       CORS_ORIGINS: "http://localhost,http://localhost:5173"
       SERVICE_NAME: auth-service
       LOG_LEVEL: INFO
+      PYTHONUNBUFFERED: "1"
     depends_on:
       auth-db:
         condition: service_healthy
@@ -97,7 +98,9 @@ services:
       CORS_ORIGINS: "http://localhost,http://localhost:5173"
       SERVICE_NAME: ai-service
       LOG_LEVEL: INFO
+      PYTHONUNBUFFERED: "1"
     depends_on:
+
       ai-db:
         condition: service_healthy
       auth-service:

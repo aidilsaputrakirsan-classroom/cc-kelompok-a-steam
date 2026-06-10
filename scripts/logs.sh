@@ -24,11 +24,29 @@ case "$1" in
     ;;
   metrics)
     echo "📊 Fetching metrics..."
+    
+    # Deteksi parser python yang tersedia
+    PYTHON_CMD=""
+    if command -v python3 >/dev/null 2>&1; then
+      PYTHON_CMD="python3"
+    elif command -v python >/dev/null 2>&1; then
+      PYTHON_CMD="python"
+    fi
+
     echo "--- Auth Service ---"
-    curl -s http://localhost/auth/metrics | python -m json.tool
+    if [ -n "$PYTHON_CMD" ]; then
+      curl -s http://localhost/auth/metrics | "$PYTHON_CMD" -m json.tool
+    else
+      curl -s http://localhost/auth/metrics
+    fi
+    echo ""
     echo ""
     echo "--- AI Service ---"
-    curl -s http://localhost/chat/metrics | python -m json.tool
+    if [ -n "$PYTHON_CMD" ]; then
+      curl -s http://localhost/chat/metrics | "$PYTHON_CMD" -m json.tool
+    else
+      curl -s http://localhost/chat/metrics
+    fi
     ;;
   *)
     echo "Usage: ./scripts/logs.sh {all|errors|trace <id>|metrics}"
