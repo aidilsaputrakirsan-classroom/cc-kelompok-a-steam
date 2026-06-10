@@ -59,15 +59,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         # Error alerting logic (Tugas Terstruktur Lead Backend)
         # Jika total request >= 3 dan error rate > 10%, catat log CRITICAL dengan alert: true
         current_metrics = metrics.get_metrics()
-        total_req = current_metrics.get("request_count", 0)
-        err_rate = current_metrics.get("error_rate", 0)
+        total_req = current_metrics.get("total_requests", 0)
+        err_rate = current_metrics.get("error_rate_percent", 0)
         
-        if total_req >= 3 and err_rate > 0.10:
+        if total_req >= 3 and err_rate > 10.0:
             logger.critical(
-                f"HIGH ERROR RATE DETECTED: {round(err_rate * 100, 2)}% errors on service",
+                f"HIGH ERROR RATE DETECTED: {round(err_rate, 2)}% errors on service",
                 extra={
                     "alert": True,
-                    "error_rate": err_rate,
+                    "error_rate_percent": err_rate,
                     "total_requests": total_req,
                     "correlation_id": correlation_id
                 }
