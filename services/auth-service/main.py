@@ -95,3 +95,13 @@ def increment_usage(user_id: int, db: Session = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
     return {"status": "success"}
+
+@app.get("/metrics")
+def get_metrics():
+    """Return application metrics."""
+    from metrics import metrics
+    return {
+        "service": "auth-service",
+        **metrics.get_metrics(),
+    }
+

@@ -427,3 +427,13 @@ def delete_chat_session(session_id: int, user: dict = Depends(verify_token_with_
     success = crud.delete_chat_session(db=db, user_id=user["user_id"], session_id=session_id)
     if not success: raise HTTPException(status_code=404, detail="Sesi tidak ditemukan.")
     return None
+
+@app.get("/metrics")
+def get_metrics():
+    """Return application metrics."""
+    from metrics import metrics
+    return {
+        "service": "ai-service",
+        **metrics.get_metrics(),
+    }
+
