@@ -1,4 +1,14 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
+/**
+ * API Service — Gateway-based microservices
+ * 
+ * Frontend mengarah ke GATEWAY (http://localhost) yang mengarahkan ke:
+ * - /auth/* → Auth Service
+ * - /items/* → Item Service
+ * - / → Frontend
+ */
+
+// Gateway URL (bukan langsung ke backend port 8000)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost"
 
 // ==================== TOKEN MANAGEMENT ====================
 
@@ -36,20 +46,37 @@ function authHeaders() {
   return headers
 }
 
-// Helper: handle response errors
+/**
+ * Handle API response dengan error handling untuk service unavailable (503)
+ * Jika service down (503), throw error dengan type 'SERVICE_UNAVAILABLE'
+ */
 async function handleResponse(response) {
   if (response.status === 401) {
     clearToken()
-    throw new Error("UNAUTHORIZED")
+    const error = new Error("UNAUTHORIZED")
+    error.type = "UNAUTHORIZED"
+    throw error
   }
+
+  // Service Unavailable (degraded mode atau service down)
+  if (response.status === 503) {
+    const error = new Error("Service temporarily unavailable. Please try again later.")
+    error.type = "SERVICE_UNAVAILABLE"
+    error.status = 503
+    throw error
+  }
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
     let errorMessage = error.detail
     if (Array.isArray(error.detail)) {
       errorMessage = error.detail.map(d => d.msg).join(', ')
     }
-    throw new Error(errorMessage || `Request gagal (${response.status})`)
+    const err = new Error(errorMessage || `Request gagal (${response.status})`)
+    err.status = response.status
+    throw err
   }
+
   // 204 No Content
   if (response.status === 204) return null
   return response.json()
@@ -130,13 +157,75 @@ export async function deleteItem(id) {
   return handleResponse(response)
 }
 
+// ==================== HEALTH & MONITORING API ====================
+
+/**
+ * Check Gateway health status
+ */
 export async function checkHealth() {
   try {
-    const response = await fetch(`${API_URL}/health`)
+    const response = await fetch(`${API_URL}/health`, { timeout: 5000 })
+    if (!response.ok) return null
     const data = await response.json()
-    return data.status === "healthy"
+    return data
   } catch {
-    return false
+    return null
+  }
+}
+
+/**
+ * Fetch health status dari Auth Service
+ */
+export async function fetchAuthHealth() {
+  try {
+    const response = await fetch(`${API_URL}/auth/health`, { timeout: 5000 })
+    if (!response.ok) return null
+    const data = await response.json()
+    return data
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Fetch health status dari Item Service
+ */
+export async function fetchItemsHealth() {
+  try {
+    const response = await fetch(`${API_URL}/items/health`, { timeout: 5000 })
+    if (!response.ok) return null
+    const data = await response.json()
+    return data
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Fetch metrics dari Auth Service
+ */
+export async function fetchAuthMetrics() {
+  try {
+    const response = await fetch(`${API_URL}/auth/metrics`, { timeout: 5000 })
+    if (!response.ok) return null
+    const data = await response.json()
+    return data
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Fetch metrics dari Item Service
+ */
+export async function fetchItemsMetrics() {
+  try {
+    const response = await fetch(`${API_URL}/items/metrics`, { timeout: 5000 })
+    if (!response.ok) return null
+    const data = await response.json()
+    return data
+  } catch {
+    return null
   }
 }
 

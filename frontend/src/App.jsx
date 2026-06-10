@@ -1,12 +1,16 @@
 import { useState, useEffect, useCallback } from "react"
+import { useLocation, BrowserRouter, Routes, Route } from "react-router-dom"
 import Header from "./components/Header"
 import LoginPage from "./components/LoginPage"
 import Toast from "./components/Toast"
 import SuccessModal from "./components/SuccessModal"
 import LogoutModal from "./components/LogoutModal"
+import ErrorBoundaryWrapper from "./components/ErrorBoundary"
+import { DegradedModeBanner } from "./components/DegradedModeBanner"
 
 import ChatHistoryPage from "./components/ChatHistoryPage"
 import AboutUs from "./components/AboutUs"
+import StatusPage from "./pages/StatusPage"
 import { useToast } from "./hooks/useToast"
 import {
   checkHealth,
@@ -17,7 +21,11 @@ import {
   getToken,
 } from "./services/api"
 
-function App() {
+/**
+ * Main App Content (setelah login)
+ * Module 12-14: Microservices frontend integration
+ */
+function AppContent() {
   // ==================== AUTH STATE ====================
   const [user, setUser] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -33,6 +41,9 @@ function App() {
   // ==================== APP STATE ====================
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem("inti_active_tab") || "about-us")
   
+  // Location hook untuk routing
+  const location = useLocation()
+  
   useEffect(() => {
     localStorage.setItem("inti_active_tab", activeTab)
   }, [activeTab])
@@ -40,7 +51,6 @@ function App() {
   // ==================== DARK MODE ====================
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("inti_dark_mode")
-    // Default: dark mode aktif
     return saved !== null ? saved === "true" : true
   })
 
@@ -55,14 +65,10 @@ function App() {
 
   const toggleDark = useCallback(() => setIsDark((prev) => !prev), [])
 
-
-
   // ==================== AUTH HANDLERS ====================
   const handleLogout = useCallback(() => {
     setShowLogoutModal(true)
   }, [])
-
-
 
   useEffect(() => {
     checkHealth().catch(() => {})
@@ -77,13 +83,15 @@ function App() {
           setUser(userData)
           setIsAuthenticated(true)
         })
-        .catch(() => {
-          clearToken() // Token expired atau invalid
+        .catch((err) => {
+          if (err.type === "SERVICE_UNAVAILABLE") {
+            showToast("Auth service temporarily unavailable. Some features may be limited.", "warning")
+          } else {
+            clearToken()
+          }
         })
     }
-  }, [isAuthenticated])
-
-
+  }, [isAuthenticated, showToast])
 
   // ==================== AUTH HANDLERS ====================
   const handleLogin = async (email, password) => {
@@ -100,7 +108,12 @@ function App() {
         setActiveTab("about-us")
       }, 2000)
     } catch (err) {
-      showToast("Login gagal: " + err.message, "error")
+      // Handle service unavailable error
+      if (err.type === "SERVICE_UNAVAILABLE") {
+        showToast("Auth service is temporarily unavailable. Please try again later.", "error")
+      } else {
+        showToast("Login gagal: " + err.message, "error")
+      }
     }
   }
 
@@ -119,11 +132,13 @@ function App() {
         setActiveTab("about-us")
       }, 2000)
     } catch (err) {
-      showToast("Registrasi gagal: " + err.message, "error")
+      if (err.type === "SERVICE_UNAVAILABLE") {
+        showToast("Auth service is temporarily unavailable. Please try again later.", "error")
+      } else {
+        showToast("Registrasi gagal: " + err.message, "error")
+      }
     }
   }
-
-
 
   const performLogout = () => {
     setShowLogoutModal(false)
@@ -132,9 +147,17 @@ function App() {
     setIsAuthenticated(false)
   }
 
-
-
   // ==================== RENDER ====================
+  
+  // Check if we're on status page
+  if (location.pathname === "/status") {
+    return (
+      <ErrorBoundaryWrapper>
+        <StatusPage />
+      </ErrorBoundaryWrapper>
+    )
+  }
+
   if (!isAuthenticated) {
     return (
       <>
@@ -147,6 +170,9 @@ function App() {
 
   return (
     <div style={{ ...styles.app, background: "var(--bg-app-gradient)" }}>
+      {/* Degraded Mode Banner */}
+      <DegradedModeBanner />
+      
       <div style={styles.container}>
         <Header
           user={user}
@@ -178,13 +204,13 @@ function App() {
           </button>
         </div>
 
-        {activeTab === "chat-history" ? (
-          <ChatHistoryPage
-            showToast={showToast}
-          />
-        ) : (
-          <AboutUs />
-        )}
+        <ErrorBoundaryWrapper>
+          {activeTab === "chat-history" ? (
+            <ChatHistoryPage showToast={showToast} />
+          ) : (
+            <AboutUs />
+          )}
+        </ErrorBoundaryWrapper>
       </div>
       <LogoutModal 
         isOpen={showLogoutModal} 
@@ -213,6 +239,20 @@ const styles = {
     flexDirection: "column",
     gap: "1.5rem",
   },
+}
+
+/**
+ * Wrapper dengan React Router
+ */
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<AppContent />} />
+        <Route path="/status" element={<AppContent />} />
+      </Routes>
+    </BrowserRouter>
+  )
 }
 
 export default App
