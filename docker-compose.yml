@@ -95,6 +95,8 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@ai-db:5432/ai_db
       AUTH_SERVICE_URL: http://auth-service:8001
       CORS_ORIGINS: "http://localhost,http://localhost:5173"
+      SERVICE_NAME: ai-service
+      LOG_LEVEL: INFO
     depends_on:
       ai-db:
         condition: service_healthy
