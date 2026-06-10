@@ -63,9 +63,9 @@ export default function StatusPage() {
             metrics={authMetrics}
           />
 
-          {/* Item Service */}
+          {/* AI Service */}
           <ServiceCard
-            title="Item Service"
+            title="AI Service"
             status={itemsStatus}
             display={itemsDisplay}
             metrics={itemsMetrics}
@@ -183,7 +183,7 @@ function MetricsSummary({ authMetrics, itemsMetrics }) {
           value={authMetrics?.request_count || 0}
         />
         <MetricBox
-          label="Item Requests"
+          label="AI Requests"
           value={itemsMetrics?.request_count || 0}
         />
         <MetricBox
@@ -191,7 +191,7 @@ function MetricsSummary({ authMetrics, itemsMetrics }) {
           value={authMetrics?.avg_response_time ? `${authMetrics.avg_response_time.toFixed(0)}ms` : 'N/A'}
         />
         <MetricBox
-          label="Avg Item Latency"
+          label="Avg AI Latency"
           value={itemsMetrics?.avg_response_time ? `${itemsMetrics.avg_response_time.toFixed(0)}ms` : 'N/A'}
         />
       </div>
@@ -237,8 +237,8 @@ function TroubleshootingGuide({ authStatus, itemsStatus }) {
 
         {itemsDown && (
           <li>
-            <span className="font-semibold">Item Service is down:</span> Item listing and creation features are unavailable.
-            Check if the Item Service container is running.
+            <span className="font-semibold">AI Service is down:</span> Chat and AI processing features are unavailable.
+            Check if the AI Service container is running.
           </li>
         )}
 
