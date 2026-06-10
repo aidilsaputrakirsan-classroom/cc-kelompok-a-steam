@@ -1,4 +1,5 @@
 import os
+import logging
 from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -11,6 +12,12 @@ from schemas import (
 )
 from auth import create_access_token, get_current_user, decode_access_token
 import crud
+from logging_config import setup_logging
+from logging_middleware import RequestLoggingMiddleware
+
+# Setup structured logging
+setup_logging()
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -33,6 +40,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Logging middleware (setelah CORS)
+app.add_middleware(RequestLoggingMiddleware)
+
 
 @app.get("/auth/health")
 def health_check():
