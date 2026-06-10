@@ -2,6 +2,7 @@ import os
 import io
 import base64
 import time
+import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +20,12 @@ from schemas import (
 from auth_client import verify_token_with_auth_service, increment_api_used_in_auth_service, auth_circuit
 import crud
 from huggingface_hub import AsyncInferenceClient
+from logging_config import setup_logging
+from logging_middleware import RequestLoggingMiddleware
+
+# Setup structured logging
+setup_logging()
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -43,6 +50,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Logging middleware (setelah CORS)
+app.add_middleware(RequestLoggingMiddleware)
+
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
@@ -416,3 +427,13 @@ def delete_chat_session(session_id: int, user: dict = Depends(verify_token_with_
     success = crud.delete_chat_session(db=db, user_id=user["user_id"], session_id=session_id)
     if not success: raise HTTPException(status_code=404, detail="Sesi tidak ditemukan.")
     return None
+
+@app.get("/metrics")
+def get_metrics():
+    """Return application metrics."""
+    from metrics import metrics
+    return {
+        "service": "ai-service",
+        **metrics.get_metrics(),
+    }
+

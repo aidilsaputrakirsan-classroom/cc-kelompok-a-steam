@@ -63,9 +63,9 @@ export default function StatusPage() {
             metrics={authMetrics}
           />
 
-          {/* Item Service */}
+          {/* AI Service */}
           <ServiceCard
-            title="Item Service"
+            title="AI Service"
             status={itemsStatus}
             display={itemsDisplay}
             metrics={itemsMetrics}
@@ -180,19 +180,19 @@ function MetricsSummary({ authMetrics, itemsMetrics }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricBox
           label="Auth Requests"
-          value={authMetrics?.request_count || 0}
+          value={authMetrics?.total_requests || 0}
         />
         <MetricBox
-          label="Item Requests"
-          value={itemsMetrics?.request_count || 0}
+          label="AI Requests"
+          value={itemsMetrics?.total_requests || 0}
         />
         <MetricBox
           label="Avg Auth Latency"
-          value={authMetrics?.avg_response_time ? `${authMetrics.avg_response_time.toFixed(0)}ms` : 'N/A'}
+          value={authMetrics?.latency?.avg_ms ? `${authMetrics.latency.avg_ms.toFixed(0)}ms` : 'N/A'}
         />
         <MetricBox
-          label="Avg Item Latency"
-          value={itemsMetrics?.avg_response_time ? `${itemsMetrics.avg_response_time.toFixed(0)}ms` : 'N/A'}
+          label="Avg AI Latency"
+          value={itemsMetrics?.latency?.avg_ms ? `${itemsMetrics.latency.avg_ms.toFixed(0)}ms` : 'N/A'}
         />
       </div>
     </div>
@@ -237,8 +237,8 @@ function TroubleshootingGuide({ authStatus, itemsStatus }) {
 
         {itemsDown && (
           <li>
-            <span className="font-semibold">Item Service is down:</span> Item listing and creation features are unavailable.
-            Check if the Item Service container is running.
+            <span className="font-semibold">AI Service is down:</span> Chat and AI processing features are unavailable.
+            Check if the AI Service container is running.
           </li>
         )}
 
