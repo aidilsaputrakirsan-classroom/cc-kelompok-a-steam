@@ -1,4 +1,31 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { fetchAuthHealth } from '../services/api'
+
 function Header({ user, onLogout, isDark, onToggleDark }) {
+  const navigate = useNavigate()
+  const [authStatus, setAuthStatus] = useState('healthy')
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      const health = await fetchAuthHealth()
+      setAuthStatus(health?.status || 'unknown')
+    }
+
+    checkStatus()
+    const interval = setInterval(checkStatus, 10000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const getStatusIcon = () => {
+    switch (authStatus) {
+      case 'healthy': return '🟢'
+      case 'degraded': return '🟡'
+      case 'unhealthy': return '🔴'
+      default: return '⚪'
+    }
+  }
+
   return (
     <header style={{
       ...styles.header,
@@ -16,6 +43,27 @@ function Header({ user, onLogout, isDark, onToggleDark }) {
         </div>
       </div>
       <div style={styles.right}>
+        {/* Status Page Link */}
+        <button
+          onClick={() => navigate('/status')}
+          style={{
+            ...styles.badge,
+            display: 'flex',
+            gap: '0.5rem',
+            alignItems: 'center',
+            cursor: 'pointer',
+            backgroundColor: 'rgba(100, 116, 139, 0.2)',
+            border: '1px solid rgba(148, 163, 184, 0.3)',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(100, 116, 139, 0.3)'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(100, 116, 139, 0.2)'}
+          title="View system status"
+        >
+          <span>{getStatusIcon()}</span>
+          <span>Status</span>
+        </button>
+
         {/* Dark Mode Toggle */}
         <button
           id="dark-mode-toggle"

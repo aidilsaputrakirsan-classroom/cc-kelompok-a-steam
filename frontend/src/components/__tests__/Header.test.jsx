@@ -2,6 +2,15 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import Header from '../Header'
 
+// Mock useNavigate agar test tidak bergantung pada context Router eksternal
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}))
+
+vi.mock('react-router', () => ({
+  useNavigate: () => vi.fn(),
+}))
+
 describe('Header Component', () => {
   it('menampilkan judul aplikasi dengan benar', () => {
     render(<Header totalItems={0} isConnected={true} isDark={true} onToggleDark={() => {}} />)
