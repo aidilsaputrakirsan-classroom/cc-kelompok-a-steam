@@ -226,6 +226,7 @@ docker compose up -d
 
 | Document                                       | Purpose                                 |
 | ---------------------------------------------- | --------------------------------------- |
+| [Architecture & API Contract](docs/architecture.md) | Microservices diagram, port mapping, API specifications |
 | [API Documentation](docs/api-documentation.md) | Complete API endpoints reference        |
 | [Deployment Guide](docs/deployment-guide.md)   | How to deploy to Railway (production)   |
 | [Operations Guide](docs/operations-guide.md)   | Production troubleshooting & monitoring |
