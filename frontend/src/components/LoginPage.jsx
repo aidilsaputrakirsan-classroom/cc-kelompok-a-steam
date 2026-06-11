@@ -189,6 +189,8 @@ function LoginPage({ onLogin, onRegister, showToast }) {
   )
 }
 
+const isDarkMode = () => document.documentElement.classList.contains('light') === false
+
 const styles = {
   wrapper: {
     position: "relative",
@@ -197,7 +199,9 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "radial-gradient(circle at top left, rgba(152, 112, 255, 0.35), transparent 28%), radial-gradient(circle at bottom right, rgba(255, 175, 110, 0.22), transparent 28%), #080914",
+    background: isDarkMode() 
+      ? "radial-gradient(circle at top left, rgba(152, 112, 255, 0.35), transparent 28%), radial-gradient(circle at bottom right, rgba(255, 175, 110, 0.22), transparent 28%), #080914"
+      : "radial-gradient(circle at top left, rgba(255, 159, 64, 0.18), transparent 28%), radial-gradient(circle at bottom right, rgba(255, 193, 105, 0.16), transparent 28%), #f5ede4",
     padding: "2rem",
     fontFamily: "'SF Pro Display', 'SF Pro', 'Inter', system-ui, sans-serif",
   },
@@ -206,7 +210,9 @@ const styles = {
     width: "720px",
     height: "720px",
     borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(255, 189, 169, 0.14), transparent 52%)",
+    background: isDarkMode()
+      ? "radial-gradient(circle, rgba(255, 189, 169, 0.14), transparent 52%)"
+      : "radial-gradient(circle, rgba(255, 159, 64, 0.18), transparent 52%)",
     filter: "blur(80px)",
     top: "-180px",
     right: "-120px",
@@ -216,11 +222,13 @@ const styles = {
     position: "relative",
     width: "100%",
     maxWidth: "460px",
-    background: "rgba(15, 23, 42, 0.92)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    background: isDarkMode() ? "rgba(15, 23, 42, 0.92)" : "rgba(252, 248, 243, 0.98)",
+    border: isDarkMode() ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255, 140, 66, 0.22)",
     borderRadius: "28px",
     padding: "2rem",
-    boxShadow: "0 24px 80px rgba(0, 0, 0, 0.35)",
+    boxShadow: isDarkMode() 
+      ? "0 24px 80px rgba(0, 0, 0, 0.35)"
+      : "0 24px 80px rgba(255, 140, 66, 0.14)",
     backdropFilter: "blur(18px)",
   },
   header: {
@@ -234,11 +242,11 @@ const styles = {
     margin: 0,
     fontSize: "2.2rem",
     lineHeight: 1.05,
-    color: "#fff",
+    color: isDarkMode() ? "#fff" : "#1a1410",
   },
   subtitle: {
     margin: "0.65rem 0 0",
-    color: "#a1a6b3",
+    color: isDarkMode() ? "#a1a6b3" : "#8b7355",
     lineHeight: 1.6,
     maxWidth: "320px",
     fontSize: "0.95rem",
@@ -247,9 +255,11 @@ const styles = {
     alignSelf: "center",
     padding: "0.5rem 0.9rem",
     borderRadius: "999px",
-    background: "linear-gradient(135deg, rgba(255,180,130,0.16), rgba(255,255,255,0.08))",
-    border: "1px solid rgba(255,255,255,0.14)",
-    color: "#ffe7d1",
+    background: isDarkMode()
+      ? "linear-gradient(135deg, rgba(255,180,130,0.16), rgba(255,255,255,0.08))"
+      : "linear-gradient(135deg, rgba(255, 140, 66, 0.16), rgba(255, 255, 255, 0.10))",
+    border: isDarkMode() ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(255, 140, 66, 0.30)",
+    color: isDarkMode() ? "#ffe7d1" : "#b85d1a",
     fontSize: "0.82rem",
     letterSpacing: "0.02em",
   },
@@ -258,7 +268,7 @@ const styles = {
     gridTemplateColumns: "1fr 1fr",
     gap: "0.5rem",
     marginBottom: "1.75rem",
-    background: "rgba(255,255,255,0.04)",
+    background: isDarkMode() ? "rgba(255,255,255,0.04)" : "rgba(255, 140, 66, 0.10)",
     borderRadius: "14px",
     padding: "0.35rem",
   },
@@ -267,15 +277,19 @@ const styles = {
     borderRadius: "12px",
     padding: "0.95rem 1rem",
     background: "transparent",
-    color: "#a1a6b3",
+    color: isDarkMode() ? "#a1a6b3" : "#8b7355",
     fontWeight: 700,
     cursor: "pointer",
     transition: "all 0.18s ease",
   },
   tabActive: {
-    background: "linear-gradient(135deg, rgba(255, 183, 128, 0.22), rgba(255, 255, 255, 0.08))",
-    color: "#fff",
-    boxShadow: "0 10px 30px rgba(255, 183, 128, 0.14)",
+    background: isDarkMode()
+      ? "linear-gradient(135deg, rgba(255, 183, 128, 0.22), rgba(255, 255, 255, 0.08))"
+      : "linear-gradient(135deg, rgba(255, 140, 66, 0.28), rgba(255, 255, 255, 0.15))",
+    color: isDarkMode() ? "#fff" : "#3d2817",
+    boxShadow: isDarkMode()
+      ? "0 10px 30px rgba(255, 183, 128, 0.14)"
+      : "0 10px 30px rgba(255, 140, 66, 0.20)",
   },
   form: {
     display: "grid",
@@ -286,7 +300,7 @@ const styles = {
     gap: "0.45rem",
   },
   label: {
-    color: "#c8c8dc",
+    color: isDarkMode() ? "#c8c8dc" : "#52372a",
     fontSize: "0.86rem",
     fontWeight: 600,
   },
@@ -294,9 +308,9 @@ const styles = {
     width: "100%",
     padding: "0.95rem 1rem",
     borderRadius: "16px",
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.04)",
-    color: "#f8f9ff",
+    border: isDarkMode() ? "1px solid rgba(255,255,255,0.10)" : "1px solid rgba(255, 140, 66, 0.22)",
+    background: isDarkMode() ? "rgba(255,255,255,0.04)" : "rgba(252, 248, 243, 0.85)",
+    color: isDarkMode() ? "#f8f9ff" : "#3d2817",
     outline: "none",
     fontSize: "0.98rem",
     transition: "border-color 0.2s ease, box-shadow 0.2s ease",
@@ -306,20 +320,22 @@ const styles = {
     padding: "0.95rem 1rem",
     borderRadius: "16px",
     border: "none",
-    background: "linear-gradient(135deg, #ffb57f, #ff8f8f)",
-    color: "#111827",
+    background: "linear-gradient(135deg, #ffb57f, #ff8f48)",
+    color: isDarkMode() ? "#111827" : "#fff8f4",
     fontWeight: 700,
     fontSize: "1rem",
     cursor: "pointer",
-    boxShadow: "0 18px 40px rgba(255, 149, 92, 0.24)",
+    boxShadow: isDarkMode()
+      ? "0 18px 40px rgba(255, 149, 92, 0.24)"
+      : "0 18px 40px rgba(255, 140, 66, 0.28)",
     transition: "transform 0.2s ease, box-shadow 0.2s ease",
   },
   error: {
     padding: "0.85rem 1rem",
     borderRadius: "14px",
-    background: "rgba(255, 74, 91, 0.14)",
-    color: "#ffccd6",
-    border: "1px solid rgba(255, 74, 91, 0.25)",
+    background: isDarkMode() ? "rgba(255, 74, 91, 0.14)" : "rgba(255, 140, 66, 0.14)",
+    color: isDarkMode() ? "#ffccd6" : "#b85d1a",
+    border: isDarkMode() ? "1px solid rgba(255, 74, 91, 0.25)" : "1px solid rgba(255, 140, 66, 0.30)",
     fontSize: "0.92rem",
   },
 }

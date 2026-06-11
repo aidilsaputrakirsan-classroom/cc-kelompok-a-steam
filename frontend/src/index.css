@@ -41,19 +41,19 @@
 
 /* Light mode — activated by html.light class */
 html.light {
-  --bg-app: #f0f4ff;
-  --bg-app-gradient: radial-gradient(circle at top left, rgba(136, 115, 255, 0.08), transparent 24%),
-                     radial-gradient(circle at bottom right, rgba(255, 143, 72, 0.10), transparent 24%),
-                     #f0f4ff;
-  --bg-card: rgba(255, 255, 255, 0.85);
-  --bg-card-border: rgba(0, 0, 0, 0.08);
-  --bg-header: linear-gradient(135deg, rgba(255, 164, 82, 0.18), rgba(238, 244, 255, 0.92));
-  --bg-header-border: rgba(255, 143, 72, 0.20);
-  --text-primary: #1a1f3c;
-  --text-muted: #4a5080;
-  --text-body: #2e3460;
-  --toggle-bg: rgba(0, 0, 0, 0.06);
-  --toggle-border: rgba(0, 0, 0, 0.12);
+  --bg-app: #f5ede4;
+  --bg-app-gradient: radial-gradient(circle at top left, rgba(255, 159, 64, 0.18), transparent 24%),
+                     radial-gradient(circle at bottom right, rgba(255, 193, 105, 0.16), transparent 24%),
+                     #f5ede4;
+  --bg-card: rgba(252, 248, 243, 0.98);
+  --bg-card-border: rgba(255, 140, 66, 0.22);
+  --bg-header: linear-gradient(135deg, rgba(255, 159, 64, 0.30), rgba(252, 248, 243, 0.99));
+  --bg-header-border: rgba(255, 140, 66, 0.30);
+  --text-primary: #3d2817;
+  --text-muted: #8b7355;
+  --text-body: #52372a;
+  --toggle-bg: rgba(255, 140, 66, 0.12);
+  --toggle-border: rgba(255, 140, 66, 0.30);
 }
 
 a {

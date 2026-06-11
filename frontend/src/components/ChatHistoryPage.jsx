@@ -773,93 +773,101 @@ export default function ChatHistoryPage({ showToast }) {
 }
 
 // ─── STYLES ──────────────────────────────────────────────
-const s = {
+const isDarkMode = () => document.documentElement.classList.contains('light') === false
+
+const getStyles = () => {
+  const isDark = isDarkMode()
+  
+  return {
   pageWrapper: {
     width: "100%", minHeight: "100%", display: "flex", flexDirection: "column",
-    gap: "1.75rem", fontFamily: "'SF Pro Display', 'SF Pro', system-ui, sans-serif", color: "#eef2ff",
+    gap: "1.75rem", fontFamily: "'SF Pro Display', 'SF Pro', system-ui, sans-serif", color: isDark ? "#eef2ff" : "#1a1410",
   },
   hero: {
     display: "flex", justifyContent: "space-between", alignItems: "flex-start",
     flexWrap: "wrap", gap: "1.5rem", padding: "2rem", borderRadius: "30px",
-    background: "linear-gradient(135deg, rgba(255, 164, 82, 0.14), rgba(25, 39, 76, 0.92))",
-    border: "1px solid rgba(255, 156, 59, 0.12)", boxShadow: "0 30px 80px rgba(0, 0, 0, 0.2)",
+    background: isDark 
+      ? "linear-gradient(135deg, rgba(255, 164, 82, 0.14), rgba(25, 39, 76, 0.92))"
+      : "linear-gradient(135deg, rgba(255, 143, 72, 0.18), rgba(255, 252, 248, 0.98))",
+    border: isDark ? "1px solid rgba(255, 156, 59, 0.12)" : "1px solid rgba(255, 143, 72, 0.25)", 
+    boxShadow: isDark ? "0 30px 80px rgba(0, 0, 0, 0.2)" : "0 30px 80px rgba(255, 143, 72, 0.15)",
   },
   heroTextBlock: { flex: "1 1 440px", minWidth: "280px" },
-  kicker: { margin: 0, color: "#ffc38d", fontSize: "0.9rem", letterSpacing: "0.24em", textTransform: "uppercase" },
-  heroTitle: { margin: "0.75rem 0 0.85rem 0", fontSize: "clamp(2rem, 3vw, 2.8rem)", lineHeight: 1.05, letterSpacing: "-0.035em", color: "#fff1e4" },
-  heroText: { margin: 0, color: "#d9d7e5", maxWidth: "720px", fontSize: "1rem", lineHeight: 1.75 },
+  kicker: { margin: 0, color: isDark ? "#ffc38d" : "#d97706", fontSize: "0.9rem", letterSpacing: "0.24em", textTransform: "uppercase" },
+  heroTitle: { margin: "0.75rem 0 0.85rem 0", fontSize: "clamp(2rem, 3vw, 2.8rem)", lineHeight: 1.05, letterSpacing: "-0.035em", color: isDark ? "#fff1e4" : "#1a1410" },
+  heroText: { margin: 0, color: isDark ? "#d9d7e5" : "#7b6f6a", maxWidth: "720px", fontSize: "1rem", lineHeight: 1.75 },
   heroActions: { display: "flex", gap: "0.8rem", flexWrap: "wrap", alignItems: "center" },
-  heroButton: { borderRadius: "999px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "#f8f9ff", padding: "0.95rem 1.45rem", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" },
-  heroButtonActive: { border: "1px solid rgba(255, 151, 73, 0.22)", background: "linear-gradient(135deg, rgba(255, 166, 79, 0.22), rgba(255, 255, 255, 0.08))", color: "#fff4e7" },
+  heroButton: { borderRadius: "999px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.25)", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(255, 143, 72, 0.10)", color: isDark ? "#f8f9ff" : "#c85a2d", padding: "0.95rem 1.45rem", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" },
+  heroButtonActive: { border: isDark ? "1px solid rgba(255, 151, 73, 0.22)" : "1px solid rgba(255, 143, 72, 0.40)", background: isDark ? "linear-gradient(135deg, rgba(255, 166, 79, 0.22), rgba(255, 255, 255, 0.08))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.25), rgba(255, 255, 255, 0.12))", color: isDark ? "#fff4e7" : "#1a1410" },
 
   layout: { display: "grid", gridTemplateColumns: "320px 1fr", gap: "1.5rem", alignItems: "start", minHeight: "620px" },
 
   // Sidebar
-  sidebar: { borderRadius: "28px", background: "rgba(31, 41, 77, 0.94)", border: "1px solid rgba(255, 156, 60, 0.12)", boxShadow: "0 30px 70px rgba(0,0,0,0.22)", display: "flex", flexDirection: "column", overflow: "hidden" },
-  sidebarHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.25rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.07)" },
-  sidebarTitle: { fontWeight: 800, fontSize: "1rem", color: "#fff8f0" },
-  btnNew: { borderRadius: "999px", border: "1px solid rgba(255,156,60,0.32)", background: "linear-gradient(135deg, rgba(255,166,79,0.22), rgba(255,255,255,0.06))", color: "#ffcf9a", padding: "0.5rem 1rem", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem" },
+  sidebar: { borderRadius: "28px", background: isDark ? "rgba(31, 41, 77, 0.94)" : "rgba(255, 252, 248, 0.95)", border: isDark ? "1px solid rgba(255, 156, 60, 0.12)" : "1px solid rgba(255, 143, 72, 0.20)", boxShadow: isDark ? "0 30px 70px rgba(0,0,0,0.22)" : "0 30px 70px rgba(255, 143, 72, 0.12)", display: "flex", flexDirection: "column", overflow: "hidden" },
+  sidebarHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.25rem 1.5rem", borderBottom: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255, 143, 72, 0.15)" },
+  sidebarTitle: { fontWeight: 800, fontSize: "1rem", color: isDark ? "#fff8f0" : "#1a1410" },
+  btnNew: { borderRadius: "999px", border: isDark ? "1px solid rgba(255,156,60,0.32)" : "1px solid rgba(255, 143, 72, 0.30)", background: isDark ? "linear-gradient(135deg, rgba(255,166,79,0.22), rgba(255,255,255,0.06))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.20), rgba(255, 255, 255, 0.10))", color: isDark ? "#ffcf9a" : "#c85a2d", padding: "0.5rem 1rem", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem" },
   sessionList: { listStyle: "none", margin: 0, padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "560px", overflowY: "auto" },
   sessionItem: { display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.9rem 1rem", borderRadius: "18px", cursor: "pointer", border: "1px solid transparent", transition: "all 0.18s ease" },
-  sessionItemActive: { background: "linear-gradient(135deg, rgba(255,156,60,0.14), rgba(255,255,255,0.06))", border: "1px solid rgba(255,156,60,0.24)" },
+  sessionItemActive: { background: isDark ? "linear-gradient(135deg, rgba(255,156,60,0.14), rgba(255,255,255,0.06))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.18), rgba(255, 255, 255, 0.10))", border: isDark ? "1px solid rgba(255,156,60,0.24)" : "1px solid rgba(255, 143, 72, 0.30)" },
   sessionIcon: { fontSize: "1.4rem", flexShrink: 0 },
   sessionInfo: { flex: 1, minWidth: 0 },
-  sessionTitle: { display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#fff7ee", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  sessionTitle: { display: "block", fontWeight: 700, fontSize: "0.9rem", color: isDark ? "#fff7ee" : "#1a1410", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   sessionMeta: { display: "flex", gap: "0.4rem", flexWrap: "wrap", marginTop: "0.25rem", alignItems: "center" },
-  sessionType: { fontSize: "0.72rem", padding: "0.2rem 0.55rem", borderRadius: "999px", background: "rgba(255,148,66,0.16)", color: "#ffd8b2", fontWeight: 700 },
-  sessionCount: { fontSize: "0.72rem", color: "#9aa0b8" },
-  sessionDate: { fontSize: "0.72rem", color: "#9aa0b8" },
+  sessionType: { fontSize: "0.72rem", padding: "0.2rem 0.55rem", borderRadius: "999px", background: isDark ? "rgba(255,148,66,0.16)" : "rgba(255, 143, 72, 0.15)", color: isDark ? "#ffd8b2" : "#c85a2d", fontWeight: 700 },
+  sessionCount: { fontSize: "0.72rem", color: isDark ? "#9aa0b8" : "#7b6f6a" },
+  sessionDate: { fontSize: "0.72rem", color: isDark ? "#9aa0b8" : "#7b6f6a" },
   sessionActions: { display: "flex", gap: "0.25rem", flexShrink: 0 },
   btnIcon: { background: "transparent", border: "none", cursor: "pointer", fontSize: "0.85rem", padding: "0.3rem", borderRadius: "8px", opacity: 0.6, transition: "opacity 0.2s" },
-  renameInput: { width: "100%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,156,60,0.32)", borderRadius: "8px", color: "#fff", padding: "0.25rem 0.5rem", fontSize: "0.9rem", outline: "none" },
+  renameInput: { width: "100%", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(255, 143, 72, 0.10)", border: isDark ? "1px solid rgba(255,156,60,0.32)" : "1px solid rgba(255, 143, 72, 0.25)", borderRadius: "8px", color: isDark ? "#fff" : "#1a1410", padding: "0.25rem 0.5rem", fontSize: "0.9rem", outline: "none" },
   emptyList: { display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", padding: "2.5rem 1rem", textAlign: "center" },
   emptyListIcon: { fontSize: "2.5rem" },
-  emptyListText: { color: "#9aa0b8", fontSize: "0.9rem", lineHeight: 1.6, margin: 0 },
+  emptyListText: { color: isDark ? "#9aa0b8" : "#7b6f6a", fontSize: "0.9rem", lineHeight: 1.6, margin: 0 },
 
   // Chat panel
-  chatPanel: { borderRadius: "28px", background: "rgba(28, 34, 57, 0.96)", border: "1px solid rgba(255, 156, 60, 0.12)", boxShadow: "0 30px 70px rgba(0,0,0,0.22)", display: "flex", flexDirection: "column", minHeight: "620px", overflow: "hidden" },
-  chatHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "1.25rem 1.75rem", borderBottom: "1px solid rgba(255,255,255,0.07)" },
-  chatHeaderLabel: { margin: 0, color: "#f2c29b", fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 },
-  chatHeaderTitle: { margin: "0.3rem 0 0", fontSize: "1.2rem", color: "#fff8f0", fontWeight: 800 },
-  chatHeaderDate: { fontSize: "0.8rem", color: "#9aa0b8", flexShrink: 0, paddingTop: "0.2rem" },
+  chatPanel: { borderRadius: "28px", background: isDark ? "rgba(28, 34, 57, 0.96)" : "rgba(255, 252, 248, 0.95)", border: isDark ? "1px solid rgba(255, 156, 60, 0.12)" : "1px solid rgba(255, 143, 72, 0.20)", boxShadow: isDark ? "0 30px 70px rgba(0,0,0,0.22)" : "0 30px 70px rgba(255, 143, 72, 0.12)", display: "flex", flexDirection: "column", minHeight: "620px", overflow: "hidden" },
+  chatHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "1.25rem 1.75rem", borderBottom: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255, 143, 72, 0.15)" },
+  chatHeaderLabel: { margin: 0, color: isDark ? "#f2c29b" : "#c85a2d", fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 },
+  chatHeaderTitle: { margin: "0.3rem 0 0", fontSize: "1.2rem", color: isDark ? "#fff8f0" : "#1a1410", fontWeight: 800 },
+  chatHeaderDate: { fontSize: "0.8rem", color: isDark ? "#9aa0b8" : "#7b6f6a", flexShrink: 0, paddingTop: "0.2rem" },
   messagesArea: { flex: 1, overflowY: "auto", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" },
   msgRow: { display: "flex", gap: "0.75rem", alignItems: "flex-start" },
   msgRowUser: { flexDirection: "row-reverse" },
-  msgAvatar: { width: "36px", height: "36px", borderRadius: "50%", background: "rgba(255,148,66,0.18)", display: "grid", placeItems: "center", fontSize: "1rem", flexShrink: 0 },
-  msgAvatarUser: { width: "36px", height: "36px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "grid", placeItems: "center", fontSize: "1rem", flexShrink: 0 },
-  msgBubble: { maxWidth: "75%", padding: "0.9rem 1.15rem", borderRadius: "20px 20px 20px 4px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" },
-  msgBubbleUser: { borderRadius: "20px 20px 4px 20px", background: "rgba(255,148,66,0.14)", border: "1px solid rgba(255,156,60,0.2)" },
-  msgText: { margin: 0, fontSize: "0.95rem", lineHeight: 1.7, color: "#f3e7d7", whiteSpace: "pre-wrap" },
+  msgAvatar: { width: "36px", height: "36px", borderRadius: "50%", background: isDark ? "rgba(255,148,66,0.18)" : "rgba(255, 143, 72, 0.15)", display: "grid", placeItems: "center", fontSize: "1rem", flexShrink: 0 },
+  msgAvatarUser: { width: "36px", height: "36px", borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(255, 143, 72, 0.08)", display: "grid", placeItems: "center", fontSize: "1rem", flexShrink: 0 },
+  msgBubble: { maxWidth: "75%", padding: "0.9rem 1.15rem", borderRadius: "20px 20px 20px 4px", background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255, 143, 72, 0.08)", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255, 143, 72, 0.15)" },
+  msgBubbleUser: { borderRadius: "20px 20px 4px 20px", background: isDark ? "rgba(255,148,66,0.14)" : "rgba(255, 143, 72, 0.18)", border: isDark ? "1px solid rgba(255,156,60,0.2)" : "1px solid rgba(255, 143, 72, 0.30)" },
+  msgText: { margin: 0, fontSize: "0.95rem", lineHeight: 1.7, color: isDark ? "#f3e7d7" : "#1a1410", whiteSpace: "pre-wrap" },
   msgImage: { width: "100%", maxWidth: "480px", borderRadius: "16px", display: "block" },
   imgActions: { marginTop: "0.75rem" },
-  msgTime: { display: "block", fontSize: "0.72rem", color: "#6b7394", marginTop: "0.5rem", textAlign: "right" },
+  msgTime: { display: "block", fontSize: "0.72rem", color: isDark ? "#6b7394" : "#9b8f7f", marginTop: "0.5rem", textAlign: "right" },
   typingDots: { display: "flex", alignItems: "center", padding: "0.15rem 0" },
 
   // Input area
-  inputArea: { padding: "1.25rem 1.75rem", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", gap: "0.75rem" },
-  modelSelect: { width: "fit-content", padding: "0.6rem 0.9rem", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.07)", color: "#f7ede2", outline: "none", fontSize: "0.85rem" },
+  inputArea: { padding: "1.25rem 1.75rem", borderTop: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255, 143, 72, 0.15)", display: "flex", flexDirection: "column", gap: "0.75rem" },
+  modelSelect: { width: "fit-content", padding: "0.6rem 0.9rem", borderRadius: "12px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#f7ede2" : "#3d3530", outline: "none", fontSize: "0.85rem" },
   inputRow: { display: "flex", gap: "0.75rem", alignItems: "flex-start" },
-  inputTextarea: { flex: 1, padding: "0.85rem 1rem", borderRadius: "18px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)", color: "#f8f5ef", outline: "none", resize: "none", fontSize: "0.95rem", lineHeight: 1.6 },
-  btnSend: { minWidth: "90px", height: "52px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#111827", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" },
+  inputTextarea: { flex: 1, padding: "0.85rem 1rem", borderRadius: "18px", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(255, 252, 248, 0.80)", color: isDark ? "#f8f5ef" : "#1a1410", outline: "none", resize: "none", fontSize: "0.95rem", lineHeight: 1.6 },
+  btnSend: { minWidth: "90px", height: "52px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: isDark ? "#111827" : "#fefdfb", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" },
   btnStop: { background: "linear-gradient(135deg, #ef4444, #be123c)", color: "#ffffff", boxShadow: "0 4px 15px rgba(225, 29, 72, 0.3)" },
   btnDisabled: { opacity: 0.55, cursor: "not-allowed" },
-  inputHint: { margin: 0, fontSize: "0.75rem", color: "#6b7394" },
+  inputHint: { margin: 0, fontSize: "0.75rem", color: isDark ? "#6b7394" : "#9b8f7f" },
 
   // Markdown mode toggle
   modeToggleRow: { display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" },
-  modeToggleBtn: { padding: "0.3rem 0.8rem", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.05)", color: "#c8bfb0", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease" },
-  modeToggleBtnActive: { background: "rgba(255,156,60,0.2)", borderColor: "rgba(255,156,60,0.4)", color: "#ffcf9a" },
-  mdHintBadge: { fontSize: "0.72rem", color: "#7a7f9a", fontStyle: "italic" },
+  modeToggleBtn: { padding: "0.3rem 0.8rem", borderRadius: "999px", border: isDark ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#c8bfb0" : "#7b6f6a", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease" },
+  modeToggleBtnActive: { background: isDark ? "rgba(255,156,60,0.2)" : "rgba(255, 143, 72, 0.20)", borderColor: isDark ? "rgba(255,156,60,0.4)" : "rgba(255, 143, 72, 0.35)", color: isDark ? "#ffcf9a" : "#c85a2d" },
+  mdHintBadge: { fontSize: "0.72rem", color: isDark ? "#7a7f9a" : "#9b8f7f", fontStyle: "italic" },
 
   // Preview tabs
-  previewTabRow: { display: "flex", gap: "0", borderRadius: "10px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", width: "fit-content" },
-  previewTab: { padding: "0.3rem 1rem", border: "none", background: "rgba(255,255,255,0.04)", color: "#9aa0b8", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", transition: "all 0.15s ease" },
-  previewTabActive: { background: "rgba(255,156,60,0.18)", color: "#ffcf9a" },
-  previewBox: { flex: 1, minHeight: "52px", maxHeight: "260px", overflowY: "auto", padding: "0.85rem 1rem", borderRadius: "18px", border: "1px solid rgba(255,156,60,0.2)", background: "rgba(255,156,60,0.04)" },
-  previewPlaceholder: { margin: 0, color: "#5a6080", fontSize: "0.85rem", fontStyle: "italic" },
+  previewTabRow: { display: "flex", gap: "0", borderRadius: "10px", overflow: "hidden", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255, 143, 72, 0.15)", width: "fit-content" },
+  previewTab: { padding: "0.3rem 1rem", border: "none", background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#9aa0b8" : "#7b6f6a", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", transition: "all 0.15s ease" },
+  previewTabActive: { background: isDark ? "rgba(255,156,60,0.18)" : "rgba(255, 143, 72, 0.18)", color: isDark ? "#ffcf9a" : "#c85a2d" },
+  previewBox: { flex: 1, minHeight: "52px", maxHeight: "260px", overflowY: "auto", padding: "0.85rem 1rem", borderRadius: "18px", border: isDark ? "1px solid rgba(255,156,60,0.2)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,156,60,0.04)" : "rgba(255, 143, 72, 0.08)" },
+  previewPlaceholder: { margin: 0, color: isDark ? "#5a6080" : "#9b8f7f", fontSize: "0.85rem", fontStyle: "italic" },
 
   // Markdown rendered output (AI bubble)
-  markdownBody: { fontSize: "0.95rem", lineHeight: 1.75, color: "#f3e7d7", overflowWrap: "break-word", wordBreak: "break-word", maxWidth: "100%" },
+  markdownBody: { fontSize: "0.95rem", lineHeight: 1.75, color: isDark ? "#f3e7d7" : "#1a1410", overflowWrap: "break-word", wordBreak: "break-word", maxWidth: "100%" },
 
   // Modal field header (label + toggle in same row)
   modalFieldHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" },
@@ -867,30 +875,33 @@ const s = {
   // Empty state
   centered: { flex: 1, display: "grid", placeItems: "center", padding: "3rem" },
   emptyChat: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1rem", padding: "3rem", textAlign: "center" },
-  emptyIcon: { width: "76px", height: "76px", borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", fontSize: "2.2rem" },
-  emptyTitle: { margin: 0, fontSize: "1.3rem", fontWeight: 700, color: "#fff8ee" },
-  emptyText: { margin: 0, maxWidth: "320px", color: "#9aa0b8", lineHeight: 1.7, fontSize: "0.95rem" },
-  btnCreateFirst: { marginTop: "0.5rem", borderRadius: "999px", border: "1px solid rgba(255,156,60,0.32)", background: "linear-gradient(135deg, rgba(255,166,79,0.22), rgba(255,255,255,0.06))", color: "#ffcf9a", padding: "0.75rem 1.5rem", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" },
+  emptyIcon: { width: "76px", height: "76px", borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.08)" : "rgba(255, 143, 72, 0.10)", display: "grid", placeItems: "center", fontSize: "2.2rem" },
+  emptyTitle: { margin: 0, fontSize: "1.3rem", fontWeight: 700, color: isDark ? "#fff8ee" : "#1a1410" },
+  emptyText: { margin: 0, maxWidth: "320px", color: isDark ? "#9aa0b8" : "#7b6f6a", lineHeight: 1.7, fontSize: "0.95rem" },
+  btnCreateFirst: { marginTop: "0.5rem", borderRadius: "999px", border: isDark ? "1px solid rgba(255,156,60,0.32)" : "1px solid rgba(255, 143, 72, 0.30)", background: isDark ? "linear-gradient(135deg, rgba(255,166,79,0.22), rgba(255,255,255,0.06))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.18), rgba(255, 255, 255, 0.10))", color: isDark ? "#ffcf9a" : "#c85a2d", padding: "0.75rem 1.5rem", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" },
 
   // Modal
-  modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", display: "grid", placeItems: "center", zIndex: 999, padding: "1rem" },
-  modal: { width: "100%", maxWidth: "520px", maxHeight: "90vh", overflowY: "auto", borderRadius: "28px", background: "rgba(31, 41, 77, 0.98)", border: "1px solid rgba(255, 156, 60, 0.18)", boxShadow: "0 40px 100px rgba(0,0,0,0.5)", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.25rem" },
+  modalOverlay: { position: "fixed", inset: 0, background: isDark ? "rgba(0,0,0,0.65)" : "rgba(0, 0, 0, 0.40)", backdropFilter: "blur(8px)", display: "grid", placeItems: "center", zIndex: 999, padding: "1rem" },
+  modal: { width: "100%", maxWidth: "520px", maxHeight: "90vh", overflowY: "auto", borderRadius: "28px", background: isDark ? "rgba(31, 41, 77, 0.98)" : "rgba(255, 252, 248, 0.98)", border: isDark ? "1px solid rgba(255, 156, 60, 0.18)" : "1px solid rgba(255, 143, 72, 0.25)", boxShadow: isDark ? "0 40px 100px rgba(0,0,0,0.5)" : "0 40px 100px rgba(255, 143, 72, 0.20)", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.25rem" },
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
-  modalLabel: { margin: 0, color: "#f2c29b", fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 },
-  modalTitle: { margin: "0.3rem 0 0", fontSize: "1.3rem", color: "#fff8f0", fontWeight: 800 },
-  btnClose: { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", width: "36px", height: "36px", cursor: "pointer", color: "#edf2ff", fontWeight: 700, display: "grid", placeItems: "center", padding: 0 },
+  modalLabel: { margin: 0, color: isDark ? "#f2c29b" : "#c85a2d", fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 },
+  modalTitle: { margin: "0.3rem 0 0", fontSize: "1.3rem", color: isDark ? "#fff8f0" : "#1a1410", fontWeight: 800 },
+  btnClose: { background: isDark ? "rgba(255,255,255,0.08)" : "rgba(255, 143, 72, 0.10)", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", borderRadius: "999px", width: "36px", height: "36px", cursor: "pointer", color: isDark ? "#edf2ff" : "#3d3530", fontWeight: 700, display: "grid", placeItems: "center", padding: 0 },
   typeGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem" },
-  typeCard: { padding: "1rem", borderRadius: "18px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#f2ede8", textAlign: "left", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.35rem" },
-  typeCardActive: { background: "linear-gradient(135deg, rgba(255,156,60,0.16), rgba(255,255,255,0.08))", borderColor: "rgba(255,156,60,0.32)", boxShadow: "0 8px 24px rgba(255,141,61,0.12)" },
+  typeCard: { padding: "1rem", borderRadius: "18px", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255, 143, 72, 0.08)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255, 143, 72, 0.15)", color: isDark ? "#f2ede8" : "#3d3530", textAlign: "left", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.35rem" },
+  typeCardActive: { background: isDark ? "linear-gradient(135deg, rgba(255,156,60,0.16), rgba(255,255,255,0.08))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.20), rgba(255, 255, 255, 0.12))", borderColor: isDark ? "rgba(255,156,60,0.32)" : "rgba(255, 143, 72, 0.35)", boxShadow: isDark ? "0 8px 24px rgba(255,141,61,0.12)" : "0 8px 24px rgba(255, 143, 72, 0.18)" },
   typeIcon: { fontSize: "1.5rem" },
-  typeLabel: { fontWeight: 700, fontSize: "0.9rem", color: "#fff7ee" },
-  typeDesc: { fontSize: "0.78rem", color: "#c8bfb0", lineHeight: 1.4 },
+  typeLabel: { fontWeight: 700, fontSize: "0.9rem", color: isDark ? "#fff7ee" : "#1a1410" },
+  typeDesc: { fontSize: "0.78rem", color: isDark ? "#c8bfb0" : "#7b6f6a", lineHeight: 1.4 },
   modalField: { display: "flex", flexDirection: "column", gap: "0.5rem" },
-  modalFieldLabel: { fontSize: "0.88rem", fontWeight: 600, color: "#e6d8ca" },
-  modalInput: { width: "100%", padding: "0.85rem 1rem", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.07)", color: "#f7f1e8", outline: "none", fontSize: "0.95rem", fontFamily: "inherit", boxSizing: "border-box" },
+  modalFieldLabel: { fontSize: "0.88rem", fontWeight: 600, color: isDark ? "#e6d8ca" : "#3d3530" },
+  modalInput: { width: "100%", padding: "0.85rem 1rem", borderRadius: "16px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255, 252, 248, 0.80)", color: isDark ? "#f7f1e8" : "#1a1410", outline: "none", fontSize: "0.95rem", fontFamily: "inherit", boxSizing: "border-box" },
   modalActions: { display: "flex", gap: "0.75rem", marginTop: "0.25rem" },
-  btnCreate: { flex: 1, minHeight: "50px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#111827", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" },
-  btnCancelModal: { minHeight: "50px", borderRadius: "18px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.08)", color: "#f7ece1", padding: "0 1.4rem", cursor: "pointer", fontWeight: 700 },
-  btnDownload: { borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#111827", padding: "0.6rem 1rem", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem" },
-  btnUpload: { cursor: "pointer", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "18px", padding: "0 1rem", color: "#f3e7d7", fontSize: "0.85rem", display: "grid", placeItems: "center", minHeight: "52px", fontWeight: 600, whiteSpace: "nowrap" }
+  btnCreate: { flex: 1, minHeight: "50px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: isDark ? "#111827" : "#fefdfb", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" },
+  btnCancelModal: { minHeight: "50px", borderRadius: "18px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.08)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#f7ece1" : "#3d3530", padding: "0 1.4rem", cursor: "pointer", fontWeight: 700 },
+  btnDownload: { borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: isDark ? "#111827" : "#fefdfb", padding: "0.6rem 1rem", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem" },
+  btnUpload: { cursor: "pointer", background: isDark ? "rgba(255,255,255,0.08)" : "rgba(255, 143, 72, 0.10)", border: isDark ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255, 143, 72, 0.20)", borderRadius: "18px", padding: "0 1rem", color: isDark ? "#f3e7d7" : "#3d3530", fontSize: "0.85rem", display: "grid", placeItems: "center", minHeight: "52px", fontWeight: 600, whiteSpace: "nowrap" }
 }
+}
+
+const s = getStyles()

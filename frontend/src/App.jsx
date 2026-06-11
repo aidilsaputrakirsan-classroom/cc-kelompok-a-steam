@@ -181,15 +181,6 @@ function AppContent() {
             isDark={isDark}
             onToggleDark={toggleDark}
           />
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={() => window.location.href = '/status'}
-              className="px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30 font-medium transition-all duration-300"
-              title="System Status & Monitoring"
-            >
-              📊 Status
-            </button>
-          </div>
         </div>
 
         <div className="flex gap-3 flex-wrap mb-6">
@@ -197,8 +188,12 @@ function AppContent() {
             onClick={() => setActiveTab("about-us")}
             className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
               activeTab === "about-us"
-                ? "bg-linear-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105"
-                : "bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30"
+                ? isDark 
+                  ? "bg-linear-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105"
+                  : "bg-linear-to-r from-inti-orange to-inti-orange-light text-white shadow-[0_10px_25px_-5px_rgba(255,143,72,0.5)] scale-105"
+                : isDark
+                  ? "bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30"
+                  : "bg-orange-100/30 border border-orange-200/50 text-orange-700 hover:bg-orange-100/50 hover:text-orange-900 hover:border-orange-300"
             }`}
           >
             ℹ️ About Us
@@ -207,8 +202,12 @@ function AppContent() {
             onClick={() => setActiveTab("chat-history")}
             className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
               activeTab === "chat-history"
-                ? "bg-linear-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105"
-                : "bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30"
+                ? isDark 
+                  ? "bg-linear-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105"
+                  : "bg-linear-to-r from-inti-orange to-inti-orange-light text-white shadow-[0_10px_25px_-5px_rgba(255,143,72,0.5)] scale-105"
+                : isDark
+                  ? "bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30"
+                  : "bg-orange-100/30 border border-orange-200/50 text-orange-700 hover:bg-orange-100/50 hover:text-orange-900 hover:border-orange-300"
             }`}
           >
             💬 Chat History
