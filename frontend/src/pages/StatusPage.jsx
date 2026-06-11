@@ -1,254 +1,257 @@
-import { useServiceStatus, getStatusDisplay, formatUptime, formatErrorRate } from '../hooks/useServiceStatus'
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost';
 
 /**
- * StatusPage - Monitoring Dashboard
- * Menampilkan health dan metrics dari Auth Service dan Item Service
- * Auto-refresh setiap 10 detik
- * 
+ * StatusPage - System Monitoring Dashboard
  * Module 14: Observability & Monitoring
+ * Displays real-time health and metrics for all services
  */
-export default function StatusPage() {
-  const {
-    authStatus,
-    itemsStatus,
-    authMetrics,
-    itemsMetrics,
-    isLoading,
-    error,
-    lastUpdated,
-    refetch,
-  } = useServiceStatus(10000)
 
-  const authDisplay = getStatusDisplay(authStatus?.status)
-  const itemsDisplay = getStatusDisplay(itemsStatus?.status)
+function ServiceCard({ name, icon, healthUrl, metricsUrl }) {
+  const [health, setHealth] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStatus = useCallback(async () => {
+    try {
+      const healthRes = await fetch(healthUrl);
+      const healthData = await healthRes.json();
+      setHealth(healthData);
+    } catch {
+      setHealth({ status: 'unreachable' });
+    }
+
+    if (metricsUrl) {
+      try {
+        const metricsRes = await fetch(metricsUrl);
+        const metricsData = await metricsRes.json();
+        setMetrics(metricsData);
+      } catch {
+        setMetrics(null);
+      }
+    }
+
+    setLoading(false);
+  }, [healthUrl, metricsUrl]);
+
+  useEffect(() => {
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 10000);
+    return () => clearInterval(interval);
+  }, [fetchStatus]);
+
+  const statusColor = {
+    healthy: '#10b981',
+    degraded: '#f59e0b',
+    unhealthy: '#ef4444',
+    unreachable: '#6b7280',
+  };
+
+  const statusBgColor = {
+    healthy: 'rgba(16, 185, 129, 0.08)',
+    degraded: 'rgba(245, 158, 11, 0.08)',
+    unhealthy: 'rgba(239, 68, 68, 0.08)',
+    unreachable: 'rgba(107, 114, 128, 0.08)',
+  };
+
+  const status = health?.status || 'unreachable';
+  const isDark = document.documentElement.classList.contains('light') === false;
+
+  const cardBgColor = isDark 
+    ? 'rgba(17, 24, 39, 0.6)' 
+    : 'rgba(255, 255, 255, 0.8)';
+  const cardBorderColor = isDark 
+    ? 'rgba(229, 231, 235, 0.1)' 
+    : 'rgba(209, 213, 219, 0.4)';
+  const textColor = isDark 
+    ? '#f3f4f6' 
+    : '#1f2937';
+  const subtextColor = isDark 
+    ? '#9ca3af' 
+    : '#6b7280';
+  const metricBgColor = isDark
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'rgba(0, 0, 0, 0.02)';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 p-4 md:p-8">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">System Status</h1>
-            <p className="text-slate-400">Real-time monitoring dashboard for microservices</p>
-          </div>
-          <button
-            onClick={refetch}
-            disabled={isLoading}
-            className="mt-4 md:mt-0 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg transition flex items-center gap-2"
-          >
-            {isLoading ? '⏳ Updating...' : '🔄 Refresh'}
-          </button>
+    <div style={{
+      border: `1px solid ${cardBorderColor}`,
+      borderRadius: '12px',
+      padding: '20px',
+      borderLeft: `3px solid ${statusColor[status] || '#6b7280'}`,
+      background: isDark ? cardBgColor : statusBgColor[status],
+      backdropFilter: 'blur(10px)',
+      color: textColor,
+      transition: 'all 0.2s ease',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '20px' }}>{icon}</span>
+            {name}
+          </h3>
         </div>
-
-        {/* Last Updated */}
-        {lastUpdated && (
-          <div className="text-sm text-slate-400 mb-6">
-            Last updated: {lastUpdated.toLocaleTimeString()}
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-6">
-            <p className="text-red-200">⚠️ Error: {error}</p>
-          </div>
-        )}
-
-        {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Auth Service */}
-          <ServiceCard
-            title="Auth Service"
-            status={authStatus}
-            display={authDisplay}
-            metrics={authMetrics}
-          />
-
-          {/* AI Service */}
-          <ServiceCard
-            title="AI Service"
-            status={itemsStatus}
-            display={itemsDisplay}
-            metrics={itemsMetrics}
-          />
-        </div>
-
-        {/* Metrics Summary */}
-        <MetricsSummary authMetrics={authMetrics} itemsMetrics={itemsMetrics} />
-
-        {/* Troubleshooting Guide */}
-        <TroubleshootingGuide authStatus={authStatus} itemsStatus={itemsStatus} />
-      </div>
-    </div>
-  )
-}
-
-/**
- * Service Card Component
- */
-function ServiceCard({ title, status, display, metrics }) {
-  if (!status) {
-    return (
-      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-        <div className="animate-pulse">
-          <div className="h-4 bg-slate-700 rounded mb-4"></div>
-          <div className="h-4 bg-slate-700 rounded w-1/2"></div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-slate-600 transition">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <span className="text-2xl">{display.icon}</span>
+        <span style={{
+          background: statusColor[status],
+          color: '#fff',
+          padding: '4px 12px',
+          borderRadius: '16px',
+          fontSize: '11px',
+          fontWeight: '600',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+          whiteSpace: 'nowrap',
+        }}>
+          {loading ? 'Checking' : status}
+        </span>
       </div>
 
-      {/* Status Badge */}
-      <div className={`${display.color} px-3 py-1 rounded-full text-sm font-medium w-fit mb-4`}>
-        {display.label}
-      </div>
-
-      {/* Metrics */}
-      <div className="space-y-3 text-sm">
-        {status.uptime !== undefined && (
-          <div className="flex justify-between">
-            <span className="text-slate-400">Uptime:</span>
-            <span className="font-mono font-medium">{formatUptime(status.uptime)}</span>
-          </div>
-        )}
-
-        {status.error_rate !== undefined && (
-          <div className="flex justify-between">
-            <span className="text-slate-400">Error Rate:</span>
-            <span className="font-mono font-medium">{formatErrorRate(status.error_rate)}</span>
-          </div>
-        )}
-
-        {status.request_count !== undefined && (
-          <div className="flex justify-between">
-            <span className="text-slate-400">Total Requests:</span>
-            <span className="font-mono font-medium">{status.request_count}</span>
-          </div>
-        )}
-
-        {metrics && (
-          <>
-            {metrics.avg_response_time && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">Avg Response Time:</span>
-                <span className="font-mono font-medium">{metrics.avg_response_time.toFixed(2)}ms</span>
+      {metrics && (
+        <div style={{ marginTop: '16px', fontSize: '13px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            <div style={{ background: metricBgColor, padding: '10px', borderRadius: '6px' }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', color: subtextColor }}>Requests</div>
+              <div style={{ fontSize: '18px', fontWeight: '600', color: textColor }}>{metrics.total_requests || 0}</div>
+            </div>
+            <div style={{ background: metricBgColor, padding: '10px', borderRadius: '6px' }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', color: metrics.total_errors > 0 ? '#ef4444' : subtextColor }}>Errors</div>
+              <div style={{ fontSize: '18px', fontWeight: '600', color: metrics.total_errors > 0 ? '#ef4444' : textColor }}>
+                {metrics.total_errors || 0}
               </div>
-            )}
+            </div>
+            <div style={{ background: metricBgColor, padding: '10px', borderRadius: '6px' }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', color: subtextColor }}>Error %</div>
+              <div style={{ fontSize: '18px', fontWeight: '600', color: textColor }}>{metrics.error_rate_percent || 0}%</div>
+            </div>
+          </div>
 
-            {metrics.p95_response_time && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">P95 Response Time:</span>
-                <span className="font-mono font-medium">{metrics.p95_response_time.toFixed(2)}ms</span>
-              </div>
-            )}
-
-            {metrics.p99_response_time && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">P99 Response Time:</span>
-                <span className="font-mono font-medium">{metrics.p99_response_time.toFixed(2)}ms</span>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Status Message */}
-      {status.error && (
-        <div className="mt-4 p-3 bg-red-900/20 border border-red-800/50 rounded text-sm text-red-200">
-          {status.error}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginTop: '10px' }}>
+            <div style={{ background: metricBgColor, padding: '10px', borderRadius: '6px' }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', color: subtextColor }}>Avg Latency</div>
+              <div style={{ fontSize: '16px', fontWeight: '600', color: textColor }}>{(metrics.latency?.avg_ms || 0).toFixed(1)}ms</div>
+            </div>
+            <div style={{ background: metricBgColor, padding: '10px', borderRadius: '6px' }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', color: subtextColor }}>P95 Latency</div>
+              <div style={{ fontSize: '16px', fontWeight: '600', color: textColor }}>{(metrics.latency?.p95_ms || 0).toFixed(1)}ms</div>
+            </div>
+            <div style={{ background: metricBgColor, padding: '10px', borderRadius: '6px' }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', color: subtextColor }}>Uptime</div>
+              <div style={{ fontSize: '16px', fontWeight: '600', color: textColor }}>{Math.round((metrics.uptime_seconds || 0) / 60)}m</div>
+            </div>
+          </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
-/**
- * Metrics Summary Component
- */
-function MetricsSummary({ authMetrics, itemsMetrics }) {
-  return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-6">
-      <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
+export default function StatusPage() {
+  const navigate = useNavigate();
+  const isDark = document.documentElement.classList.contains('light') === false;
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricBox
-          label="Auth Requests"
-          value={authMetrics?.total_requests || 0}
-        />
-        <MetricBox
-          label="AI Requests"
-          value={itemsMetrics?.total_requests || 0}
-        />
-        <MetricBox
-          label="Avg Auth Latency"
-          value={authMetrics?.latency?.avg_ms ? `${authMetrics.latency.avg_ms.toFixed(0)}ms` : 'N/A'}
-        />
-        <MetricBox
-          label="Avg AI Latency"
-          value={itemsMetrics?.latency?.avg_ms ? `${itemsMetrics.latency.avg_ms.toFixed(0)}ms` : 'N/A'}
-        />
+  const bgColor = isDark 
+    ? 'radial-gradient(circle at top left, rgba(136, 115, 255, 0.16), transparent 24%), radial-gradient(circle at bottom right, rgba(255, 184, 130, 0.18), transparent 24%), #060913'
+    : 'linear-gradient(135deg, #f8f9fa 0%, #f0f4f8 100%)';
+  const textColor = isDark 
+    ? '#f3f4f6' 
+    : '#1f2937';
+  const subtextColor = isDark 
+    ? '#9ca3af' 
+    : '#6b7280';
+
+  const handleBack = () => {
+    navigate('/');
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: bgColor,
+      padding: '2rem',
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'San Francisco', 'Segoe UI', sans-serif",
+      color: textColor,
+    }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        {/* Header dengan back button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+          <button
+            onClick={handleBack}
+            style={{
+              background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+              border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)',
+              color: textColor,
+              width: '40px',
+              height: '40px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              fontWeight: '600',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)';
+              e.target.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+              e.target.style.transform = 'scale(1)';
+            }}
+            title="Back to application"
+          >
+            ←
+          </button>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700', letterSpacing: '-0.5px' }}>System Status</h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: subtextColor }}>
+              Real-time monitoring • Auto-refresh every 10 seconds
+            </p>
+          </div>
+        </div>
+
+        {/* Service Status Cards */}
+        <div style={{ display: 'grid', gap: '16px', marginBottom: '24px' }}>
+          <ServiceCard
+            name="Auth Service"
+            icon="🔐"
+            healthUrl={`${API_URL}/auth/health`}
+            metricsUrl={`${API_URL}/auth/metrics`}
+          />
+          <ServiceCard
+            name="AI Service"
+            icon="🤖"
+            healthUrl={`${API_URL}/items/health`}
+            metricsUrl={`${API_URL}/items/metrics`}
+          />
+          <ServiceCard
+            name="API Gateway"
+            icon="🌐"
+            healthUrl={`${API_URL}/health`}
+            metricsUrl={null}
+          />
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          textAlign: 'center',
+          fontSize: '12px',
+          color: subtextColor,
+          paddingTop: '16px',
+          borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+        }}>
+          <p style={{ margin: '12px 0' }}>
+            Last checked: <strong>{new Date().toLocaleTimeString('id-ID')}</strong> • 
+            Status page auto-refresh enabled
+          </p>
+          <p style={{ margin: '0', fontSize: '11px' }}>
+            For production monitoring, integrate with Prometheus + Grafana
+          </p>
+        </div>
       </div>
     </div>
-  )
-}
-
-/**
- * Single Metric Box
- */
-function MetricBox({ label, value }) {
-  return (
-    <div className="bg-slate-700/30 rounded p-3">
-      <div className="text-xs text-slate-400 mb-1">{label}</div>
-      <div className="text-lg font-semibold text-slate-100">{value}</div>
-    </div>
-  )
-}
-
-/**
- * Troubleshooting Guide Component
- */
-function TroubleshootingGuide({ authStatus, itemsStatus }) {
-  const authDown = authStatus?.status === 'unhealthy' || authStatus?.status === 'error'
-  const itemsDown = itemsStatus?.status === 'unhealthy' || itemsStatus?.status === 'error'
-
-  if (!authDown && !itemsDown) {
-    return null
-  }
-
-  return (
-    <div className="bg-yellow-900/20 border border-yellow-800/50 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-yellow-200 mb-3">⚠️ Troubleshooting</h3>
-
-      <ul className="space-y-2 text-sm text-yellow-100">
-        {authDown && (
-          <li>
-            <span className="font-semibold">Auth Service is down:</span> Login and registration features are unavailable.
-            Check if the Auth Service container is running with{' '}
-            <code className="bg-slate-700/50 px-2 py-1 rounded">docker-compose ps</code>
-          </li>
-        )}
-
-        {itemsDown && (
-          <li>
-            <span className="font-semibold">AI Service is down:</span> Chat and AI processing features are unavailable.
-            Check if the AI Service container is running.
-          </li>
-        )}
-
-        {(authDown || itemsDown) && (
-          <li>
-            <span className="font-semibold">To restart services:</span>
-            <code className="bg-slate-700/50 px-2 py-1 rounded block mt-1">docker-compose up -d</code>
-          </li>
-        )}
-      </ul>
-    </div>
-  )
+  );
 }
