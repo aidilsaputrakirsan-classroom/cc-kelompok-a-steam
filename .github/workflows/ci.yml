@@ -148,11 +148,17 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🐳 Build backend image
-        run: docker build -t intirupa-backend:ci ./backend
+      - name: 🐳 Build auth-service image
+        run: docker build -t intirupa-auth-service:ci ./services/auth-service
+
+      - name: 🐳 Build ai-service image
+        run: docker build -t intirupa-ai-service:ci ./services/ai-service
+
+      - name: 🐳 Build gateway image
+        run: docker build -t intirupa-gateway:ci ./services/gateway
 
       - name: 🐳 Build frontend image
-        run: docker build --build-arg VITE_API_URL=http://localhost:8000 -t intirupa-frontend:ci ./frontend
+        run: docker build --build-arg VITE_API_URL=http://localhost -t intirupa-frontend:ci ./frontend
 
       - name: ✅ Build success
         run: |
@@ -240,16 +246,23 @@ jobs:
       - name: 🚂 Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: 🚀 Deploy Backend
+      - name: 🚀 Deploy Auth Service
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
-          cd backend
-          # Railway CLI v4 reads RAILWAY_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_ENVIRONMENT_ID
-          # automatically from env vars — no `railway link` needed
-          railway up --service backend --detach
+          cd services/auth-service
+          railway up --service auth-service --detach
+
+      - name: 🚀 Deploy AI Service
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
+        run: |
+          cd services/ai-service
+          railway up --service ai-service --detach
 
       - name: 🚀 Deploy Frontend
         env:
@@ -258,8 +271,6 @@ jobs:
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
           cd frontend
-          # Railway CLI v4 reads RAILWAY_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_ENVIRONMENT_ID
-          # automatically from env vars — no `railway link` needed
           railway up --service frontend --detach
 
       - name: 🩺 Automated Health Check
@@ -322,6 +333,7 @@ jobs:
 
       - name: ✅ Deploy complete
         run: |
-          echo "✅ Deployment and health checks completed successfully!"
-          echo "Backend: https://cc-kelompok-a-steam-production.up.railway.app"
+          echo "✅ Microservices deployment and health checks completed successfully!"
           echo "Frontend: https://cc-kelompok-a-steam-production-51bf.up.railway.app"
+          echo "Auth Service: http://auth-service.railway.internal:8001 (internal)"
+          echo "AI Service: http://ai-service.railway.internal:8002 (internal)"
