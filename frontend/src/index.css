@@ -9,6 +9,13 @@
   --color-inti-text-light: #edf2ff;
   --color-inti-text-muted: #d9d7e5;
   --color-inti-text-deep: #9aa0b8;
+
+  --color-app-bg: var(--bg-app);
+  --color-app-card: var(--bg-card);
+  --color-app-border: var(--bg-card-border);
+  --color-text-primary: var(--text-primary);
+  --color-text-body: var(--text-body);
+  --color-text-muted: var(--text-muted);
 }
 
 /* ===== DARK / LIGHT MODE DESIGN TOKENS ===== */
@@ -27,9 +34,14 @@
   --text-body: #c5cae4;
   --toggle-bg: rgba(255, 255, 255, 0.08);
   --toggle-border: rgba(255, 255, 255, 0.15);
-  --toggle-icon: "🌙";
+  --toggle-icon: "\1F319";
   --toggle-text: "Light Mode";
+  --modal-overlay: rgba(8, 9, 20, 0.8);
+  --modal-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
 
+  /* Header-specific dark mode defaults */
+  --header-user-bg: rgba(255, 255, 255, 0.08);
+  --header-user-border: rgba(255, 255, 255, 0.12);
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -41,19 +53,25 @@
 
 /* Light mode — activated by html.light class */
 html.light {
-  --bg-app: #f5ede4;
-  --bg-app-gradient: radial-gradient(circle at top left, rgba(255, 159, 64, 0.18), transparent 24%),
-                     radial-gradient(circle at bottom right, rgba(255, 193, 105, 0.16), transparent 24%),
-                     #f5ede4;
-  --bg-card: rgba(252, 248, 243, 0.98);
-  --bg-card-border: rgba(255, 140, 66, 0.22);
-  --bg-header: linear-gradient(135deg, rgba(255, 159, 64, 0.30), rgba(252, 248, 243, 0.99));
-  --bg-header-border: rgba(255, 140, 66, 0.30);
-  --text-primary: #3d2817;
-  --text-muted: #8b7355;
-  --text-body: #52372a;
-  --toggle-bg: rgba(255, 140, 66, 0.12);
-  --toggle-border: rgba(255, 140, 66, 0.30);
+  --bg-app: #f8fafc;
+  --bg-app-gradient: radial-gradient(circle at top left, rgba(249, 115, 22, 0.08), transparent 35%),
+                     radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.05), transparent 35%),
+                     #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-border: #e2e8f0;
+  --bg-header: linear-gradient(135deg, rgba(249, 115, 22, 0.10) 0%, rgba(255, 245, 237, 0.98) 100%);
+  --bg-header-border: #fed7aa;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --text-body: #334155;
+  --toggle-bg: #f1f5f9;
+  --toggle-border: #cbd5e1;
+  --modal-overlay: rgba(15, 23, 42, 0.45);
+  --modal-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+
+  /* Header-specific light mode tokens */
+  --header-user-bg: rgba(249, 115, 22, 0.08);
+  --header-user-border: rgba(249, 115, 22, 0.20);
 }
 
 a {
@@ -85,7 +103,8 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: transparent;
+  color: inherit;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -122,8 +141,13 @@ button:focus-visible {
   transform: scale(1.04);
 }
 
+html.light .dark-mode-toggle {
+  color: #0f172a;
+}
+
 html.light .dark-mode-toggle:hover {
-  background: rgba(255, 143, 72, 0.10);
+  background: rgba(249, 115, 22, 0.10);
+  color: #ea580c;
 }
 
 /* ===== MARKDOWN BODY STYLES ===== */
@@ -283,4 +307,78 @@ html.light .dark-mode-toggle:hover {
   .markdown-body pre {
     font-size: 0.8rem;
   }
+}
+
+/* ===== LIGHT MODE MARKDOWN BODY OVERRIDES ===== */
+html.light .markdown-body {
+  color: var(--text-body);
+}
+html.light .markdown-body h1,
+html.light .markdown-body h2,
+html.light .markdown-body h3,
+html.light .markdown-body h4,
+html.light .markdown-body h5,
+html.light .markdown-body h6 {
+  color: var(--text-primary);
+}
+html.light .markdown-body h2 {
+  border-bottom-color: rgba(249, 115, 22, 0.2);
+}
+html.light .markdown-body h3 {
+  color: #ea580c;
+}
+html.light .markdown-body h4,
+html.light .markdown-body h5,
+html.light .markdown-body h6 {
+  color: #c2410c;
+}
+html.light .markdown-body strong {
+  color: #ea580c;
+}
+html.light .markdown-body em {
+  color: #475569;
+}
+html.light .markdown-body li {
+  color: var(--text-body);
+}
+html.light .markdown-body li::marker {
+  color: #f97316;
+}
+html.light .markdown-body blockquote {
+  border-left-color: rgba(249, 115, 22, 0.5);
+  background: rgba(249, 115, 22, 0.05);
+  color: var(--text-body);
+}
+html.light .markdown-body code {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #ea580c;
+}
+html.light .markdown-body pre {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+html.light .markdown-body pre code {
+  color: var(--text-body);
+}
+html.light .markdown-body a {
+  color: #ea580c;
+}
+html.light .markdown-body a:hover {
+  color: #c2410c;
+}
+html.light .markdown-body hr {
+  border-top-color: #e2e8f0;
+}
+html.light .markdown-body th {
+  background: rgba(249, 115, 22, 0.08);
+  color: #ea580c;
+  border-color: #cbd5e1;
+}
+html.light .markdown-body td {
+  border-color: #e2e8f0;
+  color: var(--text-body);
+}
+html.light .markdown-body tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.02);
 }

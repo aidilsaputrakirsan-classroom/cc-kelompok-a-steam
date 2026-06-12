@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShieldCheck, Bot, Globe } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost';
 
@@ -9,7 +10,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost';
  * Displays real-time health and metrics for all services
  */
 
-function ServiceCard({ name, icon, healthUrl, metricsUrl }) {
+function ServiceCard({ name, icon, healthUrl, metricsUrl, isDark: isDarkProp }) {
   const [health, setHealth] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,23 +58,25 @@ function ServiceCard({ name, icon, healthUrl, metricsUrl }) {
   };
 
   const status = health?.status || 'unreachable';
-  const isDark = document.documentElement.classList.contains('light') === false;
+  const isDark = isDarkProp !== undefined
+    ? isDarkProp
+    : document.documentElement.classList.contains('light') === false;
 
   const cardBgColor = isDark 
     ? 'rgba(17, 24, 39, 0.6)' 
-    : 'rgba(255, 255, 255, 0.8)';
+    : 'rgba(255, 255, 255, 0.95)';
   const cardBorderColor = isDark 
     ? 'rgba(229, 231, 235, 0.1)' 
-    : 'rgba(209, 213, 219, 0.4)';
+    : '#e2e8f0';
   const textColor = isDark 
     ? '#f3f4f6' 
-    : '#1f2937';
+    : '#0f172a';
   const subtextColor = isDark 
     ? '#9ca3af' 
-    : '#6b7280';
+    : '#64748b';
   const metricBgColor = isDark
     ? 'rgba(255, 255, 255, 0.05)'
-    : 'rgba(0, 0, 0, 0.02)';
+    : 'rgba(15, 23, 42, 0.02)';
 
   return (
     <div style={{
@@ -89,7 +92,7 @@ function ServiceCard({ name, icon, healthUrl, metricsUrl }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '20px' }}>{icon}</span>
+            <span style={{ display: 'flex', alignItems: 'center', color: statusColor[status] || '#6b7280' }}>{icon}</span>
             {name}
           </h3>
         </div>
@@ -147,19 +150,21 @@ function ServiceCard({ name, icon, healthUrl, metricsUrl }) {
   );
 }
 
-export default function StatusPage() {
+export default function StatusPage({ isDark: isDarkProp }) {
   const navigate = useNavigate();
-  const isDark = document.documentElement.classList.contains('light') === false;
+  const isDark = isDarkProp !== undefined
+    ? isDarkProp
+    : document.documentElement.classList.contains('light') === false;
 
   const bgColor = isDark 
     ? 'radial-gradient(circle at top left, rgba(136, 115, 255, 0.16), transparent 24%), radial-gradient(circle at bottom right, rgba(255, 184, 130, 0.18), transparent 24%), #060913'
-    : 'linear-gradient(135deg, #f8f9fa 0%, #f0f4f8 100%)';
+    : 'radial-gradient(circle at top left, rgba(249, 115, 22, 0.08), transparent 35%), radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.05), transparent 35%), #f8fafc';
   const textColor = isDark 
     ? '#f3f4f6' 
-    : '#1f2937';
+    : '#0f172a';
   const subtextColor = isDark 
     ? '#9ca3af' 
-    : '#6b7280';
+    : '#64748b';
 
   const handleBack = () => {
     navigate('/');
@@ -179,8 +184,8 @@ export default function StatusPage() {
           <button
             onClick={handleBack}
             style={{
-              background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-              border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)',
+              background: isDark ? 'rgba(255,255,255,0.1)' : '#f1f5f9',
+              border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid #cbd5e1',
               color: textColor,
               width: '40px',
               height: '40px',
@@ -194,11 +199,11 @@ export default function StatusPage() {
               fontWeight: '600',
             }}
             onMouseEnter={(e) => {
-              e.target.style.background = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)';
+              e.target.style.background = isDark ? 'rgba(255,255,255,0.15)' : '#e2e8f0';
               e.target.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+              e.target.style.background = isDark ? 'rgba(255,255,255,0.1)' : '#f1f5f9';
               e.target.style.transform = 'scale(1)';
             }}
             title="Back to application"
@@ -217,21 +222,24 @@ export default function StatusPage() {
         <div style={{ display: 'grid', gap: '16px', marginBottom: '24px' }}>
           <ServiceCard
             name="Auth Service"
-            icon="🔐"
+            icon={<ShieldCheck size={20} />}
             healthUrl={`${API_URL}/auth/health`}
             metricsUrl={`${API_URL}/auth/metrics`}
+            isDark={isDark}
           />
           <ServiceCard
             name="AI Service"
-            icon="🤖"
+            icon={<Bot size={20} />}
             healthUrl={`${API_URL}/items/health`}
             metricsUrl={`${API_URL}/items/metrics`}
+            isDark={isDark}
           />
           <ServiceCard
             name="API Gateway"
-            icon="🌐"
+            icon={<Globe size={20} />}
             healthUrl={`${API_URL}/health`}
             metricsUrl={null}
+            isDark={isDark}
           />
         </div>
 
@@ -241,7 +249,7 @@ export default function StatusPage() {
           fontSize: '12px',
           color: subtextColor,
           paddingTop: '16px',
-          borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+          borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
         }}>
           <p style={{ margin: '12px 0' }}>
             Last checked: <strong>{new Date().toLocaleTimeString('id-ID')}</strong> • 

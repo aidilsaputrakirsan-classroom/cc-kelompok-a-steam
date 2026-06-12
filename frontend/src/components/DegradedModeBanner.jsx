@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { AlertTriangle, X } from 'lucide-react'
 import { fetchAuthHealth } from '../services/api'
 
 /**
@@ -37,7 +38,7 @@ export function DegradedModeBanner() {
     <div className="fixed top-0 left-0 right-0 bg-yellow-900/90 border-b border-yellow-700 text-yellow-100 px-4 py-3 shadow-lg z-50">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-xl">⚠️</span>
+          <AlertTriangle size={20} className="shrink-0" />
           <div>
             <p className="font-semibold">Degraded Mode</p>
             <p className="text-sm opacity-90">
@@ -55,9 +56,10 @@ export function DegradedModeBanner() {
           </a>
           <button
             onClick={() => setIsDismissed(true)}
-            className="px-2 py-1 text-yellow-200 hover:text-yellow-100 transition"
+            className="px-2 py-1 text-yellow-200 hover:text-yellow-100 transition flex items-center"
+            aria-label="Dismiss banner"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
       </div>

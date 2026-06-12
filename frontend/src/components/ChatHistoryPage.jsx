@@ -3,6 +3,11 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import Spinner from "./Spinner"
 import {
+  MessageSquare, Image, FileText, ScanText, User, Bot,
+  Download, Pencil, Trash2, Paperclip, Send, Square,
+  Sparkles, Plus, X
+} from "lucide-react"
+import {
   getChatSessions,
   getChatSessionById,
   createChatSession,
@@ -28,7 +33,12 @@ function formatTime(iso) {
   return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
 }
 
-export default function ChatHistoryPage({ showToast }) {
+export default function ChatHistoryPage({ showToast, isDark: isDarkProp }) {
+  // Determine current theme: prefer prop (reactive), fall back to DOM check
+  const isDarkResolved = isDarkProp !== undefined
+    ? isDarkProp
+    : document.documentElement.classList.contains('light') === false
+  const s = getStyles(isDarkResolved)
   const [sessions, setSessions] = useState([])
   const [activeSession, setActiveSession] = useState(null)
   const [loadingSessions, setLoadingSessions] = useState(true)
@@ -69,7 +79,7 @@ export default function ChatHistoryPage({ showToast }) {
   const messagesEndRef = useRef(null)
 
   // Helper untuk membaca file ke base64
-  const handleFileSelect = (e, setBase64) => {
+  const handleFileSelect = (e, setBase64, setFile = null) => {
     const file = e.target.files[0]
     if (!file) return
 
@@ -95,7 +105,10 @@ export default function ChatHistoryPage({ showToast }) {
     }
 
     const reader = new FileReader()
-    reader.onload = (ev) => setBase64(ev.target.result)
+    reader.onload = (ev) => {
+      setBase64(ev.target.result)
+      if (setFile) setFile(file)
+    }
     reader.readAsDataURL(file)
   }
 
@@ -323,7 +336,10 @@ export default function ChatHistoryPage({ showToast }) {
       {/* HERO */}
       <div style={s.hero}>
         <div style={s.heroTextBlock}>
-          <p style={s.kicker}>Inti Studio ✨</p>
+          <p style={s.kicker}>
+            <Sparkles size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '0.4rem' }} />
+            Inti Studio
+          </p>
           <h2 style={s.heroTitle}>Ruang Kerja AI Kreatifmu</h2>
           <p style={s.heroText}>
             Buat sesi generate gambar atau rangkum teks, lanjutkan kapan saja, dan kelola seluruh riwayat karyamu dalam satu tempat.
@@ -334,7 +350,7 @@ export default function ChatHistoryPage({ showToast }) {
       {/* MAIN LAYOUT */}
       <div style={s.layout}>
         {/* ── SIDEBAR ── */}
-        <aside style={s.sidebar}>
+        <aside style={s.sidebar} aria-label="Chat sessions list">
           <div style={s.sidebarHeader}>
             <span style={s.sidebarTitle}>Sesi Inti Studio</span>
             <button style={s.btnNew} onClick={() => setShowNewModal(true)}>+ Baru</button>
@@ -344,7 +360,7 @@ export default function ChatHistoryPage({ showToast }) {
             <div style={s.centered}><Spinner size={28} color="#ffb26c" /></div>
           ) : sessions.length === 0 ? (
             <div style={s.emptyList}>
-              <span style={s.emptyListIcon}>💬</span>
+              <span style={s.emptyListIcon}><MessageSquare size={36} /></span>
               <p style={s.emptyListText}>Belum ada sesi.<br />Klik "+ Baru" untuk mulai berkarya.</p>
             </div>
           ) : (
@@ -359,7 +375,12 @@ export default function ChatHistoryPage({ showToast }) {
                   onClick={() => openSession(session.id)}
                 >
                   <div style={s.sessionIcon}>
-                    {session.session_type === "image" ? "🖼️" : session.session_type === "ocr" ? "📄" : "📝"}
+                    {session.session_type === "image"
+                      ? <Image size={20} />
+                      : session.session_type === "ocr"
+                        ? <ScanText size={20} />
+                        : <FileText size={20} />
+                    }
                   </div>
                   <div style={s.sessionInfo}>
                     {renamingId === session.id ? (
@@ -388,13 +409,17 @@ export default function ChatHistoryPage({ showToast }) {
                       style={s.btnIcon}
                       title="Rename"
                       onClick={e => startRename(e, session)}
-                    >✏️</button>
+                    >
+                      <Pencil size={14} />
+                    </button>
                     <button
                       style={{ ...s.btnIcon, ...(deletingId === session.id ? { opacity: 0.4 } : {}) }}
                       title="Hapus"
                       onClick={e => handleDelete(e, session.id)}
                       disabled={deletingId === session.id}
-                    >🗑️</button>
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </li>
               ))}
@@ -408,7 +433,7 @@ export default function ChatHistoryPage({ showToast }) {
             <div style={s.centered}><Spinner size={40} color="#ffb26c" /></div>
           ) : !activeSession ? (
             <div style={s.emptyChat}>
-              <div style={s.emptyIcon}>💬</div>
+              <div style={s.emptyIcon}><MessageSquare size={48} /></div>
               <h3 style={s.emptyTitle}>Mulai berkarya di Inti Studio</h3>
               <p style={s.emptyText}>
                 Pilih sesi dari daftar kiri, atau klik tombol "+ Baru" untuk memulai sesi generate gambar atau rangkum teks baru.
@@ -423,7 +448,12 @@ export default function ChatHistoryPage({ showToast }) {
               <div style={s.chatHeader}>
                 <div>
                   <p style={s.chatHeaderLabel}>
-                    {activeSession.session_type === "image" ? "🖼️ Image Generation" : activeSession.session_type === "ocr" ? "📄 Document OCR" : "📝 Text Summarize"}
+                    {activeSession.session_type === "image"
+                      ? <><Image size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '0.35rem' }} />Image Generation</>
+                      : activeSession.session_type === "ocr"
+                        ? <><ScanText size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '0.35rem' }} />Document OCR</>
+                        : <><FileText size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '0.35rem' }} />Text Summarize</>
+                    }
                   </p>
                   <h3 style={s.chatHeaderTitle}>{activeSession.title}</h3>
                 </div>
@@ -438,7 +468,7 @@ export default function ChatHistoryPage({ showToast }) {
                     style={{ ...s.msgRow, ...(msg.role === "user" ? s.msgRowUser : {}) }}
                   >
                     <div style={msg.role === "user" ? s.msgAvatarUser : s.msgAvatar}>
-                      {msg.role === "user" ? "👤" : "🤖"}
+                      {msg.role === "user" ? <User size={18} /> : <Bot size={18} />}
                     </div>
                     <div style={{ ...s.msgBubble, ...(msg.role === "user" ? s.msgBubbleUser : {}) }}>
                       {msg.content_type === "image_base64" ? (
@@ -458,7 +488,10 @@ export default function ChatHistoryPage({ showToast }) {
                                   a.download = `inti-rupa-${msg.id}.png`
                                   a.click()
                                 }}
-                              >⬇️ Download</button>
+                              >
+                                <Download size={14} style={{ flexShrink: 0 }} />
+                                Download
+                              </button>
                             </div>
                           )}
                         </div>
@@ -479,7 +512,7 @@ export default function ChatHistoryPage({ showToast }) {
                     className="animate-slide-up"
                     style={{ ...s.msgRow, ...s.msgRowUser }}
                   >
-                    <div style={s.msgAvatarUser}>👤</div>
+                    <div style={s.msgAvatarUser}><User size={18} /></div>
                     <div style={{ ...s.msgBubble, ...s.msgBubbleUser }}>
                       <p style={s.msgText}>{optimisticMsg.content}</p>
                       <span style={s.msgTime}>{formatTime(optimisticMsg.created_at)}</span>
@@ -518,13 +551,19 @@ export default function ChatHistoryPage({ showToast }) {
                       style={{ ...s.modeToggleBtn, ...(inputMode === "plain" ? s.modeToggleBtnActive : {}) }}
                       onClick={() => { setInputMode("plain"); setShowPreview(false) }}
                       title="Mode teks biasa"
-                    >✏️ Plain</button>
+                    >
+                      <Pencil size={13} style={{ flexShrink: 0 }} />
+                      Plain
+                    </button>
                     <button
                       id="btn-mode-markdown"
                       style={{ ...s.modeToggleBtn, ...(inputMode === "markdown" ? s.modeToggleBtnActive : {}) }}
                       onClick={() => setInputMode("markdown")}
                       title="Mode Markdown — gunakan # heading, **bold**, - list"
-                    >📝 Markdown</button>
+                    >
+                      <FileText size={13} style={{ flexShrink: 0 }} />
+                      Markdown
+                    </button>
                     {inputMode === "markdown" && (
                       <span style={s.mdHintBadge}>Gunakan # heading, **bold**, - list</span>
                     )}
@@ -585,7 +624,10 @@ export default function ChatHistoryPage({ showToast }) {
                         onChange={e => handleFileSelect(e, setContinueImageBase64, setContinueImageFile)} 
                       />
                       <label htmlFor="chatOcrUpload" style={s.btnUpload}>
-                        {continueImageFile ? "📄 " + continueImageFile.name.slice(0, 10) + "..." : "📎 Pilih File"}
+                        {continueImageFile
+                          ? <><Paperclip size={14} style={{ flexShrink: 0 }} />{continueImageFile.name.slice(0, 10) + "..."}</>
+                          : <><Paperclip size={14} style={{ flexShrink: 0 }} />Pilih File</>
+                        }
                       </label>
                     </div>
                   )}
@@ -596,9 +638,9 @@ export default function ChatHistoryPage({ showToast }) {
                     disabled={!sending && ((!continueMsg.trim() && activeSession.session_type !== "ocr") || (activeSession.session_type === "ocr" && !continueImageBase64))}
                   >
                     {sending ? (
-                      <>⏹ Batal</>
+                      <><Square size={14} style={{ flexShrink: 0 }} /> Batal</>
                     ) : (
-                      <>Kirim ↑</>
+                      <><Send size={14} style={{ flexShrink: 0 }} /> Kirim</>
                     )}
                   </button>
                 </div>
@@ -628,9 +670,9 @@ export default function ChatHistoryPage({ showToast }) {
             {/* Type selector */}
             <div style={s.typeGrid}>
               {[
-                { val: "image", icon: "🖼️", label: "Image Generator", desc: "Generate gambar dari teks prompt" },
-                { val: "summarize", icon: "📝", label: "Text Summarizer", desc: "Rangkum teks panjang jadi ringkasan" },
-                { val: "ocr", icon: "📄", label: "Document OCR", desc: "Ekstrak teks dari foto dokumen" },
+                { val: "image", icon: Image, label: "Image Generator", desc: "Generate gambar dari teks prompt" },
+                { val: "summarize", icon: FileText, label: "Text Summarizer", desc: "Rangkum teks panjang jadi ringkasan" },
+                { val: "ocr", icon: ScanText, label: "Document OCR", desc: "Ekstrak teks dari foto dokumen" },
               ].map(t => (
                 <button
                   key={t.val}
@@ -638,7 +680,7 @@ export default function ChatHistoryPage({ showToast }) {
                   onClick={() => setNewType(t.val)}
                   disabled={creatingSession}
                 >
-                  <span style={s.typeIcon}>{t.icon}</span>
+                  <span style={s.typeIcon}><t.icon size={24} /></span>
                   <span style={s.typeLabel}>{t.label}</span>
                   <span style={s.typeDesc}>{t.desc}</span>
                 </button>
@@ -681,12 +723,18 @@ export default function ChatHistoryPage({ showToast }) {
                       id="btn-modal-mode-plain"
                       style={{ ...s.modeToggleBtn, ...(newMsgInputMode === "plain" ? s.modeToggleBtnActive : {}) }}
                       onClick={() => { setNewMsgInputMode("plain"); setNewMsgShowPreview(false) }}
-                    >✏️ Plain</button>
+                    >
+                      <Pencil size={13} style={{ flexShrink: 0 }} />
+                      Plain
+                    </button>
                     <button
                       id="btn-modal-mode-markdown"
                       style={{ ...s.modeToggleBtn, ...(newMsgInputMode === "markdown" ? s.modeToggleBtnActive : {}) }}
                       onClick={() => setNewMsgInputMode("markdown")}
-                    >📝 Markdown</button>
+                    >
+                      <FileText size={13} style={{ flexShrink: 0 }} />
+                      Markdown
+                    </button>
                   </div>
                 )}
               </div>
@@ -773,101 +821,98 @@ export default function ChatHistoryPage({ showToast }) {
 }
 
 // ─── STYLES ──────────────────────────────────────────────
-const isDarkMode = () => document.documentElement.classList.contains('light') === false
-
-const getStyles = () => {
-  const isDark = isDarkMode()
+const getStyles = (isDark = document.documentElement.classList.contains('light') === false) => {
   
   return {
   pageWrapper: {
     width: "100%", minHeight: "100%", display: "flex", flexDirection: "column",
-    gap: "1.75rem", fontFamily: "'SF Pro Display', 'SF Pro', system-ui, sans-serif", color: isDark ? "#eef2ff" : "#1a1410",
+    gap: "1.75rem", fontFamily: "'SF Pro Display', 'SF Pro', system-ui, sans-serif", color: isDark ? "#eef2ff" : "#0f172a",
   },
   hero: {
     display: "flex", justifyContent: "space-between", alignItems: "flex-start",
     flexWrap: "wrap", gap: "1.5rem", padding: "2rem", borderRadius: "30px",
     background: isDark 
       ? "linear-gradient(135deg, rgba(255, 164, 82, 0.14), rgba(25, 39, 76, 0.92))"
-      : "linear-gradient(135deg, rgba(255, 143, 72, 0.18), rgba(255, 252, 248, 0.98))",
-    border: isDark ? "1px solid rgba(255, 156, 59, 0.12)" : "1px solid rgba(255, 143, 72, 0.25)", 
-    boxShadow: isDark ? "0 30px 80px rgba(0, 0, 0, 0.2)" : "0 30px 80px rgba(255, 143, 72, 0.15)",
+      : "linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, rgba(255, 255, 255, 0.95) 100%)",
+    border: isDark ? "1px solid rgba(255, 156, 59, 0.12)" : "1px solid #e2e8f0", 
+    boxShadow: isDark ? "0 30px 80px rgba(0, 0, 0, 0.2)" : "0 10px 30px -3px rgba(15, 23, 42, 0.03), 0 4px 12px -2px rgba(15, 23, 42, 0.02)",
   },
   heroTextBlock: { flex: "1 1 440px", minWidth: "280px" },
   kicker: { margin: 0, color: isDark ? "#ffc38d" : "#d97706", fontSize: "0.9rem", letterSpacing: "0.24em", textTransform: "uppercase" },
-  heroTitle: { margin: "0.75rem 0 0.85rem 0", fontSize: "clamp(2rem, 3vw, 2.8rem)", lineHeight: 1.05, letterSpacing: "-0.035em", color: isDark ? "#fff1e4" : "#1a1410" },
-  heroText: { margin: 0, color: isDark ? "#d9d7e5" : "#7b6f6a", maxWidth: "720px", fontSize: "1rem", lineHeight: 1.75 },
+  heroTitle: { margin: "0.75rem 0 0.85rem 0", fontSize: "clamp(2rem, 3vw, 2.8rem)", lineHeight: 1.05, letterSpacing: "-0.035em", color: isDark ? "#fff1e4" : "#0f172a" },
+  heroText: { margin: 0, color: isDark ? "#d9d7e5" : "#475569", maxWidth: "720px", fontSize: "1rem", lineHeight: 1.75 },
   heroActions: { display: "flex", gap: "0.8rem", flexWrap: "wrap", alignItems: "center" },
-  heroButton: { borderRadius: "999px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.25)", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(255, 143, 72, 0.10)", color: isDark ? "#f8f9ff" : "#c85a2d", padding: "0.95rem 1.45rem", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" },
-  heroButtonActive: { border: isDark ? "1px solid rgba(255, 151, 73, 0.22)" : "1px solid rgba(255, 143, 72, 0.40)", background: isDark ? "linear-gradient(135deg, rgba(255, 166, 79, 0.22), rgba(255, 255, 255, 0.08))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.25), rgba(255, 255, 255, 0.12))", color: isDark ? "#fff4e7" : "#1a1410" },
+  heroButton: { borderRadius: "999px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid #cbd5e1", background: isDark ? "rgba(255,255,255,0.06)" : "#f1f5f9", color: isDark ? "#f8f9ff" : "#475569", padding: "0.95rem 1.45rem", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" },
+  heroButtonActive: { border: isDark ? "1px solid rgba(255, 151, 73, 0.22)" : "1px solid #f97316", background: isDark ? "linear-gradient(135deg, rgba(255, 166, 79, 0.22), rgba(255, 255, 255, 0.08))" : "linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(255, 255, 255, 0.90))", color: isDark ? "#fff4e7" : "#ea580c" },
 
   layout: { display: "grid", gridTemplateColumns: "320px 1fr", gap: "1.5rem", alignItems: "start", minHeight: "620px" },
 
   // Sidebar
-  sidebar: { borderRadius: "28px", background: isDark ? "rgba(31, 41, 77, 0.94)" : "rgba(255, 252, 248, 0.95)", border: isDark ? "1px solid rgba(255, 156, 60, 0.12)" : "1px solid rgba(255, 143, 72, 0.20)", boxShadow: isDark ? "0 30px 70px rgba(0,0,0,0.22)" : "0 30px 70px rgba(255, 143, 72, 0.12)", display: "flex", flexDirection: "column", overflow: "hidden" },
-  sidebarHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.25rem 1.5rem", borderBottom: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255, 143, 72, 0.15)" },
-  sidebarTitle: { fontWeight: 800, fontSize: "1rem", color: isDark ? "#fff8f0" : "#1a1410" },
-  btnNew: { borderRadius: "999px", border: isDark ? "1px solid rgba(255,156,60,0.32)" : "1px solid rgba(255, 143, 72, 0.30)", background: isDark ? "linear-gradient(135deg, rgba(255,166,79,0.22), rgba(255,255,255,0.06))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.20), rgba(255, 255, 255, 0.10))", color: isDark ? "#ffcf9a" : "#c85a2d", padding: "0.5rem 1rem", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem" },
+  sidebar: { borderRadius: "28px", background: isDark ? "rgba(31, 41, 77, 0.94)" : "#ffffff", border: isDark ? "1px solid rgba(255, 156, 60, 0.12)" : "1px solid #e2e8f0", boxShadow: isDark ? "0 30px 70px rgba(0,0,0,0.22)" : "0 10px 30px -3px rgba(15, 23, 42, 0.03)", display: "flex", flexDirection: "column", overflow: "hidden" },
+  sidebarHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.25rem 1.5rem", borderBottom: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid #f1f5f9" },
+  sidebarTitle: { fontWeight: 800, fontSize: "1rem", color: isDark ? "#fff8f0" : "#0f172a" },
+  btnNew: { borderRadius: "999px", border: isDark ? "1px solid rgba(255,156,60,0.32)" : "1px solid rgba(249, 115, 22, 0.30)", background: isDark ? "linear-gradient(135deg, rgba(255,166,79,0.22), rgba(255,255,255,0.06))" : "linear-gradient(135deg, rgba(249, 115, 22, 0.10), rgba(255, 255, 255, 0.90))", color: isDark ? "#ffcf9a" : "#ea580c", padding: "0.5rem 1rem", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem" },
   sessionList: { listStyle: "none", margin: 0, padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "560px", overflowY: "auto" },
   sessionItem: { display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.9rem 1rem", borderRadius: "18px", cursor: "pointer", border: "1px solid transparent", transition: "all 0.18s ease" },
-  sessionItemActive: { background: isDark ? "linear-gradient(135deg, rgba(255,156,60,0.14), rgba(255,255,255,0.06))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.18), rgba(255, 255, 255, 0.10))", border: isDark ? "1px solid rgba(255,156,60,0.24)" : "1px solid rgba(255, 143, 72, 0.30)" },
-  sessionIcon: { fontSize: "1.4rem", flexShrink: 0 },
+  sessionItemActive: { background: isDark ? "linear-gradient(135deg, rgba(255,156,60,0.14), rgba(255,255,255,0.06))" : "linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(255, 255, 255, 0.90))", border: isDark ? "1px solid rgba(255,156,60,0.24)" : "1px solid rgba(249, 115, 22, 0.25)" },
+  sessionIcon: { flexShrink: 0, width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", color: isDark ? "#ffb26c" : "#ea580c" },
   sessionInfo: { flex: 1, minWidth: 0 },
-  sessionTitle: { display: "block", fontWeight: 700, fontSize: "0.9rem", color: isDark ? "#fff7ee" : "#1a1410", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  sessionTitle: { display: "block", fontWeight: 700, fontSize: "0.9rem", color: isDark ? "#fff7ee" : "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   sessionMeta: { display: "flex", gap: "0.4rem", flexWrap: "wrap", marginTop: "0.25rem", alignItems: "center" },
-  sessionType: { fontSize: "0.72rem", padding: "0.2rem 0.55rem", borderRadius: "999px", background: isDark ? "rgba(255,148,66,0.16)" : "rgba(255, 143, 72, 0.15)", color: isDark ? "#ffd8b2" : "#c85a2d", fontWeight: 700 },
-  sessionCount: { fontSize: "0.72rem", color: isDark ? "#9aa0b8" : "#7b6f6a" },
-  sessionDate: { fontSize: "0.72rem", color: isDark ? "#9aa0b8" : "#7b6f6a" },
+  sessionType: { fontSize: "0.72rem", padding: "0.2rem 0.55rem", borderRadius: "999px", background: isDark ? "rgba(255,148,66,0.16)" : "rgba(249, 115, 22, 0.08)", color: isDark ? "#ffd8b2" : "#ea580c", fontWeight: 700 },
+  sessionCount: { fontSize: "0.72rem", color: isDark ? "#9aa0b8" : "#64748b" },
+  sessionDate: { fontSize: "0.72rem", color: isDark ? "#9aa0b8" : "#64748b" },
   sessionActions: { display: "flex", gap: "0.25rem", flexShrink: 0 },
-  btnIcon: { background: "transparent", border: "none", cursor: "pointer", fontSize: "0.85rem", padding: "0.3rem", borderRadius: "8px", opacity: 0.6, transition: "opacity 0.2s" },
-  renameInput: { width: "100%", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(255, 143, 72, 0.10)", border: isDark ? "1px solid rgba(255,156,60,0.32)" : "1px solid rgba(255, 143, 72, 0.25)", borderRadius: "8px", color: isDark ? "#fff" : "#1a1410", padding: "0.25rem 0.5rem", fontSize: "0.9rem", outline: "none" },
+  btnIcon: { background: "transparent", border: "none", cursor: "pointer", padding: "0.3rem", borderRadius: "8px", opacity: 0.6, transition: "opacity 0.2s", display: "flex", alignItems: "center", justifyContent: "center", color: "inherit" },
+  renameInput: { width: "100%", background: "var(--toggle-bg)", border: "1px solid var(--toggle-border)", borderRadius: "8px", color: "var(--text-primary)", padding: "0.25rem 0.5rem", fontSize: "0.9rem", outline: "none" },
   emptyList: { display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", padding: "2.5rem 1rem", textAlign: "center" },
-  emptyListIcon: { fontSize: "2.5rem" },
-  emptyListText: { color: isDark ? "#9aa0b8" : "#7b6f6a", fontSize: "0.9rem", lineHeight: 1.6, margin: 0 },
+  emptyListIcon: { display: "flex", alignItems: "center", justifyContent: "center", color: isDark ? "#6b7394" : "#94a3b8" },
+  emptyListText: { color: isDark ? "#9aa0b8" : "#64748b", fontSize: "0.9rem", lineHeight: 1.6, margin: 0 },
 
   // Chat panel
-  chatPanel: { borderRadius: "28px", background: isDark ? "rgba(28, 34, 57, 0.96)" : "rgba(255, 252, 248, 0.95)", border: isDark ? "1px solid rgba(255, 156, 60, 0.12)" : "1px solid rgba(255, 143, 72, 0.20)", boxShadow: isDark ? "0 30px 70px rgba(0,0,0,0.22)" : "0 30px 70px rgba(255, 143, 72, 0.12)", display: "flex", flexDirection: "column", minHeight: "620px", overflow: "hidden" },
-  chatHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "1.25rem 1.75rem", borderBottom: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255, 143, 72, 0.15)" },
-  chatHeaderLabel: { margin: 0, color: isDark ? "#f2c29b" : "#c85a2d", fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 },
-  chatHeaderTitle: { margin: "0.3rem 0 0", fontSize: "1.2rem", color: isDark ? "#fff8f0" : "#1a1410", fontWeight: 800 },
-  chatHeaderDate: { fontSize: "0.8rem", color: isDark ? "#9aa0b8" : "#7b6f6a", flexShrink: 0, paddingTop: "0.2rem" },
+  chatPanel: { borderRadius: "28px", background: isDark ? "rgba(28, 34, 57, 0.96)" : "#ffffff", border: isDark ? "1px solid rgba(255, 156, 60, 0.12)" : "1px solid #e2e8f0", boxShadow: isDark ? "0 30px 70px rgba(0,0,0,0.22)" : "0 10px 30px -3px rgba(15, 23, 42, 0.03)", display: "flex", flexDirection: "column", minHeight: "620px", overflow: "hidden" },
+  chatHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "1.25rem 1.75rem", borderBottom: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid #f1f5f9" },
+  chatHeaderLabel: { margin: 0, color: isDark ? "#f2c29b" : "#ea580c", fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 },
+  chatHeaderTitle: { margin: "0.3rem 0 0", fontSize: "1.2rem", color: isDark ? "#fff8f0" : "#0f172a", fontWeight: 800 },
+  chatHeaderDate: { fontSize: "0.8rem", color: isDark ? "#9aa0b8" : "#64748b", flexShrink: 0, paddingTop: "0.2rem" },
   messagesArea: { flex: 1, overflowY: "auto", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" },
   msgRow: { display: "flex", gap: "0.75rem", alignItems: "flex-start" },
   msgRowUser: { flexDirection: "row-reverse" },
-  msgAvatar: { width: "36px", height: "36px", borderRadius: "50%", background: isDark ? "rgba(255,148,66,0.18)" : "rgba(255, 143, 72, 0.15)", display: "grid", placeItems: "center", fontSize: "1rem", flexShrink: 0 },
-  msgAvatarUser: { width: "36px", height: "36px", borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(255, 143, 72, 0.08)", display: "grid", placeItems: "center", fontSize: "1rem", flexShrink: 0 },
-  msgBubble: { maxWidth: "75%", padding: "0.9rem 1.15rem", borderRadius: "20px 20px 20px 4px", background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255, 143, 72, 0.08)", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255, 143, 72, 0.15)" },
-  msgBubbleUser: { borderRadius: "20px 20px 4px 20px", background: isDark ? "rgba(255,148,66,0.14)" : "rgba(255, 143, 72, 0.18)", border: isDark ? "1px solid rgba(255,156,60,0.2)" : "1px solid rgba(255, 143, 72, 0.30)" },
-  msgText: { margin: 0, fontSize: "0.95rem", lineHeight: 1.7, color: isDark ? "#f3e7d7" : "#1a1410", whiteSpace: "pre-wrap" },
+  msgAvatar: { width: "36px", height: "36px", borderRadius: "50%", background: isDark ? "rgba(255,148,66,0.18)" : "rgba(249, 115, 22, 0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: isDark ? "#ffb26c" : "#ea580c" },
+  msgAvatarUser: { width: "36px", height: "36px", borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.1)" : "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: isDark ? "#edf2ff" : "#475569" },
+  msgBubble: { maxWidth: "75%", padding: "0.9rem 1.15rem", borderRadius: "20px 20px 20px 4px", background: isDark ? "rgba(255,255,255,0.07)" : "#f8fafc", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0" },
+  msgBubbleUser: { borderRadius: "20px 20px 4px 20px", background: isDark ? "rgba(255,148,66,0.14)" : "linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(255, 255, 255, 0.90))", border: isDark ? "1px solid rgba(255,156,60,0.2)" : "1px solid rgba(249, 115, 22, 0.20)" },
+  msgText: { margin: 0, fontSize: "0.95rem", lineHeight: 1.7, color: isDark ? "#f3e7d7" : "#0f172a", whiteSpace: "pre-wrap" },
   msgImage: { width: "100%", maxWidth: "480px", borderRadius: "16px", display: "block" },
   imgActions: { marginTop: "0.75rem" },
-  msgTime: { display: "block", fontSize: "0.72rem", color: isDark ? "#6b7394" : "#9b8f7f", marginTop: "0.5rem", textAlign: "right" },
+  msgTime: { display: "block", fontSize: "0.72rem", color: isDark ? "#6b7394" : "#64748b", marginTop: "0.5rem", textAlign: "right" },
   typingDots: { display: "flex", alignItems: "center", padding: "0.15rem 0" },
 
   // Input area
-  inputArea: { padding: "1.25rem 1.75rem", borderTop: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255, 143, 72, 0.15)", display: "flex", flexDirection: "column", gap: "0.75rem" },
-  modelSelect: { width: "fit-content", padding: "0.6rem 0.9rem", borderRadius: "12px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#f7ede2" : "#3d3530", outline: "none", fontSize: "0.85rem" },
+  inputArea: { padding: "1.25rem 1.75rem", borderTop: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid #f1f5f9", display: "flex", flexDirection: "column", gap: "0.75rem" },
+  modelSelect: { width: "fit-content", padding: "0.6rem 0.9rem", borderRadius: "12px", border: "1px solid var(--toggle-border)", background: "var(--toggle-bg)", color: "var(--text-primary)", outline: "none", fontSize: "0.85rem" },
   inputRow: { display: "flex", gap: "0.75rem", alignItems: "flex-start" },
-  inputTextarea: { flex: 1, padding: "0.85rem 1rem", borderRadius: "18px", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(255, 252, 248, 0.80)", color: isDark ? "#f8f5ef" : "#1a1410", outline: "none", resize: "none", fontSize: "0.95rem", lineHeight: 1.6 },
-  btnSend: { minWidth: "90px", height: "52px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: isDark ? "#111827" : "#fefdfb", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" },
+  inputTextarea: { flex: 1, padding: "0.85rem 1rem", borderRadius: "18px", border: "1px solid var(--toggle-border)", background: "var(--toggle-bg)", color: "var(--text-primary)", outline: "none", resize: "none", fontSize: "0.95rem", lineHeight: 1.6 },
+  btnSend: { minWidth: "90px", height: "52px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#ffffff", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" },
   btnStop: { background: "linear-gradient(135deg, #ef4444, #be123c)", color: "#ffffff", boxShadow: "0 4px 15px rgba(225, 29, 72, 0.3)" },
   btnDisabled: { opacity: 0.55, cursor: "not-allowed" },
-  inputHint: { margin: 0, fontSize: "0.75rem", color: isDark ? "#6b7394" : "#9b8f7f" },
+  inputHint: { margin: 0, fontSize: "0.75rem", color: isDark ? "#6b7394" : "#64748b" },
 
   // Markdown mode toggle
   modeToggleRow: { display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" },
-  modeToggleBtn: { padding: "0.3rem 0.8rem", borderRadius: "999px", border: isDark ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#c8bfb0" : "#7b6f6a", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease" },
-  modeToggleBtnActive: { background: isDark ? "rgba(255,156,60,0.2)" : "rgba(255, 143, 72, 0.20)", borderColor: isDark ? "rgba(255,156,60,0.4)" : "rgba(255, 143, 72, 0.35)", color: isDark ? "#ffcf9a" : "#c85a2d" },
-  mdHintBadge: { fontSize: "0.72rem", color: isDark ? "#7a7f9a" : "#9b8f7f", fontStyle: "italic" },
+  modeToggleBtn: { padding: "0.3rem 0.8rem", borderRadius: "999px", border: isDark ? "1px solid rgba(255,255,255,0.14)" : "1px solid #cbd5e1", background: isDark ? "rgba(255,255,255,0.05)" : "#f1f5f9", color: isDark ? "#c8bfb0" : "#475569", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease", display: "flex", alignItems: "center", gap: "0.3rem" },
+  modeToggleBtnActive: { background: isDark ? "rgba(255,156,60,0.2)" : "rgba(249, 115, 22, 0.08)", borderColor: isDark ? "rgba(255,156,60,0.4)" : "rgba(249, 115, 22, 0.25)", color: isDark ? "#ffcf9a" : "#ea580c" },
+  mdHintBadge: { fontSize: "0.72rem", color: isDark ? "#7a7f9a" : "#64748b", fontStyle: "italic" },
 
   // Preview tabs
-  previewTabRow: { display: "flex", gap: "0", borderRadius: "10px", overflow: "hidden", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255, 143, 72, 0.15)", width: "fit-content" },
-  previewTab: { padding: "0.3rem 1rem", border: "none", background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#9aa0b8" : "#7b6f6a", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", transition: "all 0.15s ease" },
-  previewTabActive: { background: isDark ? "rgba(255,156,60,0.18)" : "rgba(255, 143, 72, 0.18)", color: isDark ? "#ffcf9a" : "#c85a2d" },
-  previewBox: { flex: 1, minHeight: "52px", maxHeight: "260px", overflowY: "auto", padding: "0.85rem 1rem", borderRadius: "18px", border: isDark ? "1px solid rgba(255,156,60,0.2)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,156,60,0.04)" : "rgba(255, 143, 72, 0.08)" },
-  previewPlaceholder: { margin: 0, color: isDark ? "#5a6080" : "#9b8f7f", fontSize: "0.85rem", fontStyle: "italic" },
+  previewTabRow: { display: "flex", gap: "0", borderRadius: "10px", overflow: "hidden", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #cbd5e1", width: "fit-content" },
+  previewTab: { padding: "0.3rem 1rem", border: "none", background: isDark ? "rgba(255,255,255,0.04)" : "#f1f5f9", color: isDark ? "#9aa0b8" : "#475569", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", transition: "all 0.15s ease" },
+  previewTabActive: { background: isDark ? "rgba(255,156,60,0.18)" : "rgba(249, 115, 22, 0.08)", color: isDark ? "#ffcf9a" : "#ea580c" },
+  previewBox: { flex: 1, minHeight: "52px", maxHeight: "260px", overflowY: "auto", padding: "0.85rem 1rem", borderRadius: "18px", border: isDark ? "1px solid rgba(255,156,60,0.2)" : "1px solid #cbd5e1", background: isDark ? "rgba(255,156,60,0.04)" : "#f8fafc" },
+  previewPlaceholder: { margin: 0, color: isDark ? "#5a6080" : "#64748b", fontSize: "0.85rem", fontStyle: "italic" },
 
   // Markdown rendered output (AI bubble)
-  markdownBody: { fontSize: "0.95rem", lineHeight: 1.75, color: isDark ? "#f3e7d7" : "#1a1410", overflowWrap: "break-word", wordBreak: "break-word", maxWidth: "100%" },
+  markdownBody: { fontSize: "0.95rem", lineHeight: 1.75, color: isDark ? "#f3e7d7" : "#0f172a", overflowWrap: "break-word", wordBreak: "break-word", maxWidth: "100%" },
 
   // Modal field header (label + toggle in same row)
   modalFieldHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" },
@@ -875,33 +920,31 @@ const getStyles = () => {
   // Empty state
   centered: { flex: 1, display: "grid", placeItems: "center", padding: "3rem" },
   emptyChat: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1rem", padding: "3rem", textAlign: "center" },
-  emptyIcon: { width: "76px", height: "76px", borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.08)" : "rgba(255, 143, 72, 0.10)", display: "grid", placeItems: "center", fontSize: "2.2rem" },
-  emptyTitle: { margin: 0, fontSize: "1.3rem", fontWeight: 700, color: isDark ? "#fff8ee" : "#1a1410" },
-  emptyText: { margin: 0, maxWidth: "320px", color: isDark ? "#9aa0b8" : "#7b6f6a", lineHeight: 1.7, fontSize: "0.95rem" },
-  btnCreateFirst: { marginTop: "0.5rem", borderRadius: "999px", border: isDark ? "1px solid rgba(255,156,60,0.32)" : "1px solid rgba(255, 143, 72, 0.30)", background: isDark ? "linear-gradient(135deg, rgba(255,166,79,0.22), rgba(255,255,255,0.06))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.18), rgba(255, 255, 255, 0.10))", color: isDark ? "#ffcf9a" : "#c85a2d", padding: "0.75rem 1.5rem", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" },
+  emptyIcon: { width: "76px", height: "76px", borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.08)" : "rgba(249, 115, 22, 0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: isDark ? "#9aa0b8" : "#ea580c" },
+  emptyTitle: { margin: 0, fontSize: "1.3rem", fontWeight: 700, color: isDark ? "#fff8ee" : "#0f172a" },
+  emptyText: { margin: 0, maxWidth: "320px", color: isDark ? "#9aa0b8" : "#64748b", lineHeight: 1.7, fontSize: "0.95rem" },
+  btnCreateFirst: { marginTop: "0.5rem", borderRadius: "999px", border: isDark ? "1px solid rgba(255,156,60,0.32)" : "1px solid rgba(249, 115, 22, 0.30)", background: isDark ? "linear-gradient(135deg, rgba(255,166,79,0.22), rgba(255,255,255,0.06))" : "linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(255, 255, 255, 0.90))", color: isDark ? "#ffcf9a" : "#ea580c", padding: "0.75rem 1.5rem", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" },
 
   // Modal
-  modalOverlay: { position: "fixed", inset: 0, background: isDark ? "rgba(0,0,0,0.65)" : "rgba(0, 0, 0, 0.40)", backdropFilter: "blur(8px)", display: "grid", placeItems: "center", zIndex: 999, padding: "1rem" },
-  modal: { width: "100%", maxWidth: "520px", maxHeight: "90vh", overflowY: "auto", borderRadius: "28px", background: isDark ? "rgba(31, 41, 77, 0.98)" : "rgba(255, 252, 248, 0.98)", border: isDark ? "1px solid rgba(255, 156, 60, 0.18)" : "1px solid rgba(255, 143, 72, 0.25)", boxShadow: isDark ? "0 40px 100px rgba(0,0,0,0.5)" : "0 40px 100px rgba(255, 143, 72, 0.20)", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.25rem" },
+  modalOverlay: { position: "fixed", inset: 0, background: isDark ? "rgba(0,0,0,0.65)" : "rgba(15, 23, 42, 0.40)", backdropFilter: "blur(8px)", display: "grid", placeItems: "center", zIndex: 999, padding: "1rem" },
+  modal: { width: "100%", maxWidth: "520px", maxHeight: "90vh", overflowY: "auto", borderRadius: "28px", background: isDark ? "rgba(31, 41, 77, 0.98)" : "#ffffff", border: isDark ? "1px solid rgba(255, 156, 60, 0.18)" : "1px solid #e2e8f0", boxShadow: isDark ? "0 40px 100px rgba(0,0,0,0.5)" : "0 20px 50px rgba(15, 23, 42, 0.08)", padding: "2rem", display: "flex", flexDirection: "column", gap: "1.25rem" },
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
-  modalLabel: { margin: 0, color: isDark ? "#f2c29b" : "#c85a2d", fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 },
-  modalTitle: { margin: "0.3rem 0 0", fontSize: "1.3rem", color: isDark ? "#fff8f0" : "#1a1410", fontWeight: 800 },
-  btnClose: { background: isDark ? "rgba(255,255,255,0.08)" : "rgba(255, 143, 72, 0.10)", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", borderRadius: "999px", width: "36px", height: "36px", cursor: "pointer", color: isDark ? "#edf2ff" : "#3d3530", fontWeight: 700, display: "grid", placeItems: "center", padding: 0 },
+  modalLabel: { margin: 0, color: isDark ? "#f2c29b" : "#ea580c", fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 },
+  modalTitle: { margin: "0.3rem 0 0", fontSize: "1.3rem", color: isDark ? "#fff8f0" : "#0f172a", fontWeight: 800 },
+  btnClose: { background: isDark ? "rgba(255,255,255,0.08)" : "#f1f5f9", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid #cbd5e1", borderRadius: "999px", width: "36px", height: "36px", cursor: "pointer", color: isDark ? "#edf2ff" : "#334155", fontWeight: 700, display: "grid", placeItems: "center", padding: 0 },
   typeGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem" },
-  typeCard: { padding: "1rem", borderRadius: "18px", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255, 143, 72, 0.08)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255, 143, 72, 0.15)", color: isDark ? "#f2ede8" : "#3d3530", textAlign: "left", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.35rem" },
-  typeCardActive: { background: isDark ? "linear-gradient(135deg, rgba(255,156,60,0.16), rgba(255,255,255,0.08))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.20), rgba(255, 255, 255, 0.12))", borderColor: isDark ? "rgba(255,156,60,0.32)" : "rgba(255, 143, 72, 0.35)", boxShadow: isDark ? "0 8px 24px rgba(255,141,61,0.12)" : "0 8px 24px rgba(255, 143, 72, 0.18)" },
+  typeCard: { padding: "1rem", borderRadius: "18px", background: isDark ? "rgba(255,255,255,0.05)" : "#f8fafc", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid #cbd5e1", color: isDark ? "#f2ede8" : "#334155", textAlign: "left", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.35rem" },
+  typeCardActive: { background: isDark ? "linear-gradient(135deg, rgba(255,156,60,0.16), rgba(255,255,255,0.08))" : "linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(255, 255, 255, 0.90))", borderColor: isDark ? "rgba(255,156,60,0.32)" : "rgba(249, 115, 22, 0.25)", boxShadow: isDark ? "0 8px 24px rgba(255,141,61,0.12)" : "0 8px 24px rgba(249, 115, 22, 0.10)" },
   typeIcon: { fontSize: "1.5rem" },
-  typeLabel: { fontWeight: 700, fontSize: "0.9rem", color: isDark ? "#fff7ee" : "#1a1410" },
-  typeDesc: { fontSize: "0.78rem", color: isDark ? "#c8bfb0" : "#7b6f6a", lineHeight: 1.4 },
+  typeLabel: { fontWeight: 700, fontSize: "0.9rem", color: isDark ? "#fff7ee" : "#0f172a" },
+  typeDesc: { fontSize: "0.78rem", color: isDark ? "#c8bfb0" : "#64748b", lineHeight: 1.4 },
   modalField: { display: "flex", flexDirection: "column", gap: "0.5rem" },
-  modalFieldLabel: { fontSize: "0.88rem", fontWeight: 600, color: isDark ? "#e6d8ca" : "#3d3530" },
-  modalInput: { width: "100%", padding: "0.85rem 1rem", borderRadius: "16px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255, 252, 248, 0.80)", color: isDark ? "#f7f1e8" : "#1a1410", outline: "none", fontSize: "0.95rem", fontFamily: "inherit", boxSizing: "border-box" },
+  modalFieldLabel: { fontSize: "0.88rem", fontWeight: 600, color: isDark ? "#e6d8ca" : "#334155" },
+  modalInput: { width: "100%", padding: "0.85rem 1rem", borderRadius: "16px", border: "1px solid var(--toggle-border)", background: "var(--toggle-bg)", color: "var(--text-primary)", outline: "none", fontSize: "0.95rem", fontFamily: "inherit", boxSizing: "border-box" },
   modalActions: { display: "flex", gap: "0.75rem", marginTop: "0.25rem" },
-  btnCreate: { flex: 1, minHeight: "50px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: isDark ? "#111827" : "#fefdfb", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" },
-  btnCancelModal: { minHeight: "50px", borderRadius: "18px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.08)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#f7ece1" : "#3d3530", padding: "0 1.4rem", cursor: "pointer", fontWeight: 700 },
-  btnDownload: { borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: isDark ? "#111827" : "#fefdfb", padding: "0.6rem 1rem", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem" },
-  btnUpload: { cursor: "pointer", background: isDark ? "rgba(255,255,255,0.08)" : "rgba(255, 143, 72, 0.10)", border: isDark ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255, 143, 72, 0.20)", borderRadius: "18px", padding: "0 1rem", color: isDark ? "#f3e7d7" : "#3d3530", fontSize: "0.85rem", display: "grid", placeItems: "center", minHeight: "52px", fontWeight: 600, whiteSpace: "nowrap" }
+  btnCreate: { flex: 1, minHeight: "50px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#ffffff", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" },
+  btnCancelModal: { minHeight: "50px", borderRadius: "18px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid #cbd5e1", background: isDark ? "rgba(255,255,255,0.08)" : "#f1f5f9", color: isDark ? "#f7ece1" : "#475569", padding: "0 1.4rem", cursor: "pointer", fontWeight: 700 },
+  btnDownload: { borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: "#ffffff", padding: "0.6rem 1rem", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" },
+  btnUpload: { cursor: "pointer", background: isDark ? "rgba(255,255,255,0.08)" : "#f1f5f9", border: isDark ? "1px solid rgba(255,255,255,0.15)" : "1px solid #cbd5e1", borderRadius: "18px", padding: "0 1rem", color: isDark ? "#f3e7d7" : "#475569", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem", minHeight: "52px", fontWeight: 600, whiteSpace: "nowrap" }
 }
 }
-
-const s = getStyles()

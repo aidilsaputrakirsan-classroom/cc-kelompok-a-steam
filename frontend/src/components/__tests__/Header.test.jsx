@@ -26,10 +26,10 @@ describe('Header Component', () => {
 
     render(<Header totalItems={0} isConnected={true} user={mockUser} isDark={true} onToggleDark={() => {}} />)
 
-    // Harus memunculkan nama
-    expect(screen.getByText(/👤 Aidil Saputra/i)).toBeInTheDocument()
+    // Harus memunculkan nama (tanpa emoji prefix setelah icon migration)
+    expect(screen.getByText(/Aidil Saputra/i)).toBeInTheDocument()
     // Harus memunculkan tombol logout
-    expect(screen.getByText(/🚪 Logout/i)).toBeInTheDocument()
+    expect(screen.getByText(/Logout/i)).toBeInTheDocument()
   })
 
   it('menampilkan tombol dark mode toggle di header', () => {
@@ -38,17 +38,15 @@ describe('Header Component', () => {
     // Tombol toggle harus ada (dengan id unik)
     const toggleBtn = screen.getByRole('button', { name: /switch to light mode/i })
     expect(toggleBtn).toBeInTheDocument()
-    // Dalam mode dark, icon harus ☀️
-    expect(toggleBtn).toHaveTextContent('☀️')
+    // Dalam mode dark, tombol harus ada teks "Light"
     expect(toggleBtn).toHaveTextContent('Light')
   })
 
-  it('menampilkan ikon 🌙 saat sedang dalam light mode', () => {
+  it('menampilkan teks "Dark" saat sedang dalam light mode', () => {
     render(<Header isDark={false} onToggleDark={() => {}} />)
 
     const toggleBtn = screen.getByRole('button', { name: /switch to dark mode/i })
     expect(toggleBtn).toBeInTheDocument()
-    expect(toggleBtn).toHaveTextContent('🌙')
     expect(toggleBtn).toHaveTextContent('Dark')
   })
 

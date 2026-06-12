@@ -1,11 +1,19 @@
 /**
  * API Service — Gateway-based microservices
- * 
+ *
  * Frontend mengarah ke GATEWAY (http://localhost) yang mengarahkan ke:
  * - /auth/* → Auth Service
  * - /items/* → Item Service
  * - / → Frontend
  */
+
+// Helper untuk membuat fetch signal dengan timeout
+function timeoutSignal(ms = 5000) {
+  if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+    return AbortSignal.timeout(ms)
+  }
+  return undefined
+}
 
 // Gateway URL (bukan langsung ke backend port 8000)
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost"
@@ -164,7 +172,7 @@ export async function deleteItem(id) {
  */
 export async function checkHealth() {
   try {
-    const response = await fetch(`${API_URL}/health`, { timeout: 5000 })
+    const response = await fetch(`${API_URL}/health`, { signal: timeoutSignal(5000) })
     if (!response.ok) return null
     const data = await response.json()
     return data
@@ -178,7 +186,7 @@ export async function checkHealth() {
  */
 export async function fetchAuthHealth() {
   try {
-    const response = await fetch(`${API_URL}/auth/health`, { timeout: 5000 })
+    const response = await fetch(`${API_URL}/auth/health`, { signal: timeoutSignal(5000) })
     if (!response.ok) return null
     const data = await response.json()
     return data
@@ -192,7 +200,7 @@ export async function fetchAuthHealth() {
  */
 export async function fetchItemsHealth() {
   try {
-    const response = await fetch(`${API_URL}/items/health`, { timeout: 5000 })
+    const response = await fetch(`${API_URL}/items/health`, { signal: timeoutSignal(5000) })
     if (!response.ok) return null
     const data = await response.json()
     return data
@@ -206,7 +214,7 @@ export async function fetchItemsHealth() {
  */
 export async function fetchAuthMetrics() {
   try {
-    const response = await fetch(`${API_URL}/auth/metrics`, { timeout: 5000 })
+    const response = await fetch(`${API_URL}/auth/metrics`, { signal: timeoutSignal(5000) })
     if (!response.ok) return null
     const data = await response.json()
     return data
@@ -220,7 +228,7 @@ export async function fetchAuthMetrics() {
  */
 export async function fetchItemsMetrics() {
   try {
-    const response = await fetch(`${API_URL}/items/metrics`, { timeout: 5000 })
+    const response = await fetch(`${API_URL}/items/metrics`, { signal: timeoutSignal(5000) })
     if (!response.ok) return null
     const data = await response.json()
     return data

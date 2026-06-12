@@ -3,6 +3,8 @@ import React from "react"
 function LogoutModal({ isOpen, onConfirm, onCancel }) {
   if (!isOpen) return null
 
+  const styles = getLogoutModalStyles()
+
   return (
     <div style={styles.overlay}>
       <div style={styles.modal}>
@@ -47,14 +49,15 @@ function LogoutModal({ isOpen, onConfirm, onCancel }) {
   )
 }
 
-const styles = {
+const getLogoutModalStyles = () => {
+  return {
   overlay: {
     position: "fixed",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(8, 9, 20, 0.8)",
+    backgroundColor: "var(--modal-overlay)",
     backdropFilter: "blur(8px)",
     display: "flex",
     alignItems: "center",
@@ -63,14 +66,14 @@ const styles = {
     animation: "fadeIn 0.3s ease-out forwards",
   },
   modal: {
-    background: "linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(25, 39, 76, 0.95))",
-    border: "1px solid rgba(255, 164, 82, 0.2)",
+    background: "var(--bg-card)",
+    border: "1px solid var(--bg-card-border)",
     borderRadius: "24px",
     padding: "2.5rem 2rem",
     width: "90%",
     maxWidth: "400px",
     textAlign: "center",
-    boxShadow: "0 24px 80px rgba(0, 0, 0, 0.4)",
+    boxShadow: "var(--modal-shadow)",
     animation: "scaleUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
   },
   iconContainer: {
@@ -113,12 +116,12 @@ const styles = {
   title: {
     margin: "0 0 0.5rem",
     fontSize: "1.5rem",
-    color: "#fff",
+    color: "var(--text-primary)",
     fontWeight: "bold",
   },
   message: {
     margin: "0 0 1.5rem",
-    color: "#a1a6b3",
+    color: "var(--text-muted)",
     fontSize: "1rem",
     lineHeight: 1.5,
   },
@@ -130,9 +133,9 @@ const styles = {
   btnCancel: {
     padding: "0.75rem 1.5rem",
     borderRadius: "12px",
-    border: "1px solid rgba(255, 255, 255, 0.2)",
-    background: "rgba(255, 255, 255, 0.05)",
-    color: "#fff",
+    border: "1px solid var(--toggle-border)",
+    background: "var(--toggle-bg)",
+    color: "var(--text-primary)",
     cursor: "pointer",
     fontWeight: 600,
     transition: "all 0.2s ease",
@@ -142,12 +145,13 @@ const styles = {
     borderRadius: "12px",
     border: "none",
     background: "linear-gradient(135deg, #ffb57f, #ff8f8f)",
-    color: "#111827",
+    color: "var(--bg-app)",
     cursor: "pointer",
     fontWeight: 700,
-    boxShadow: "0 10px 20px rgba(255, 149, 92, 0.2)",
+    boxShadow: "0 10px 20px rgba(255, 143, 72, 0.18)",
     transition: "transform 0.2s ease, box-shadow 0.2s ease",
   },
+}
 }
 
 export default LogoutModal

@@ -3,6 +3,8 @@ import React from "react"
 function SuccessModal({ isOpen, message }) {
   if (!isOpen) return null
 
+  const styles = getSuccessModalStyles()
+
   return (
     <div style={styles.overlay}>
       <div style={styles.modal}>
@@ -32,14 +34,15 @@ function SuccessModal({ isOpen, message }) {
   )
 }
 
-const styles = {
+const getSuccessModalStyles = () => {
+  return {
   overlay: {
     position: "fixed",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(8, 9, 20, 0.8)",
+    backgroundColor: "var(--modal-overlay)",
     backdropFilter: "blur(8px)",
     display: "flex",
     alignItems: "center",
@@ -48,14 +51,14 @@ const styles = {
     animation: "fadeIn 0.3s ease-out forwards",
   },
   modal: {
-    background: "linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(25, 39, 76, 0.95))",
-    border: "1px solid rgba(255, 164, 82, 0.2)",
+    background: "var(--bg-card)",
+    border: "1px solid var(--bg-card-border)",
     borderRadius: "24px",
     padding: "3rem 2rem",
     width: "90%",
     maxWidth: "400px",
     textAlign: "center",
-    boxShadow: "0 24px 80px rgba(0, 0, 0, 0.4)",
+    boxShadow: "var(--modal-shadow)",
     animation: "scaleUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
   },
   iconContainer: {
@@ -91,15 +94,16 @@ const styles = {
   title: {
     margin: "0 0 0.5rem",
     fontSize: "1.8rem",
-    color: "#fff",
+    color: "var(--text-primary)",
     fontWeight: "bold",
   },
   message: {
     margin: 0,
-    color: "#a1a6b3",
+    color: "var(--text-muted)",
     fontSize: "1.05rem",
     lineHeight: 1.5,
   },
+}
 }
 
 export default SuccessModal

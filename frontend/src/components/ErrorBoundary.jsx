@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react'
+import React from 'react'
+import { AlertTriangle, XCircle, Lock, RefreshCw, Home } from 'lucide-react'
 
 /**
  * Error Boundary Component
  * Menangkap errors dari child components dan menampilkan fallback UI
- * 
+ *
  * Module 13: Reliability - Graceful Degradation
  */
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { 
-      hasError: false, 
-      error: null, 
+    this.state = {
+      hasError: false,
+      error: null,
       errorInfo: null,
       errorType: 'generic'
     }
@@ -41,10 +42,10 @@ class ErrorBoundary extends React.Component {
   }
 
   handleReset = () => {
-    this.setState({ 
-      hasError: false, 
-      error: null, 
-      errorInfo: null 
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null
     })
   }
 
@@ -63,10 +64,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// Convert functional component to class for error boundary
-import React from 'react'
-
-// Wrapper untuk class component
+// Wrapper para class component
 export default function ErrorBoundaryWrapper({ children }) {
   return <ErrorBoundary>{children}</ErrorBoundary>
 }
@@ -79,25 +77,25 @@ function ErrorFallback({ error, errorType, onReset }) {
     switch (errorType) {
       case 'service_unavailable':
         return {
-          title: '⚠️ Service Temporarily Unavailable',
+          title: 'Service Temporarily Unavailable',
           message: 'The service is currently experiencing issues. Please try again in a few moments.',
-          icon: '🔴',
+          icon: <AlertTriangle size={48} className="text-red-400" />,
           color: 'bg-red-900/20 border-red-800',
           buttonColor: 'bg-red-600 hover:bg-red-700',
         }
       case 'unauthorized':
         return {
-          title: '🔐 Authentication Required',
+          title: 'Authentication Required',
           message: 'Your session has expired. Please log in again.',
-          icon: '🔑',
+          icon: <Lock size={48} className="text-yellow-400" />,
           color: 'bg-yellow-900/20 border-yellow-800',
           buttonColor: 'bg-yellow-600 hover:bg-yellow-700',
         }
       default:
         return {
-          title: '❌ Something Went Wrong',
+          title: 'Something Went Wrong',
           message: 'An unexpected error occurred. Please try again or contact support.',
-          icon: '⚠️',
+          icon: <XCircle size={48} className="text-gray-400" />,
           color: 'bg-gray-900/20 border-gray-800',
           buttonColor: 'bg-gray-600 hover:bg-gray-700',
         }
@@ -107,10 +105,14 @@ function ErrorFallback({ error, errorType, onReset }) {
   const config = getErrorConfig()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 flex items-center justify-center p-4">
+    <div
+      role="alert"
+      aria-live="assertive"
+      className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 flex items-center justify-center p-4"
+    >
       <div className={`border rounded-lg p-8 max-w-md w-full ${config.color}`}>
         {/* Icon */}
-        <div className="text-5xl text-center mb-4">{config.icon}</div>
+        <div className="flex justify-center mb-4">{config.icon}</div>
 
         {/* Title */}
         <h1 className="text-2xl font-bold text-center mb-3">{config.title}</h1>
@@ -130,14 +132,16 @@ function ErrorFallback({ error, errorType, onReset }) {
         <div className="flex flex-col gap-2">
           <button
             onClick={onReset}
-            className={`${config.buttonColor} text-white py-2 px-4 rounded font-semibold transition`}
+            className={`${config.buttonColor} text-white py-2 px-4 rounded font-semibold transition flex items-center justify-center gap-2`}
           >
+            <RefreshCw size={16} />
             Try Again
           </button>
           <button
             onClick={() => window.location.href = '/'}
-            className="bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded font-semibold transition"
+            className="bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded font-semibold transition flex items-center justify-center gap-2"
           >
+            <Home size={16} />
             Go Home
           </button>
         </div>

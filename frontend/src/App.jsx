@@ -12,6 +12,7 @@ import ChatHistoryPage from "./components/ChatHistoryPage"
 import AboutUs from "./components/AboutUs"
 import StatusPage from "./pages/StatusPage"
 import { useToast } from "./hooks/useToast"
+import { Info, MessageSquare } from "lucide-react"
 import {
   checkHealth,
   login,
@@ -55,13 +56,18 @@ function AppContent() {
   })
 
   useEffect(() => {
-    if (isDark) {
+    const isStatusPage = location.pathname === "/status"
+    if (!isAuthenticated && !isStatusPage) {
       document.documentElement.classList.remove("light")
     } else {
-      document.documentElement.classList.add("light")
+      if (isDark) {
+        document.documentElement.classList.remove("light")
+      } else {
+        document.documentElement.classList.add("light")
+      }
     }
     localStorage.setItem("inti_dark_mode", String(isDark))
-  }, [isDark])
+  }, [isDark, isAuthenticated, location.pathname])
 
   const toggleDark = useCallback(() => setIsDark((prev) => !prev), [])
 
@@ -153,7 +159,7 @@ function AppContent() {
   if (location.pathname === "/status") {
     return (
       <ErrorBoundaryWrapper>
-        <StatusPage />
+        <StatusPage isDark={isDark} />
       </ErrorBoundaryWrapper>
     )
   }
@@ -174,51 +180,51 @@ function AppContent() {
       <DegradedModeBanner />
       
       <div style={styles.container}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-          <Header
-            user={user}
-            onLogout={handleLogout}
-            isDark={isDark}
-            onToggleDark={toggleDark}
-          />
-        </div>
+        <Header
+          user={user}
+          onLogout={handleLogout}
+          isDark={isDark}
+          onToggleDark={toggleDark}
+        />
 
         <div className="flex gap-3 flex-wrap mb-6">
           <button
             onClick={() => setActiveTab("about-us")}
-            className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+            className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 flex items-center gap-2 ${
               activeTab === "about-us"
-                ? isDark 
+                ? isDark
                   ? "bg-linear-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105"
                   : "bg-linear-to-r from-inti-orange to-inti-orange-light text-white shadow-[0_10px_25px_-5px_rgba(255,143,72,0.5)] scale-105"
                 : isDark
-                  ? "bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30"
-                  : "bg-orange-100/30 border border-orange-200/50 text-orange-700 hover:bg-orange-100/50 hover:text-orange-900 hover:border-orange-300"
+                  ? "bg-white/10 border border-white/15 text-inti-text-muted hover:bg-white/20 hover:text-inti-text-light hover:border-white/30"
+                  : "bg-orange-50 border border-orange-200 text-slate-700 hover:bg-orange-100 hover:text-orange-800 hover:border-orange-300"
             }`}
           >
-            ℹ️ About Us
+            <Info size={16} />
+            About Us
           </button>
           <button
             onClick={() => setActiveTab("chat-history")}
-            className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+            className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 flex items-center gap-2 ${
               activeTab === "chat-history"
-                ? isDark 
+                ? isDark
                   ? "bg-linear-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105"
                   : "bg-linear-to-r from-inti-orange to-inti-orange-light text-white shadow-[0_10px_25px_-5px_rgba(255,143,72,0.5)] scale-105"
                 : isDark
-                  ? "bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30"
-                  : "bg-orange-100/30 border border-orange-200/50 text-orange-700 hover:bg-orange-100/50 hover:text-orange-900 hover:border-orange-300"
+                  ? "bg-white/10 border border-white/15 text-inti-text-muted hover:bg-white/20 hover:text-inti-text-light hover:border-white/30"
+                  : "bg-orange-50 border border-orange-200 text-slate-700 hover:bg-orange-100 hover:text-orange-800 hover:border-orange-300"
             }`}
           >
-            💬 Chat History
+            <MessageSquare size={16} />
+            Chat History
           </button>
         </div>
 
         <ErrorBoundaryWrapper>
           {activeTab === "chat-history" ? (
-            <ChatHistoryPage showToast={showToast} />
+            <ChatHistoryPage showToast={showToast} isDark={isDark} />
           ) : (
-            <AboutUs />
+            <AboutUs isDark={isDark} />
           )}
         </ErrorBoundaryWrapper>
       </div>
@@ -235,11 +241,10 @@ function AppContent() {
 const styles = {
   app: {
     minHeight: "100vh",
-    background:
-      "radial-gradient(circle at top left, rgba(136, 115, 255, 0.16), transparent 24%), radial-gradient(circle at bottom right, rgba(255, 184, 130, 0.18), transparent 24%), #060913",
+    background: "var(--bg-app-gradient)",
     padding: "2rem",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'San Francisco', 'Segoe UI', 'Helvetica Neue', sans-serif",
-    color: "#edf2ff",
+    color: "var(--text-primary)",
   },
   container: {
     width: "100%",
