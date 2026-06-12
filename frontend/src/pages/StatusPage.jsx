@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShieldCheck, Bot, Globe } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost';
 
@@ -37,6 +38,7 @@ function ServiceCard({ name, icon, healthUrl, metricsUrl }) {
   }, [healthUrl, metricsUrl]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStatus();
     const interval = setInterval(fetchStatus, 10000);
     return () => clearInterval(interval);
@@ -89,7 +91,7 @@ function ServiceCard({ name, icon, healthUrl, metricsUrl }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '20px' }}>{icon}</span>
+            <span style={{ fontSize: '20px', color: statusColor[status] || '#6b7280', display: 'flex' }}>{icon}</span>
             {name}
           </h3>
         </div>
@@ -217,19 +219,19 @@ export default function StatusPage() {
         <div style={{ display: 'grid', gap: '16px', marginBottom: '24px' }}>
           <ServiceCard
             name="Auth Service"
-            icon="🔐"
+            icon={<ShieldCheck size={20} />}
             healthUrl={`${API_URL}/auth/health`}
             metricsUrl={`${API_URL}/auth/metrics`}
           />
           <ServiceCard
             name="AI Service"
-            icon="🤖"
+            icon={<Bot size={20} />}
             healthUrl={`${API_URL}/items/health`}
             metricsUrl={`${API_URL}/items/metrics`}
           />
           <ServiceCard
             name="API Gateway"
-            icon="🌐"
+            icon={<Globe size={20} />}
             healthUrl={`${API_URL}/health`}
             metricsUrl={null}
           />

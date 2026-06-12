@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { LogIn, UserPlus } from "lucide-react"
 import Spinner from "./Spinner"
 
 const initialFormData = {
@@ -63,7 +64,7 @@ function LoginPage({ onLogin, onRegister, showToast }) {
   }
 
   return (
-    <div style={styles.wrapper}>
+    <div style={styles.wrapper} role="main">
       <div style={styles.backgroundGlow} />
       <div style={styles.card}>
         <div style={styles.header}>
@@ -97,7 +98,7 @@ function LoginPage({ onLogin, onRegister, showToast }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={styles.form} autoComplete="off">
+        <form onSubmit={handleSubmit} style={styles.form} autoComplete="off" aria-label={isRegister ? "Registration form" : "Login form"}>
           <input
             type="text"
             name="fakeusername"
@@ -113,8 +114,9 @@ function LoginPage({ onLogin, onRegister, showToast }) {
 
           {isRegister && (
             <div style={styles.field}>
-              <label style={styles.label}>Nama Lengkap</label>
+              <label htmlFor="full_name" style={styles.label}>Nama Lengkap</label>
               <input
+                id="full_name"
                 type="text"
                 name="full_name"
                 value={formData.full_name}
@@ -128,8 +130,9 @@ function LoginPage({ onLogin, onRegister, showToast }) {
 
           {isRegister && (
             <div style={styles.field}>
-              <label style={styles.label}>Username</label>
+              <label htmlFor="username" style={styles.label}>Username</label>
               <input
+                id="username"
                 type="text"
                 name="username"
                 value={formData.username}
@@ -142,8 +145,9 @@ function LoginPage({ onLogin, onRegister, showToast }) {
           )}
 
           <div style={styles.field}>
-            <label style={styles.label}>{isRegister ? "Email" : "Email / Username"}</label>
+            <label htmlFor="email" style={styles.label}>{isRegister ? "Email" : "Email / Username"}</label>
             <input
+              id="email"
               type={isRegister ? "email" : "text"}
               name="email"
               value={formData.email}
@@ -156,8 +160,9 @@ function LoginPage({ onLogin, onRegister, showToast }) {
           </div>
 
           <div style={styles.field}>
-            <label style={styles.label}>Password</label>
+            <label htmlFor="password" style={styles.label}>Password</label>
             <input
+              id="password"
               type="password"
               name="password"
               value={formData.password}
@@ -180,7 +185,7 @@ function LoginPage({ onLogin, onRegister, showToast }) {
                 </span>
               </>
             ) : (
-              isRegister ? "📝 Register" : "🔐 Login"
+              isRegister ? <><UserPlus size={18} /> <span>Register</span></> : <><LogIn size={18} /> <span>Login</span></>
             )}
           </button>
         </form>
@@ -316,6 +321,10 @@ const styles = {
     transition: "border-color 0.2s ease, box-shadow 0.2s ease",
   },
   btnSubmit: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.5rem",
     marginTop: "0.5rem",
     padding: "0.95rem 1rem",
     borderRadius: "16px",

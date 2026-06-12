@@ -164,7 +164,7 @@ export async function deleteItem(id) {
  */
 export async function checkHealth() {
   try {
-    const response = await fetch(`${API_URL}/health`, { timeout: 5000 })
+    const response = await fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(5000) })
     if (!response.ok) return null
     const data = await response.json()
     return data
@@ -178,7 +178,7 @@ export async function checkHealth() {
  */
 export async function fetchAuthHealth() {
   try {
-    const response = await fetch(`${API_URL}/auth/health`, { timeout: 5000 })
+    const response = await fetch(`${API_URL}/auth/health`, { signal: AbortSignal.timeout(5000) })
     if (!response.ok) return null
     const data = await response.json()
     return data
@@ -192,7 +192,7 @@ export async function fetchAuthHealth() {
  */
 export async function fetchItemsHealth() {
   try {
-    const response = await fetch(`${API_URL}/items/health`, { timeout: 5000 })
+    const response = await fetch(`${API_URL}/items/health`, { signal: AbortSignal.timeout(5000) })
     if (!response.ok) return null
     const data = await response.json()
     return data
@@ -206,7 +206,7 @@ export async function fetchItemsHealth() {
  */
 export async function fetchAuthMetrics() {
   try {
-    const response = await fetch(`${API_URL}/auth/metrics`, { timeout: 5000 })
+    const response = await fetch(`${API_URL}/auth/metrics`, { signal: AbortSignal.timeout(5000) })
     if (!response.ok) return null
     const data = await response.json()
     return data
@@ -220,7 +220,7 @@ export async function fetchAuthMetrics() {
  */
 export async function fetchItemsMetrics() {
   try {
-    const response = await fetch(`${API_URL}/items/metrics`, { timeout: 5000 })
+    const response = await fetch(`${API_URL}/items/metrics`, { signal: AbortSignal.timeout(5000) })
     if (!response.ok) return null
     const data = await response.json()
     return data

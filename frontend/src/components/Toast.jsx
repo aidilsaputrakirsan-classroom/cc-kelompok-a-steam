@@ -17,26 +17,28 @@ function Toast({ message, type = "success", onClose, duration = 3000 }) {
     warning: "⚠️",
   }
 
+  const isDark = document.documentElement.classList.contains('light') === false;
+
   const colors = {
     success: {
-      bg: "#E2EFDA",
-      border: "#548235",
-      text: "#2D5016",
+      bg: isDark ? "rgba(45, 80, 22, 0.85)" : "#E2EFDA",
+      border: isDark ? "rgba(84, 130, 53, 0.5)" : "#548235",
+      text: isDark ? "#E2EFDA" : "#2D5016",
     },
     error: {
-      bg: "#FBE5D6",
-      border: "#C00000",
-      text: "#7F0000",
+      bg: isDark ? "rgba(127, 0, 0, 0.85)" : "#FBE5D6",
+      border: isDark ? "rgba(192, 0, 0, 0.5)" : "#C00000",
+      text: isDark ? "#FBE5D6" : "#7F0000",
     },
     info: {
-      bg: "#DEEBF7",
-      border: "#2E75B6",
-      text: "#1F4E79",
+      bg: isDark ? "rgba(31, 78, 121, 0.85)" : "#DEEBF7",
+      border: isDark ? "rgba(46, 117, 182, 0.5)" : "#2E75B6",
+      text: isDark ? "#DEEBF7" : "#1F4E79",
     },
     warning: {
-      bg: "#FFF2CC",
-      border: "#BF8F00",
-      text: "#7F6000",
+      bg: isDark ? "rgba(127, 96, 0, 0.85)" : "#FFF2CC",
+      border: isDark ? "rgba(191, 143, 0, 0.5)" : "#BF8F00",
+      text: isDark ? "#FFF2CC" : "#7F6000",
     },
   }
 
@@ -53,9 +55,11 @@ function Toast({ message, type = "success", onClose, duration = 3000 }) {
     display: "flex",
     alignItems: "center",
     gap: "0.75rem",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+    boxShadow: isDark ? "0 4px 12px rgba(0,0,0,0.3)" : "0 4px 12px rgba(0,0,0,0.15)",
+    backdropFilter: isDark ? "blur(8px)" : "none",
+    WebkitBackdropFilter: isDark ? "blur(8px)" : "none",
     zIndex: 9999,
-    animation: "slideIn 0.3s ease-out",
+    animation: "toastSlideIn 0.3s ease-out",
   }
 
   const iconStyle = {
@@ -90,7 +94,7 @@ function Toast({ message, type = "success", onClose, duration = 3000 }) {
     <>
       <style>
         {`
-          @keyframes slideIn {
+          @keyframes toastSlideIn {
             from {
               transform: translateX(400px);
               opacity: 0;
@@ -102,7 +106,7 @@ function Toast({ message, type = "success", onClose, duration = 3000 }) {
           }
         `}
       </style>
-      <div style={style}>
+      <div style={style} role="status" aria-live="polite" aria-atomic="true">
         <span style={iconStyle}>{icons[type]}</span>
         <span style={messageStyle}>{message}</span>
         <button

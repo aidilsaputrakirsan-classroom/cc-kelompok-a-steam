@@ -69,7 +69,7 @@ export default function ChatHistoryPage({ showToast }) {
   const messagesEndRef = useRef(null)
 
   // Helper untuk membaca file ke base64
-  const handleFileSelect = (e, setBase64) => {
+  const handleFileSelect = (e, setBase64, setFile = null) => {
     const file = e.target.files[0]
     if (!file) return
 
@@ -95,7 +95,10 @@ export default function ChatHistoryPage({ showToast }) {
     }
 
     const reader = new FileReader()
-    reader.onload = (ev) => setBase64(ev.target.result)
+    reader.onload = (ev) => {
+      setBase64(ev.target.result)
+      if (setFile) setFile(file)
+    }
     reader.readAsDataURL(file)
   }
 
@@ -214,7 +217,6 @@ export default function ChatHistoryPage({ showToast }) {
     
     const originalMsg = continueMsg.trim()
     const currentBase64 = continueImageBase64
-    const isImage = activeSession?.session_type === "image"
 
     setOptimisticMsg({
       id: "optimistic-" + Date.now(),
@@ -334,7 +336,7 @@ export default function ChatHistoryPage({ showToast }) {
       {/* MAIN LAYOUT */}
       <div style={s.layout}>
         {/* ── SIDEBAR ── */}
-        <aside style={s.sidebar}>
+        <aside style={s.sidebar} aria-label="Chat sessions list">
           <div style={s.sidebarHeader}>
             <span style={s.sidebarTitle}>Sesi Inti Studio</span>
             <button style={s.btnNew} onClick={() => setShowNewModal(true)}>+ Baru</button>
