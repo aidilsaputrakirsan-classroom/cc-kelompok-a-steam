@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React from 'react'
 
 /**
  * Error Boundary Component
@@ -17,7 +17,7 @@ class ErrorBoundary extends React.Component {
     }
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     return { hasError: true }
   }
 
@@ -64,7 +64,6 @@ class ErrorBoundary extends React.Component {
 }
 
 // Convert functional component to class for error boundary
-import React from 'react'
 
 // Wrapper untuk class component
 export default function ErrorBoundaryWrapper({ children }) {
@@ -108,7 +107,11 @@ function ErrorFallback({ error, errorType, onReset }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 flex items-center justify-center p-4">
-      <div className={`border rounded-lg p-8 max-w-md w-full ${config.color}`}>
+      <div 
+        className={`border rounded-lg p-8 max-w-md w-full ${config.color}`}
+        role="alert" 
+        aria-live="assertive"
+      >
         {/* Icon */}
         <div className="text-5xl text-center mb-4">{config.icon}</div>
 
