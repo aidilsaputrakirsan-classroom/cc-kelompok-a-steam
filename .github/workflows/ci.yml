@@ -252,7 +252,8 @@ jobs:
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
-          cd services/auth-service
+          # Jalankan dari root repo agar Railway bisa menemukan root_directory
+          # yang sudah dikonfigurasi (services/auth-service)
           railway up --service auth-service --detach
 
       - name: 🚀 Deploy AI Service
@@ -261,7 +262,8 @@ jobs:
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
-          cd services/ai-service
+          # Jalankan dari root repo agar Railway bisa menemukan root_directory
+          # yang sudah dikonfigurasi (services/ai-service)
           railway up --service ai-service --detach
 
       - name: 🚀 Deploy Frontend
@@ -270,7 +272,8 @@ jobs:
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
         run: |
-          cd frontend
+          # Jalankan dari root repo agar Railway bisa menemukan root_directory
+          # yang sudah dikonfigurasi (frontend)
           railway up --service frontend --detach
 
       - name: 🩺 Automated Health Check
