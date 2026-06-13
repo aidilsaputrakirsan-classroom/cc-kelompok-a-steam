@@ -104,8 +104,10 @@ Untuk mempermudah workflow pengembangan dan CI/CD, Anda dapat menggunakan perint
 | 5-7    | Docker & Compose       |   ✅   |
 | 8      | UTS Demo               |   ✅   |
 | 9-11   | CI/CD Pipeline         |   ✅   |
-| 12-14  | Microservices          |   ⬜   |
-| 15-16  | Final & UAS            |   ⬜   |
+| 12-14  | Microservices          |   ✅   |
+| 13     | Reliability Testing    |   ✅   |
+| 14     | Operations & Monitoring|   ✅   |
+| 15     | Final QA & Security    |   ✅   |
 
 ### 🔐 Security & Rate Limiting
 
@@ -224,14 +226,17 @@ docker compose up -d
 
 ### 📝 Documentation
 
-| Document                                       | Purpose                                 |
-| ---------------------------------------------- | --------------------------------------- |
-| [API Documentation](docs/api-documentation.md) | Complete API endpoints reference        |
-| [Deployment Guide](docs/deployment-guide.md)   | How to deploy to Railway (production)   |
-| [Operations Guide](docs/operations-guide.md)   | Production troubleshooting & monitoring |
-| [Database Schema](docs/database-schema.md)     | ER diagram & table definitions          |
-| [CI/CD Pipeline](docs/cicd.md)                 | GitHub Actions workflow explanation     |
-| [Git Workflow](docs/git-workflow.md)           | Team collaboration guidelines           |
+| Document                                            | Purpose                                         |
+| --------------------------------------------------- | ----------------------------------------------- |
+| [Architecture & API Contract](docs/architecture.md) | Microservices diagram, port mapping, API specs |
+| [API Documentation](docs/api-documentation.md)     | Complete API endpoints reference                |
+| [Reliability Testing](docs/reliability-testing.md) | Sistem keandalan & error handling validation    |
+| [Operations Guide](docs/operations-guide.md)       | Troubleshooting & monitoring production         |
+| [Final Checklist](docs/final-checklist.md)         | Security audit & quality gate final             |
+| [Deployment Guide](docs/deployment-guide.md)       | How to deploy to Railway (production)           |
+| [Database Schema](docs/database-schema.md)         | ER diagram & table definitions                  |
+| [CI/CD Pipeline](docs/cicd.md)                     | GitHub Actions workflow explanation             |
+| [Git Workflow](docs/git-workflow.md)               | Team collaboration guidelines                   |
 
 ---
 
@@ -285,3 +290,27 @@ _[Deployment & Rollback Guide](docs/deployment-guide.md)_
 - Production URL:
   - **Frontend:** [https://cc-kelompok-a-steam-production-51bf.up.railway.app](https://cc-kelompok-a-steam-production-51bf.up.railway.app)
   - **Backend:** [https://cc-kelompok-a-steam-production.up.railway.app](https://cc-kelompok-a-steam-production.up.railway.app)
+
+**🧪 Modul 13: Reliability Testing & Error Handling**
+_[Panduan & Laporan Pengujian Keandalan Sistem](docs/reliability-testing.md)_
+
+- Pengujian manual keandalan sistem dengan 8 skenario (RT-01 hingga RT-08)
+- Validasi penanganan error timeout ketika kontainer autentikasi sengaja dimatikan
+- Bukti sistem tetap responsif dan memberikan error handling yang tepat
+- Laporan lengkap dengan bukti penolakan permintaan ilegal
+
+**⚙️ Modul 14: Operations Guide & Troubleshooting**
+_[Panduan Operasional untuk Tim Production](docs/operations-guide.md)_
+
+- Instruksi taktis untuk troubleshooting di lingkungan produksi
+- Pelacakan urutan request menggunakan **Correlation ID** via PowerShell
+- Panduan debugging untuk mengidentifikasi masalah jaringan
+- Log tracing untuk monitoring request flow across microservices
+
+**✅ Modul 15: Final Quality Gate & Security Audit**
+_[Checklist Pemeriksaan Kualitas Akhir](docs/final-checklist.md)_
+
+- Gerbang pemeriksaan kualitas final sebelum rilis produk
+- Audit forensik keamanan: verifikasi `.env` file terisolasi di `.gitignore`
+- Laporan keberhasilan security testing: 30 serangan login ilegal ditolak dengan status `401 Unauthorized`
+- Sertifikasi sistem siap untuk production deployment
