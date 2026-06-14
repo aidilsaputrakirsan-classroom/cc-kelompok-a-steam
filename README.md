@@ -60,14 +60,14 @@ graph TD
     AIService -->|Inference Call| HFClient
 
     %% Styling
-    style User fill:#e1f5ff,stroke:#03a9f4,stroke-width:2px
-    style Gateway fill:#fff3e0,stroke:#ff9800,stroke-width:2px
-    style Frontend fill:#f3e5f5,stroke:#9c27b0,stroke-width:1px
-    style AuthService fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
-    style AIService fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
-    style AuthDB fill:#ffebee,stroke:#e91e63,stroke-width:1px
-    style AIDB fill:#ffebee,stroke:#e91e63,stroke-width:1px
-    style SharedSecret fill:#eceff1,stroke:#607d8b,stroke-width:1px
+    style User fill:#e1f5ff,stroke:#03a9f4,stroke-width:2px,color:#111
+    style Gateway fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#111
+    style Frontend fill:#f3e5f5,stroke:#9c27b0,stroke-width:1px,color:#111
+    style AuthService fill:#e8f5e9,stroke:#4caf50,stroke-width:2px,color:#111
+    style AIService fill:#e8f5e9,stroke:#4caf50,stroke-width:2px,color:#111
+    style AuthDB fill:#ffebee,stroke:#e91e63,stroke-width:1px,color:#111
+    style AIDB fill:#ffebee,stroke:#e91e63,stroke-width:1px,color:#111
+    style SharedSecret fill:#eceff1,stroke:#607d8b,stroke-width:1px,color:#111
 ```
 
 ### Desain Arsitektur Sistem:
