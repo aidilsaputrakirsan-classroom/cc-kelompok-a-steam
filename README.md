@@ -4,9 +4,9 @@
 [![Production Release](https://img.shields.io/badge/release-v3.0.0-blue.svg)](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-a-steam/releases)
 [![Tech Stack](https://img.shields.io/badge/stack-FastAPI%20%7C%20React%20%7C%20Docker-green.svg)](#tech-stack)
 
-**Inti Rupa** adalah platform asisten cerdas berbasis cloud-native yang dirancang untuk membantu pengguna mengolah informasi secara efisien. Platform ini mengintegrasikan kekuatan **Pemrosesan Bahasa Alami (NLP/LLM)** dan **Kreativitas Visual** ke dalam arsitektur microservices modern yang tangguh, aman, dan siap produksi.
+**Inti Rupa** adalah aplikasi web asisten cerdas berbasis cloud yang membantu Anda meringkas teks dan menghasilkan gambar secara otomatis. Aplikasi ini memisahkan layanan autentikasi pengguna dan pemrosesan AI ke dalam sistem microservices agar kinerjanya lebih cepat dan stabil.
 
-Dengan fitur **Summarizer & OCR**, pengguna dapat mengekstrak teks dari foto dokumen serta merangkum artikel panjang hanya dalam hitungan detik. Didukung oleh fitur **Visual Generator**, pengguna juga dapat menciptakan karya seni visual baru berkualitas tinggi berdasarkan deskripsi teks sederhana.
+Melalui fitur **Summarizer & OCR**, pengguna dapat mengambil teks dari artikel web atau gambar dokumen lalu merangkum isinya dengan mudah. Selain itu, dengan fitur **Visual Generator**, pengguna bisa membuat gambar kreatif baru hanya dengan mengetikkan deskripsi teks sederhana.
 
 ---
 
@@ -70,11 +70,11 @@ graph TD
     style SharedSecret fill:#eceff1,stroke:#607d8b,stroke-width:1px
 ```
 
-### Key Architectural Decisions:
-1. **API Gateway Pattern:** Nginx digunakan sebagai single entry-point terpusat untuk routing path, penanganan CORS, TLS Termination, dan perlindungan Rate Limiting.
-2. **Database per Service Pattern:** `auth-service` dan `ai-service` memiliki database PostgreSQL terisolasi masing-masing (`auth_db` dan `ai_db`). Tidak ada query lintas database (shared-database anti-pattern dihindari).
-3. **Stateless JWT Authentication:** `ai-service` memverifikasi token pengguna secara mandiri menggunakan shared-secret key secara stateless, mengeliminasi kebutuhan synchronous network request ke `auth-service` untuk setiap validasi endpoint terproteksi.
-4. **Resilient Circuit Breaker:** Komunikasi inter-service untuk pencatatan kuota dilindungi oleh pattern **Circuit Breaker** untuk mencegah cascading failure jika `auth-service` mengalami downtime.
+### Desain Arsitektur Sistem:
+1.  **API Gateway (Nginx):** Berperan sebagai pintu masuk utama untuk mengarahkan lalu lintas data, mengatur CORS, dan membatasi jumlah request agar server terhindar dari beban berlebih.
+2.  **Database Terpisah (Database per Service):** Layanan autentikasi pengguna (`auth-service`) dan pemrosesan AI (`ai-service`) menggunakan database PostgreSQL terisolasi masing-masing (`auth_db` dan `ai_db`) agar data lebih aman dan mandiri.
+3.  **Autentikasi JWT Stateless:** Layanan AI dapat langsung memverifikasi token masuk secara mandiri menggunakan kunci rahasia bersama (Shared Secret Key) tanpa perlu bertanya ke layanan Auth setiap saat. Hal ini membuat proses loading menjadi jauh lebih cepat.
+4.  **Ketahanan Layanan (Circuit Breaker):** Hubungan antar layanan dilindungi oleh mekanisme Circuit Breaker. Jika layanan autentikasi sedang tidak tersedia, layanan AI akan tetap berjalan melayani pengguna yang sudah login secara normal.
 
 ---
 
@@ -159,12 +159,12 @@ Untuk melindungi sistem dari penyalahgunaan dan serangan keamanan di lingkungan 
 
 ---
 
-## 📈 Monitoring & Observability
+## 📈 Pemantauan Sistem (Observability)
 
-Sistem ini memprioritaskan keterlacakan performa aplikasi di lingkungan cloud:
-*   **Correlation ID Tracing:** Setiap request masuk diberikan HTTP header `X-Correlation-ID` unik. ID ini secara otomatis di-forward oleh Nginx Gateway ke `auth-service` dan `ai-service`, memungkinkan kita menelusuri perjalanan request lintas kontainer (trace logs) secara real-time.
-*   **Structured JSON Logging:** Log backend ditulis dalam format JSON standar yang dapat dengan mudah di-consume oleh log aggregator (seperti ELK Stack atau Loki).
-*   **Service Metrics:** Tiap kontainer mengekspos metrik internal (seperti total request, error count, p50/p95/p99 latency) melalui format JSON di path `/metrics` (akses via Gateway di `/auth/metrics` dan `/chat/metrics`).
+Sistem ini dilengkapi pemantauan performa agar tim pengembang dapat melacak masalah dengan mudah:
+*   **Correlation ID Tracing:** Setiap permintaan dari browser diberi ID unik. ID ini diteruskan ke semua layanan terkait sehingga tim pengembang bisa melacak jalannya proses jika terjadi kendala.
+*   **Structured JSON Logging:** Catatan aktivitas server (logs) ditulis dalam format JSON standar agar mudah dibaca dan dianalisis secara terpusat.
+*   **Metrik Layanan (Metrics):** Setiap layanan menyediakan data performa seperti jumlah request yang masuk, persentase error, dan waktu respon server (latency) melalui endpoint `/metrics`.
 
 ---
 
