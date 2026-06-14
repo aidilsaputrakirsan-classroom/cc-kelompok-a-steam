@@ -53,7 +53,7 @@ graph TD
     
     %% Inter-service
     AIService -->|1. Stateless Token Verification| SharedSecret["Shared SECRET_KEY"]
-    AIService -->|2. Asynchronous Call<br/>PUT /auth/users/me/increment-api<br/>(Circuit Breaker)| AuthService
+    AIService -->|"2. Asynchronous Call<br/>PUT /auth/users/me/increment-api<br/>(Circuit Breaker)"| AuthService
     
     %% External Calls
     AIService -->|SDK API Call| GeminiSDK
