@@ -1,3 +1,4 @@
+"""Pydantic schemas for Auth Service."""
 from pydantic import BaseModel, Field, field_validator, EmailStr
 from datetime import datetime
 from typing import Optional

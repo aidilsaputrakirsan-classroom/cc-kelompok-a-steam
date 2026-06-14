@@ -1,3 +1,4 @@
+"""Database models for AI Service."""
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship

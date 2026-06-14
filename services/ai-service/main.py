@@ -1,3 +1,4 @@
+"""Main FastAPI application for AI Service."""
 import os
 import io
 import base64
