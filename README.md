@@ -135,11 +135,9 @@ Sistem ini memprioritaskan keterlacakan performa aplikasi di lingkungan cloud:
 Seluruh dokumentasi detail dan laporan pengujian berkala proyek Inti Rupa dapat diakses pada tautan berikut:
 
 1.  **[API Contract & Specifications](docs/api-contract.md)** — Kontrak payload & format endpoint backend.
-2.  **[Backend Technical Notes & UAS QA](docs/backend-notes.md)** — Catatan jawaban Lead Backend atas pertanyaan arsitektur.
-3.  **[Operations & Troubleshooting Guide](docs/operations-guide.md)** — Buku panduan penanganan insiden dan pembacaan metrik.
-4.  **[Reliability Testing Report](docs/reliability-testing.md)** — Laporan ketahanan sistem saat disimulasikan error/down.
-5.  **[Deployment & Release Notes](docs/release-notes-m3.md)** — Catatan rilis v3.0.0 dan riwayat evolusi arsitektur.
-6.  **[UAS Presentation Outline](docs/uas-presentation-outline.md)** — Rangkuman poin presentasi ulasan UAS.
+2.  **[Operations & Troubleshooting Guide](docs/operations-guide.md)** — Buku panduan penanganan insiden dan pembacaan metrik.
+3.  **[Reliability Testing Report](docs/reliability-testing.md)** — Laporan ketahanan sistem saat disimulasikan error/down.
+4.  **[Deployment & Release Notes](docs/release-notes-m3.md)** — Catatan rilis v3.0.0 dan riwayat evolusi arsitektur.
 
 ---
 
