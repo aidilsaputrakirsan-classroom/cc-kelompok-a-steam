@@ -16,20 +16,58 @@ Sistem **Inti Rupa** dirancang dengan arsitektur microservices terdesentralisasi
 
 ```mermaid
 graph TD
-    User([User Browser / React Frontend]) -->|Port 80: Nginx Gateway| Gateway[Nginx Reverse Proxy & Rate Limiter]
+    %% Nodes
+    User([👤 User Browser / React UI])
     
-    Gateway -->|/auth/*| AuthService[Auth Service : Port 8001]
-    Gateway -->|/chat/*| AIService[AI Service : Port 8002]
-    Gateway -->|/status atau /| FrontendService[Frontend Static Server : Port 80]
+    subgraph "API Gateway (Port 80)"
+        Gateway["🚪 Nginx Gateway<br/>(Reverse Proxy & Rate Limiter)"]
+    end
     
-    AuthService -->|Read/Write| AuthDB[(PostgreSQL Auth DB : Port 5433)]
-    AIService -->|Read/Write| AIDB[(PostgreSQL AI DB : Port 5435)]
+    subgraph "Frontend Static Server"
+        Frontend["🎨 Frontend SPA<br/>(React Static / Port 80)"]
+    end
     
-    AIService -.->|Stateless JWT Validation| SecretKey[Shared Secret Key]
-    AIService -->|Internal Sync Quota PUT| AuthService
+    subgraph "Microservices Layer"
+        AuthService["🔐 Auth Service<br/>(FastAPI / Port 8001)"]
+        AIService["🤖 AI Service<br/>(FastAPI / Port 8002)"]
+    end
     
-    AIService -->|External SDK API| GeminiAPI[Google Gemini AI - Text & OCR]
-    AIService -->|External API Client| HuggingFaceAPI[HuggingFace Hub - FLUX Image Gen]
+    subgraph "Databases Layer (Database per Service)"
+        AuthDB[("🗄️ Auth DB<br/>PostgreSQL<br/>Port: 5433 (External)")]
+        AIDB[("🗄️ AI DB<br/>PostgreSQL<br/>Port: 5435 (External)")]
+    end
+    
+    subgraph "External Integration"
+        GeminiSDK["Google Gemini API<br/>(Text Summary & OCR)"]
+        HFClient["HuggingFace Hub API<br/>(Flux Image Generation)"]
+    end
+
+    %% Connections
+    User -->|HTTP Requests| Gateway
+    Gateway -->|Route: /| Frontend
+    Gateway -->|Route: /auth/*| AuthService
+    Gateway -->|Route: /chat/* atau /stats| AIService
+    
+    AuthService -->|Read/Write| AuthDB
+    AIService -->|Read/Write| AIDB
+    
+    %% Inter-service
+    AIService -->|1. Stateless Token Verification| SharedSecret["Shared SECRET_KEY"]
+    AIService -->|2. Asynchronous Call<br/>PUT /auth/users/me/increment-api<br/>(Circuit Breaker)| AuthService
+    
+    %% External Calls
+    AIService -->|SDK API Call| GeminiSDK
+    AIService -->|Inference Call| HFClient
+
+    %% Styling
+    style User fill:#e1f5ff,stroke:#03a9f4,stroke-width:2px
+    style Gateway fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    style Frontend fill:#f3e5f5,stroke:#9c27b0,stroke-width:1px
+    style AuthService fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    style AIService fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    style AuthDB fill:#ffebee,stroke:#e91e63,stroke-width:1px
+    style AIDB fill:#ffebee,stroke:#e91e63,stroke-width:1px
+    style SharedSecret fill:#eceff1,stroke:#607d8b,stroke-width:1px
 ```
 
 ### Key Architectural Decisions:
