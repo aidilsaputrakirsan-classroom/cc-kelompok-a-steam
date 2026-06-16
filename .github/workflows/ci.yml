@@ -266,6 +266,16 @@ jobs:
           # yang sudah dikonfigurasi (services/ai-service)
           railway up --service ai-service --detach
 
+      - name: 🚀 Deploy Gateway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
+        run: |
+          # Jalankan dari root repo agar Railway bisa menemukan root_directory
+          # yang sudah dikonfigurasi (services/gateway)
+          railway up --service gateway --detach
+
       - name: 🚀 Deploy Frontend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
@@ -278,7 +288,7 @@ jobs:
 
       - name: 🩺 Automated Health Check
         run: |
-          BACKEND_URL="https://cc-kelompok-a-steam-production.up.railway.app/health"
+          BACKEND_URL="https://gateway-production-18ce.up.railway.app/health"
           FRONTEND_URL="https://cc-kelompok-a-steam-production-51bf.up.railway.app"
           MAX_ATTEMPTS=6
           SLEEP_BETWEEN_ATTEMPTS=10
@@ -338,5 +348,6 @@ jobs:
         run: |
           echo "✅ Microservices deployment and health checks completed successfully!"
           echo "Frontend: https://cc-kelompok-a-steam-production-51bf.up.railway.app"
+          echo "Gateway: https://gateway-production-18ce.up.railway.app"
           echo "Auth Service: http://auth-service.railway.internal:8001 (internal)"
           echo "AI Service: http://ai-service.railway.internal:8002 (internal)"
