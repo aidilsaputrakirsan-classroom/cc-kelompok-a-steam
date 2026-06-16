@@ -12,7 +12,7 @@ import {
 } from "../services/api"
 
 const MODELS = [
-  { id: "black-forest-labs/FLUX.1-schnell", label: "FLUX.1 Schnell ⚡" },
+  { id: "black-forest-labs/FLUX.1-schnell", label: "FLUX.1 Schnell" },
   { id: "stabilityai/stable-diffusion-xl-base-1.0", label: "Stable Diffusion XL" },
 ]
 
@@ -197,7 +197,7 @@ export default function ChatHistoryPage({ showToast }) {
       setNewImageBase64(null)
       await loadSessions()
       setActiveSession(created)
-      showToast("Sesi baru berhasil dibuat! ✨", "success")
+      showToast("Sesi baru berhasil dibuat!", "success")
     } catch (err) {
       showToast("Gagal membuat sesi: " + err.message, "error")
     } finally {
@@ -325,7 +325,7 @@ export default function ChatHistoryPage({ showToast }) {
       {/* HERO */}
       <div style={s.hero}>
         <div style={s.heroTextBlock}>
-          <p style={s.kicker}>Inti Studio ✨</p>
+          <p style={s.kicker}>Inti Studio</p>
           <h2 style={s.heroTitle}>Ruang Kerja AI Kreatifmu</h2>
           <p style={s.heroText}>
             Buat sesi generate gambar atau rangkum teks, lanjutkan kapan saja, dan kelola seluruh riwayat karyamu dalam satu tempat.
@@ -346,7 +346,7 @@ export default function ChatHistoryPage({ showToast }) {
             <div style={s.centered}><Spinner size={28} color="#ffb26c" /></div>
           ) : sessions.length === 0 ? (
             <div style={s.emptyList}>
-              <span style={s.emptyListIcon}>💬</span>
+              <span style={s.emptyListIcon}></span>
               <p style={s.emptyListText}>Belum ada sesi.<br />Klik "+ Baru" untuk mulai berkarya.</p>
             </div>
           ) : (
@@ -361,7 +361,7 @@ export default function ChatHistoryPage({ showToast }) {
                   onClick={() => openSession(session.id)}
                 >
                   <div style={s.sessionIcon}>
-                    {session.session_type === "image" ? "🖼️" : session.session_type === "ocr" ? "📄" : "📝"}
+                    {session.session_type === "image" ? "Image" : session.session_type === "ocr" ? "Doc" : "Text"}
                   </div>
                   <div style={s.sessionInfo}>
                     {renamingId === session.id ? (
@@ -388,15 +388,15 @@ export default function ChatHistoryPage({ showToast }) {
                   <div style={s.sessionActions}>
                     <button
                       style={s.btnIcon}
-                      title="Rename"
+                      title="Ubah Nama"
                       onClick={e => startRename(e, session)}
-                    >✏️</button>
+                    >Ubah Nama</button>
                     <button
                       style={{ ...s.btnIcon, ...(deletingId === session.id ? { opacity: 0.4 } : {}) }}
                       title="Hapus"
                       onClick={e => handleDelete(e, session.id)}
                       disabled={deletingId === session.id}
-                    >🗑️</button>
+                    >Hapus</button>
                   </div>
                 </li>
               ))}
@@ -410,7 +410,7 @@ export default function ChatHistoryPage({ showToast }) {
             <div style={s.centered}><Spinner size={40} color="#ffb26c" /></div>
           ) : !activeSession ? (
             <div style={s.emptyChat}>
-              <div style={s.emptyIcon}>💬</div>
+              <div style={s.emptyIcon}></div>
               <h3 style={s.emptyTitle}>Mulai berkarya di Inti Studio</h3>
               <p style={s.emptyText}>
                 Pilih sesi dari daftar kiri, atau klik tombol "+ Baru" untuk memulai sesi generate gambar atau rangkum teks baru.
@@ -425,7 +425,7 @@ export default function ChatHistoryPage({ showToast }) {
               <div style={s.chatHeader}>
                 <div>
                   <p style={s.chatHeaderLabel}>
-                    {activeSession.session_type === "image" ? "🖼️ Image Generation" : activeSession.session_type === "ocr" ? "📄 Document OCR" : "📝 Text Summarize"}
+                    {activeSession.session_type === "image" ? "Image Generation" : activeSession.session_type === "ocr" ? "Document OCR" : "Text Summarize"}
                   </p>
                   <h3 style={s.chatHeaderTitle}>{activeSession.title}</h3>
                 </div>
@@ -440,7 +440,7 @@ export default function ChatHistoryPage({ showToast }) {
                     style={{ ...s.msgRow, ...(msg.role === "user" ? s.msgRowUser : {}) }}
                   >
                     <div style={msg.role === "user" ? s.msgAvatarUser : s.msgAvatar}>
-                      {msg.role === "user" ? "👤" : "🤖"}
+                      {msg.role === "user" ? "You" : "AI"}
                     </div>
                     <div style={{ ...s.msgBubble, ...(msg.role === "user" ? s.msgBubbleUser : {}) }}>
                       {msg.content_type === "image_base64" ? (
@@ -460,7 +460,7 @@ export default function ChatHistoryPage({ showToast }) {
                                   a.download = `inti-rupa-${msg.id}.png`
                                   a.click()
                                 }}
-                              >⬇️ Download</button>
+                              >Download</button>
                             </div>
                           )}
                         </div>
@@ -481,7 +481,7 @@ export default function ChatHistoryPage({ showToast }) {
                     className="animate-slide-up"
                     style={{ ...s.msgRow, ...s.msgRowUser }}
                   >
-                    <div style={s.msgAvatarUser}>👤</div>
+                    <div style={s.msgAvatarUser}>U</div>
                     <div style={{ ...s.msgBubble, ...s.msgBubbleUser }}>
                       <p style={s.msgText}>{optimisticMsg.content}</p>
                       <span style={s.msgTime}>{formatTime(optimisticMsg.created_at)}</span>
@@ -520,13 +520,13 @@ export default function ChatHistoryPage({ showToast }) {
                       style={{ ...s.modeToggleBtn, ...(inputMode === "plain" ? s.modeToggleBtnActive : {}) }}
                       onClick={() => { setInputMode("plain"); setShowPreview(false) }}
                       title="Mode teks biasa"
-                    >✏️ Plain</button>
+                    >Plain</button>
                     <button
                       id="btn-mode-markdown"
                       style={{ ...s.modeToggleBtn, ...(inputMode === "markdown" ? s.modeToggleBtnActive : {}) }}
                       onClick={() => setInputMode("markdown")}
                       title="Mode Markdown — gunakan # heading, **bold**, - list"
-                    >📝 Markdown</button>
+                    >Markdown</button>
                     {inputMode === "markdown" && (
                       <span style={s.mdHintBadge}>Gunakan # heading, **bold**, - list</span>
                     )}
@@ -587,7 +587,7 @@ export default function ChatHistoryPage({ showToast }) {
                         onChange={e => handleFileSelect(e, setContinueImageBase64, setContinueImageFile)} 
                       />
                       <label htmlFor="chatOcrUpload" style={s.btnUpload}>
-                        {continueImageFile ? "📄 " + continueImageFile.name.slice(0, 10) + "..." : "📎 Pilih File"}
+                        {continueImageFile ? continueImageFile.name.slice(0, 10) + "..." : "Pilih File"}
                       </label>
                     </div>
                   )}
@@ -630,9 +630,9 @@ export default function ChatHistoryPage({ showToast }) {
             {/* Type selector */}
             <div style={s.typeGrid}>
               {[
-                { val: "image", icon: "🖼️", label: "Image Generator", desc: "Generate gambar dari teks prompt" },
-                { val: "summarize", icon: "📝", label: "Text Summarizer", desc: "Rangkum teks panjang jadi ringkasan" },
-                { val: "ocr", icon: "📄", label: "Document OCR", desc: "Ekstrak teks dari foto dokumen" },
+                { val: "image", icon: "", label: "Image Generator", desc: "Generate gambar dari teks prompt" },
+                { val: "summarize", icon: "", label: "Text Summarizer", desc: "Rangkum teks panjang jadi ringkasan" },
+                { val: "ocr", icon: "", label: "Document OCR", desc: "Ekstrak teks dari foto dokumen" },
               ].map(t => (
                 <button
                   key={t.val}

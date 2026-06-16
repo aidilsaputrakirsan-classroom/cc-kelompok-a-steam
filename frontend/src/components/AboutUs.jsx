@@ -5,13 +5,13 @@ const AboutUs = () => {
     {
       title: "AI Image Generator",
       description: "Transform text into images automatically with state-of-the-art AI technology. Unleash your visual creativity with just a few words.",
-      icon: "🖼️",
+      icon: "",
       color: "from-orange-500/20 to-transparent"
     },
     {
       title: "AI Summarizer",
       description: "Convert long texts into clear and concise summaries in seconds. Save time and understand complex information faster.",
-      icon: "📝",
+      icon: "",
       color: "from-blue-500/20 to-transparent"
     },
   ];
@@ -24,36 +24,36 @@ const AboutUs = () => {
   ];
 
   const targetUsers = [
-    { label: "Students", icon: "🎓" },
-    { label: "Content Creators", icon: "🎨" },
-    { label: "General Users", icon: "👤" },
+    { label: "Students", icon: "" },
+    { label: "Content Creators", icon: "" },
+    { label: "General Users", icon: "" },
   ];
 
   const techStack = [
     {
       category: "Backend",
-      icon: "⚙️",
+      icon: "",
       color: "from-green-500/20 to-transparent",
       border: "hover:border-green-400/40",
       items: ["FastAPI (Python)", "PostgreSQL", "SQLAlchemy ORM", "JWT Auth"],
     },
     {
       category: "Frontend",
-      icon: "🎨",
+      icon: "",
       color: "from-blue-500/20 to-transparent",
       border: "hover:border-blue-400/40",
       items: ["React + Vite", "Tailwind CSS v4", "Vitest (Testing)", "react-markdown"],
     },
     {
       category: "Container & Infra",
-      icon: "🐳",
+      icon: "",
       color: "from-cyan-500/20 to-transparent",
       border: "hover:border-cyan-400/40",
       items: ["Docker", "Docker Compose", "Nginx (reverse proxy)", "PostgreSQL Volume"],
     },
     {
       category: "CI/CD",
-      icon: "🚀",
+      icon: "",
       color: "from-orange-500/20 to-transparent",
       border: "hover:border-orange-400/40",
       items: ["GitHub Actions", "GitHub Flow", "Branch Protection", "Squash & Merge"],
@@ -97,7 +97,7 @@ const AboutUs = () => {
         <div className="flex justify-center md:justify-end">
           <div className="relative group">
             <div className="absolute inset-0 bg-orange-400/20 blur-[40px] rounded-full group-hover:bg-orange-400/30 transition-all duration-500"></div>
-            <span className="relative text-9xl">✨</span>
+            <span className="relative text-9xl"></span>
           </div>
         </div>
       </section>
@@ -157,7 +157,7 @@ const AboutUs = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="p-10 rounded-[32px] bg-gradient-to-br from-[#1a1f35] to-[#0f172a] border border-white/5 shadow-xl">
           <div className="flex items-center gap-4 mb-8">
-            <span className="text-4xl">👁️</span>
+            <span className="text-4xl"></span>
             <h2 className="text-3xl font-bold text-white">Vision</h2>
           </div>
           <p className="text-gray-300 text-xl leading-relaxed">
@@ -167,7 +167,7 @@ const AboutUs = () => {
 
         <div className="p-10 rounded-[32px] bg-gradient-to-br from-[#1a1f35] to-[#0f172a] border border-white/5 shadow-xl">
           <div className="flex items-center gap-4 mb-8">
-            <span className="text-4xl">🚀</span>
+            <span className="text-4xl"></span>
             <h2 className="text-3xl font-bold text-white">Mission</h2>
           </div>
           <ul className="space-y-5">
@@ -203,7 +203,7 @@ const AboutUs = () => {
       <section id="our-team" className="relative overflow-hidden rounded-[40px] bg-gradient-to-br from-[#ff8f4826] to-[#19274cdb] border border-white/10 shadow-2xl">
         <div className="relative z-10 p-12 md:p-16">
           <div className="flex items-center gap-4 mb-10">
-            <span className="text-4xl">👥</span>
+            <span className="text-4xl"></span>
             <h2 className="text-4xl font-black text-white">Our Team</h2>
           </div>
           <p className="text-gray-300 text-lg leading-relaxed max-w-2xl mb-10 font-medium">

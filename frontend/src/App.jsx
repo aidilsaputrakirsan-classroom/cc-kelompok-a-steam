@@ -99,7 +99,7 @@ function AppContent() {
       await login(email, password)
       const userData = await getMe()
       setUser(userData)
-      setAuthModalMessage("Login berhasil! Selamat datang di Inti Studio! ✨")
+      setAuthModalMessage("Login berhasil! Selamat datang di Inti Studio!")
       setShowAuthModal(true)
       
       setTimeout(() => {
@@ -174,14 +174,12 @@ function AppContent() {
       <DegradedModeBanner />
       
       <div style={styles.container}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-          <Header
-            user={user}
-            onLogout={handleLogout}
-            isDark={isDark}
-            onToggleDark={toggleDark}
-          />
-        </div>
+        <Header
+          user={user}
+          onLogout={handleLogout}
+          isDark={isDark}
+          onToggleDark={toggleDark}
+        />
 
         <div className="flex gap-3 flex-wrap mb-6">
           <button
@@ -196,7 +194,7 @@ function AppContent() {
                   : "bg-orange-100/30 border border-orange-200/50 text-orange-700 hover:bg-orange-100/50 hover:text-orange-900 hover:border-orange-300"
             }`}
           >
-            ℹ️ About Us
+            About Us
           </button>
           <button
             onClick={() => setActiveTab("chat-history")}
@@ -210,7 +208,7 @@ function AppContent() {
                   : "bg-orange-100/30 border border-orange-200/50 text-orange-700 hover:bg-orange-100/50 hover:text-orange-900 hover:border-orange-300"
             }`}
           >
-            💬 Chat History
+            Chat History
           </button>
         </div>
 
