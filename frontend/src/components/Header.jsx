@@ -19,10 +19,10 @@ function Header({ user, onLogout, isDark, onToggleDark }) {
 
   const getStatusIcon = () => {
     switch (authStatus) {
-      case 'healthy': return '🟢'
-      case 'degraded': return '🟡'
-      case 'unhealthy': return '🔴'
-      default: return '⚪'
+      case 'healthy': return ''
+      case 'degraded': return ''
+      case 'unhealthy': return ''
+      default: return ''
     }
   }
 
@@ -35,7 +35,7 @@ function Header({ user, onLogout, isDark, onToggleDark }) {
     }}>
       <div style={styles.left}>
         <div style={styles.logo}>
-          <span style={styles.icon}>✨</span>
+
           <div>
             <h1 style={{ ...styles.title, color: "var(--text-primary)" }}>Inti Rupa</h1>
             <p style={{ ...styles.subtitle, color: "var(--text-muted)" }}>AI Platform — Komputasi Awan ITK</p>
@@ -52,15 +52,16 @@ function Header({ user, onLogout, isDark, onToggleDark }) {
             gap: '0.5rem',
             alignItems: 'center',
             cursor: 'pointer',
-            backgroundColor: 'rgba(100, 116, 139, 0.2)',
-            border: '1px solid rgba(148, 163, 184, 0.3)',
+            backgroundColor: isDark ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.12)',
+            border: isDark ? '1px solid rgba(148, 163, 184, 0.3)' : '1px solid rgba(148, 163, 184, 0.4)',
+            color: isDark ? '#ffd8b2' : '#a1580d',
             transition: 'all 0.2s ease',
           }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(100, 116, 139, 0.3)'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(100, 116, 139, 0.2)'}
+          onMouseEnter={(e) => e.target.style.backgroundColor = isDark ? 'rgba(100, 116, 139, 0.3)' : 'rgba(100, 116, 139, 0.2)'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = isDark ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.12)'}
           title="View system status"
         >
-          <span>{getStatusIcon()}</span>
+          {getStatusIcon() && <span>{getStatusIcon()}</span>}
           <span>Status</span>
         </button>
 
@@ -72,15 +73,15 @@ function Header({ user, onLogout, isDark, onToggleDark }) {
           aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
           title={isDark ? "Switch to light mode" : "Switch to dark mode"}
         >
-          <span style={{ fontSize: "1.1rem" }}>{isDark ? "☀️" : "🌙"}</span>
+
           <span>{isDark ? "Light" : "Dark"}</span>
         </button>
 
         {user && (
           <div style={styles.user}>
-            <span style={styles.userName}>👤 {user.full_name || user.email}</span>
+            <span style={{...styles.userName, color: "var(--text-primary)"}}>{user.full_name || user.email}</span>
             <button onClick={onLogout} style={styles.btnLogout}>
-              🚪 Logout
+              Logout
             </button>
           </div>
         )}

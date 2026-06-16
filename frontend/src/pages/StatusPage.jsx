@@ -27,9 +27,31 @@ function ServiceCard({ name, icon, healthUrl, metricsUrl }) {
     if (metricsUrl) {
       try {
         const metricsRes = await fetch(metricsUrl);
-        const metricsData = await metricsRes.json();
-        setMetrics(metricsData);
-      } catch {
+        const contentType = metricsRes.headers.get("content-type");
+        
+        if (contentType && contentType.includes("application/json")) {
+          const metricsData = await metricsRes.json();
+          setMetrics(metricsData);
+        } else {
+          // Fallback to parse Nginx stub_status plain text format
+          const text = await metricsRes.text();
+          const match = text.match(/server accepts handled requests\n\s+(\d+)\s+(\d+)\s+(\d+)/);
+          if (match) {
+            const accepts = parseInt(match[1], 10);
+            const handled = parseInt(match[2], 10);
+            const requests = parseInt(match[3], 10);
+            setMetrics({
+              total_requests: requests,
+              total_errors: accepts - handled, // Basic error estimation
+              error_rate_percent: 0, // N/A
+              latency: { avg_ms: 0, p95_ms: 0 }, // N/A
+              uptime_seconds: 0 // N/A
+            });
+          } else {
+            setMetrics(null);
+          }
+        }
+      } catch (err) {
         setMetrics(null);
       }
     }
@@ -132,15 +154,15 @@ function ServiceCard({ name, icon, healthUrl, metricsUrl }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginTop: '10px' }}>
             <div style={{ background: metricBgColor, padding: '10px', borderRadius: '6px' }}>
               <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', color: subtextColor }}>Avg Latency</div>
-              <div style={{ fontSize: '16px', fontWeight: '600', color: textColor }}>{(metrics.latency?.avg_ms || 0).toFixed(1)}ms</div>
+              <div style={{ fontSize: '16px', fontWeight: '600', color: textColor }}>{metrics.latency?.avg_ms ? `${metrics.latency.avg_ms.toFixed(1)}ms` : '-'}</div>
             </div>
             <div style={{ background: metricBgColor, padding: '10px', borderRadius: '6px' }}>
               <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', color: subtextColor }}>P95 Latency</div>
-              <div style={{ fontSize: '16px', fontWeight: '600', color: textColor }}>{(metrics.latency?.p95_ms || 0).toFixed(1)}ms</div>
+              <div style={{ fontSize: '16px', fontWeight: '600', color: textColor }}>{metrics.latency?.p95_ms ? `${metrics.latency.p95_ms.toFixed(1)}ms` : '-'}</div>
             </div>
             <div style={{ background: metricBgColor, padding: '10px', borderRadius: '6px' }}>
               <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', color: subtextColor }}>Uptime</div>
-              <div style={{ fontSize: '16px', fontWeight: '600', color: textColor }}>{Math.round((metrics.uptime_seconds || 0) / 60)}m</div>
+              <div style={{ fontSize: '16px', fontWeight: '600', color: textColor }}>{metrics.uptime_seconds ? `${Math.round(metrics.uptime_seconds / 60)}m` : '-'}</div>
             </div>
           </div>
         </div>
@@ -233,7 +255,7 @@ export default function StatusPage() {
             name="API Gateway"
             icon={<Globe size={20} />}
             healthUrl={`${API_URL}/health`}
-            metricsUrl={null}
+            metricsUrl={`${API_URL}/nginx_status`}
           />
         </div>
 

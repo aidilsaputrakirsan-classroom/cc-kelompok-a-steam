@@ -24,11 +24,11 @@ function SearchBar({ onSearch }) {
         style={styles.input}
       />
       <button type="submit" style={styles.btnSearch}>
-        🔍 Cari
+        Cari
       </button>
       {query && (
         <button type="button" onClick={handleClear} style={styles.btnClear}>
-          ✕ Clear
+          Clear
         </button>
       )}
     </form>

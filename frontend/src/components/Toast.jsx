@@ -11,10 +11,10 @@ function Toast({ message, type = "success", onClose, duration = 3000 }) {
   }, [duration, onClose])
 
   const icons = {
-    success: "✅",
-    error: "❌",
-    info: "ℹ️",
-    warning: "⚠️",
+    success: "",
+    error: "",
+    info: "",
+    warning: "",
   }
 
   const isDark = document.documentElement.classList.contains('light') === false;
@@ -115,7 +115,7 @@ function Toast({ message, type = "success", onClose, duration = 3000 }) {
           onMouseEnter={(e) => (e.target.style.opacity = "1")}
           onMouseLeave={(e) => (e.target.style.opacity = "0.7")}
         >
-          ✕
+          X
         </button>
       </div>
     </>

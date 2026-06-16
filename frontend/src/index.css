@@ -13,7 +13,9 @@
 
 /* ===== DARK / LIGHT MODE DESIGN TOKENS ===== */
 :root {
+  color-scheme: dark;
   /* Dark mode tokens (default) */
+  --autofill-bg: #161e30;
   --bg-app: #060913;
   --bg-app-gradient: radial-gradient(circle at top left, rgba(136, 115, 255, 0.16), transparent 24%),
                      radial-gradient(circle at bottom right, rgba(255, 184, 130, 0.18), transparent 24%),
@@ -41,6 +43,8 @@
 
 /* Light mode — activated by html.light class */
 html.light {
+  color-scheme: light;
+  --autofill-bg: #fcf8f3;
   --bg-app: #f5ede4;
   --bg-app-gradient: radial-gradient(circle at top left, rgba(255, 159, 64, 0.18), transparent 24%),
                      radial-gradient(circle at bottom right, rgba(255, 193, 105, 0.16), transparent 24%),
@@ -52,8 +56,8 @@ html.light {
   --text-primary: #3d2817;
   --text-muted: #8b7355;
   --text-body: #52372a;
-  --toggle-bg: rgba(255, 140, 66, 0.12);
-  --toggle-border: rgba(255, 140, 66, 0.30);
+  --toggle-bg: rgba(255, 255, 255, 0.65);
+  --toggle-border: rgba(255, 140, 66, 0.40);
 }
 
 a {
@@ -85,16 +89,26 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: transparent;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: rgba(255, 143, 72, 0.5);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px auto rgba(255, 143, 72, 0.5);
+}
+
+/* ===== BROWSER AUTOFILL FIX ===== */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px var(--autofill-bg) inset !important;
+  caret-color: var(--text-primary);
+  -webkit-text-fill-color: var(--text-primary) !important;
 }
 
 /* ===== DARK MODE TOGGLE BUTTON ===== */
@@ -273,6 +287,98 @@ html.light .dark-mode-toggle:hover {
   margin-bottom: 0;
 }
 
+/* ===== LIGHT MODE OVERRIDES FOR MARKDOWN ===== */
+html.light .markdown-body {
+  color: #52372a;
+}
+
+html.light .markdown-body h1,
+html.light .markdown-body h2,
+html.light .markdown-body h3,
+html.light .markdown-body h4,
+html.light .markdown-body h5,
+html.light .markdown-body h6 {
+  color: #3d2817;
+}
+
+html.light .markdown-body h2 {
+  border-bottom: 1px solid rgba(255,140,66,0.3);
+}
+
+html.light .markdown-body h3 {
+  color: #8b4a1b;
+}
+
+html.light .markdown-body h4,
+html.light .markdown-body h5,
+html.light .markdown-body h6 {
+  color: #a8591b;
+}
+
+html.light .markdown-body strong {
+  color: #9e4c11;
+}
+
+html.light .markdown-body em {
+  color: #7b5943;
+}
+
+html.light .markdown-body li {
+  color: #52372a;
+}
+
+html.light .markdown-body li::marker {
+  color: #c85a2d;
+}
+
+html.light .markdown-body blockquote {
+  border-left: 3px solid rgba(255, 140, 66, 0.5);
+  background: rgba(255, 140, 66, 0.08);
+  color: #6a4936;
+}
+
+html.light .markdown-body code {
+  background: rgba(255, 140, 66, 0.1);
+  border: 1px solid rgba(255, 140, 66, 0.2);
+  color: #8b4a1b;
+}
+
+html.light .markdown-body pre {
+  background: rgba(252, 248, 243, 0.8);
+  border: 1px solid rgba(255, 140, 66, 0.25);
+}
+
+html.light .markdown-body pre code {
+  color: #52372a;
+}
+
+html.light .markdown-body a {
+  color: #c85a2d;
+}
+
+html.light .markdown-body a:hover {
+  color: #9e4c11;
+}
+
+html.light .markdown-body hr {
+  border-top: 1px solid rgba(255, 140, 66, 0.2);
+}
+
+html.light .markdown-body th {
+  background: rgba(255, 140, 66, 0.15);
+  color: #8b4a1b;
+  border: 1px solid rgba(255, 140, 66, 0.3);
+}
+
+html.light .markdown-body td {
+  border: 1px solid rgba(255, 140, 66, 0.2);
+  color: #52372a;
+}
+
+html.light .markdown-body tr:nth-child(even) td {
+  background: rgba(255, 140, 66, 0.04);
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .markdown-body {
@@ -284,3 +390,26 @@ html.light .dark-mode-toggle:hover {
     font-size: 0.8rem;
   }
 }
+
+/* Custom Scrollbar for Modal to prevent border-radius clipping */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  background-color: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 24px; /* Offset to not clip modal corners */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+
+
+

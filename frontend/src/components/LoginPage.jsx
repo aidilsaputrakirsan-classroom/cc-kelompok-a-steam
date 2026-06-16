@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { LogIn, UserPlus } from "lucide-react"
+import { LogIn, UserPlus, Sun, Moon } from "lucide-react"
 import Spinner from "./Spinner"
 
 const initialFormData = {
@@ -9,11 +9,13 @@ const initialFormData = {
   full_name: "",
 }
 
-function LoginPage({ onLogin, onRegister, showToast }) {
+function LoginPage({ onLogin, onRegister, showToast, isDark = true, toggleTheme }) {
   const [isRegister, setIsRegister] = useState(false)
   const [formData, setFormData] = useState(initialFormData)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
+  const styles = getStyles(isDark)
 
   useEffect(() => {
     resetForm()
@@ -66,6 +68,21 @@ function LoginPage({ onLogin, onRegister, showToast }) {
   return (
     <div style={styles.wrapper} role="main">
       <div style={styles.backgroundGlow} />
+      
+      {/* Theme Toggle Button */}
+      {toggleTheme && (
+        <button 
+          onClick={toggleTheme} 
+          style={styles.themeToggle}
+          aria-label="Toggle theme"
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.background = isDark ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 140, 66, 0.15)" }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(255, 255, 255, 0.65)" }}
+        >
+          {isDark ? <Sun size={20} color="#ff8f48" /> : <Moon size={20} color="#ff8f48" />}
+          <span style={styles.themeToggleText}>{isDark ? "Light Mode" : "Dark Mode"}</span>
+        </button>
+      )}
+
       <div style={styles.card}>
         <div style={styles.header}>
           <div>
@@ -194,9 +211,7 @@ function LoginPage({ onLogin, onRegister, showToast }) {
   )
 }
 
-const isDarkMode = () => document.documentElement.classList.contains('light') === false
-
-const styles = {
+const getStyles = (isDark) => ({
   wrapper: {
     position: "relative",
     overflow: "hidden",
@@ -204,18 +219,33 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: isDarkMode() 
+    background: isDark 
       ? "radial-gradient(circle at top left, rgba(152, 112, 255, 0.35), transparent 28%), radial-gradient(circle at bottom right, rgba(255, 175, 110, 0.22), transparent 28%), #080914"
       : "radial-gradient(circle at top left, rgba(255, 159, 64, 0.18), transparent 28%), radial-gradient(circle at bottom right, rgba(255, 193, 105, 0.16), transparent 28%), #f5ede4",
     padding: "2rem",
     fontFamily: "'SF Pro Display', 'SF Pro', 'Inter', system-ui, sans-serif",
+  },
+  themeToggle: {
+    position: "absolute",
+    top: "2rem",
+    right: "2rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    padding: "0.6rem 1rem",
+    borderRadius: "12px",
+    border: "1px solid transparent",
+    background: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(255, 255, 255, 0.65)",
+    color: isDark ? "#fff" : "#ff8f48",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
   },
   backgroundGlow: {
     position: "absolute",
     width: "720px",
     height: "720px",
     borderRadius: "50%",
-    background: isDarkMode()
+    background: isDark
       ? "radial-gradient(circle, rgba(255, 189, 169, 0.14), transparent 52%)"
       : "radial-gradient(circle, rgba(255, 159, 64, 0.18), transparent 52%)",
     filter: "blur(80px)",
@@ -227,11 +257,11 @@ const styles = {
     position: "relative",
     width: "100%",
     maxWidth: "460px",
-    background: isDarkMode() ? "rgba(15, 23, 42, 0.92)" : "rgba(252, 248, 243, 0.98)",
-    border: isDarkMode() ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255, 140, 66, 0.22)",
+    background: isDark ? "rgba(15, 23, 42, 0.92)" : "rgba(252, 248, 243, 0.98)",
+    border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255, 140, 66, 0.22)",
     borderRadius: "28px",
     padding: "2rem",
-    boxShadow: isDarkMode() 
+    boxShadow: isDark 
       ? "0 24px 80px rgba(0, 0, 0, 0.35)"
       : "0 24px 80px rgba(255, 140, 66, 0.14)",
     backdropFilter: "blur(18px)",
@@ -247,11 +277,11 @@ const styles = {
     margin: 0,
     fontSize: "2.2rem",
     lineHeight: 1.05,
-    color: isDarkMode() ? "#fff" : "#1a1410",
+    color: isDark ? "#fff" : "#1a1410",
   },
   subtitle: {
     margin: "0.65rem 0 0",
-    color: isDarkMode() ? "#a1a6b3" : "#8b7355",
+    color: isDark ? "#a1a6b3" : "#8b7355",
     lineHeight: 1.6,
     maxWidth: "320px",
     fontSize: "0.95rem",
@@ -260,11 +290,11 @@ const styles = {
     alignSelf: "center",
     padding: "0.5rem 0.9rem",
     borderRadius: "999px",
-    background: isDarkMode()
+    background: isDark
       ? "linear-gradient(135deg, rgba(255,180,130,0.16), rgba(255,255,255,0.08))"
       : "linear-gradient(135deg, rgba(255, 140, 66, 0.16), rgba(255, 255, 255, 0.10))",
-    border: isDarkMode() ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(255, 140, 66, 0.30)",
-    color: isDarkMode() ? "#ffe7d1" : "#b85d1a",
+    border: isDark ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(255, 140, 66, 0.30)",
+    color: isDark ? "#ffe7d1" : "#b85d1a",
     fontSize: "0.82rem",
     letterSpacing: "0.02em",
   },
@@ -273,7 +303,7 @@ const styles = {
     gridTemplateColumns: "1fr 1fr",
     gap: "0.5rem",
     marginBottom: "1.75rem",
-    background: isDarkMode() ? "rgba(255,255,255,0.04)" : "rgba(255, 140, 66, 0.10)",
+    background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255, 140, 66, 0.10)",
     borderRadius: "14px",
     padding: "0.35rem",
   },
@@ -282,17 +312,17 @@ const styles = {
     borderRadius: "12px",
     padding: "0.95rem 1rem",
     background: "transparent",
-    color: isDarkMode() ? "#a1a6b3" : "#8b7355",
+    color: isDark ? "#a1a6b3" : "#8b7355",
     fontWeight: 700,
     cursor: "pointer",
     transition: "all 0.18s ease",
   },
   tabActive: {
-    background: isDarkMode()
+    background: isDark
       ? "linear-gradient(135deg, rgba(255, 183, 128, 0.22), rgba(255, 255, 255, 0.08))"
       : "linear-gradient(135deg, rgba(255, 140, 66, 0.28), rgba(255, 255, 255, 0.15))",
-    color: isDarkMode() ? "#fff" : "#3d2817",
-    boxShadow: isDarkMode()
+    color: isDark ? "#fff" : "#3d2817",
+    boxShadow: isDark
       ? "0 10px 30px rgba(255, 183, 128, 0.14)"
       : "0 10px 30px rgba(255, 140, 66, 0.20)",
   },
@@ -305,7 +335,7 @@ const styles = {
     gap: "0.45rem",
   },
   label: {
-    color: isDarkMode() ? "#c8c8dc" : "#52372a",
+    color: isDark ? "#c8c8dc" : "#52372a",
     fontSize: "0.86rem",
     fontWeight: 600,
   },
@@ -313,9 +343,9 @@ const styles = {
     width: "100%",
     padding: "0.95rem 1rem",
     borderRadius: "16px",
-    border: isDarkMode() ? "1px solid rgba(255,255,255,0.10)" : "1px solid rgba(255, 140, 66, 0.22)",
-    background: isDarkMode() ? "rgba(255,255,255,0.04)" : "rgba(252, 248, 243, 0.85)",
-    color: isDarkMode() ? "#f8f9ff" : "#3d2817",
+    border: isDark ? "1px solid rgba(255,255,255,0.10)" : "1px solid rgba(255, 140, 66, 0.22)",
+    background: isDark ? "rgba(255,255,255,0.04)" : "rgba(252, 248, 243, 0.85)",
+    color: isDark ? "#f8f9ff" : "#3d2817",
     outline: "none",
     fontSize: "0.98rem",
     transition: "border-color 0.2s ease, box-shadow 0.2s ease",
@@ -330,11 +360,11 @@ const styles = {
     borderRadius: "16px",
     border: "none",
     background: "linear-gradient(135deg, #ffb57f, #ff8f48)",
-    color: isDarkMode() ? "#111827" : "#fff8f4",
+    color: isDark ? "#111827" : "#fff8f4",
     fontWeight: 700,
     fontSize: "1rem",
     cursor: "pointer",
-    boxShadow: isDarkMode()
+    boxShadow: isDark
       ? "0 18px 40px rgba(255, 149, 92, 0.24)"
       : "0 18px 40px rgba(255, 140, 66, 0.28)",
     transition: "transform 0.2s ease, box-shadow 0.2s ease",
@@ -342,11 +372,11 @@ const styles = {
   error: {
     padding: "0.85rem 1rem",
     borderRadius: "14px",
-    background: isDarkMode() ? "rgba(255, 74, 91, 0.14)" : "rgba(255, 140, 66, 0.14)",
-    color: isDarkMode() ? "#ffccd6" : "#b85d1a",
-    border: isDarkMode() ? "1px solid rgba(255, 74, 91, 0.25)" : "1px solid rgba(255, 140, 66, 0.30)",
+    background: isDark ? "rgba(255, 74, 91, 0.14)" : "rgba(255, 140, 66, 0.14)",
+    color: isDark ? "#ffccd6" : "#b85d1a",
+    border: isDark ? "1px solid rgba(255, 74, 91, 0.25)" : "1px solid rgba(255, 140, 66, 0.30)",
     fontSize: "0.92rem",
   },
-}
+})
 
 export default LoginPage
