@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { Edit2, Trash2 } from "lucide-react"
 import Spinner from "./Spinner"
 import {
   getChatSessions,
@@ -15,6 +16,88 @@ const MODELS = [
   { id: "black-forest-labs/FLUX.1-schnell", label: "FLUX.1 Schnell" },
   { id: "stabilityai/stable-diffusion-xl-base-1.0", label: "Stable Diffusion XL" },
 ]
+
+const CustomDropdown = ({ value, onChange, options, disabled, style, isDark }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const selected = options.find(o => o.id === value) || options[0]
+
+  return (
+    <div 
+      ref={dropdownRef} 
+      style={{ 
+        position: "relative", 
+        ...style, 
+        padding: 0, 
+        cursor: disabled ? "not-allowed" : "pointer", 
+        opacity: disabled ? 0.6 : 1,
+        userSelect: "none"
+      }}
+    >
+      <div 
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        style={{
+          width: "100%", height: "100%", padding: style.padding || "0.6rem 0.9rem",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem"
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selected.label}</span>
+        <span style={{ fontSize: "0.7em", transform: isOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }}>▼</span>
+      </div>
+      {isOpen && (
+        <div style={{
+          position: "absolute",
+          top: "calc(100% + 6px)",
+          left: 0,
+          right: 0,
+          background: isDark ? "rgba(22, 27, 46, 0.98)" : "rgba(255, 252, 248, 0.98)",
+          border: isDark ? "1px solid rgba(255, 156, 60, 0.25)" : "1px solid rgba(255, 143, 72, 0.25)",
+          borderRadius: "12px",
+          boxShadow: isDark ? "0 10px 40px rgba(0,0,0,0.6)" : "0 10px 40px rgba(255,143,72,0.18)",
+          backdropFilter: "blur(12px)",
+          zIndex: 50,
+          overflow: "hidden",
+          minWidth: "max-content",
+          display: "flex",
+          flexDirection: "column",
+          padding: "0.4rem"
+        }}>
+          {options.map(m => (
+            <div 
+              key={m.id}
+              onClick={() => { onChange(m.id); setIsOpen(false); }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? "rgba(255, 156, 60, 0.15)" : "rgba(255, 143, 72, 0.12)" }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
+              style={{
+                padding: "0.75rem 1rem",
+                borderRadius: "8px",
+                color: isDark ? "#fff" : "#1a1410",
+                fontSize: "0.9rem",
+                transition: "background 0.15s",
+                background: m.id === value ? (isDark ? "rgba(255, 156, 60, 0.08)" : "rgba(255, 143, 72, 0.08)") : "transparent",
+                fontWeight: m.id === value ? 700 : 400,
+                cursor: "pointer"
+              }}
+            >
+              {m.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function formatDate(iso) {
   if (!iso) return ""
@@ -374,10 +457,7 @@ export default function ChatHistoryPage({ showToast, isDark }) {
                   }}
                   onClick={() => openSession(session.id)}
                 >
-                  <div style={s.sessionIcon}>
-                    {session.session_type === "image" ? "Image" : session.session_type === "ocr" ? "Doc" : "Text"}
-                  </div>
-                  <div style={s.sessionInfo}>
+                  <div style={{...s.sessionInfo, display: "flex", flexDirection: "column", gap: "0.3rem"}}>
                     {renamingId === session.id ? (
                       <input
                         autoFocus
@@ -401,16 +481,16 @@ export default function ChatHistoryPage({ showToast, isDark }) {
                   </div>
                   <div style={s.sessionActions}>
                     <button
-                      style={s.btnIcon}
+                      style={{...s.btnIcon, display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px"}}
                       title="Ubah Nama"
                       onClick={e => startRename(e, session)}
-                    >Ubah Nama</button>
+                    ><Edit2 size={15} color={isDark ? "#9aa0b8" : "#8b7355"} /></button>
                     <button
-                      style={{ ...s.btnIcon, ...(deletingId === session.id ? { opacity: 0.4 } : {}) }}
+                      style={{ ...s.btnIcon, display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", ...(deletingId === session.id ? { opacity: 0.4 } : {}) }}
                       title="Hapus"
                       onClick={e => handleDelete(e, session.id)}
                       disabled={deletingId === session.id}
-                    >Hapus</button>
+                    ><Trash2 size={15} color="#ef4444" /></button>
                   </div>
                 </li>
               ))}
@@ -514,16 +594,14 @@ export default function ChatHistoryPage({ showToast, isDark }) {
               {/* Continue Input */}
               <div style={s.inputArea}>
                 {activeSession.session_type === "image" && (
-                  <select
+                  <CustomDropdown
                     value={continueModel}
-                    onChange={e => setContinueModel(e.target.value)}
-                    style={s.modelSelect}
+                    onChange={setContinueModel}
+                    options={MODELS}
                     disabled={sending}
-                  >
-                    {MODELS.map(m => (
-                      <option key={m.id} value={m.id}>{m.label}</option>
-                    ))}
-                  </select>
+                    style={s.modelSelect}
+                    isDark={isDark}
+                  />
                 )}
 
                 {/* Markdown mode toggle — hanya tampil untuk summarize */}
@@ -675,14 +753,14 @@ export default function ChatHistoryPage({ showToast, isDark }) {
             {newType === "image" && (
               <div style={s.modalField}>
                 <label style={s.modalFieldLabel}>Model</label>
-                <select
+                <CustomDropdown
                   value={newModel}
-                  onChange={e => setNewModel(e.target.value)}
-                  style={s.modalInput}
+                  onChange={setNewModel}
+                  options={MODELS}
                   disabled={creatingSession}
-                >
-                  {MODELS.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
-                </select>
+                  style={s.modalInput}
+                  isDark={isDark}
+                />
               </div>
             )}
 
@@ -825,8 +903,8 @@ const getStyles = (isDark) => {
   sessionItemActive: { background: isDark ? "linear-gradient(135deg, rgba(255,156,60,0.14), rgba(255,255,255,0.06))" : "linear-gradient(135deg, rgba(255, 143, 72, 0.18), rgba(255, 255, 255, 0.10))", border: isDark ? "1px solid rgba(255,156,60,0.24)" : "1px solid rgba(255, 143, 72, 0.30)" },
   sessionIcon: { fontSize: "1.4rem", flexShrink: 0 },
   sessionInfo: { flex: 1, minWidth: 0 },
-  sessionTitle: { display: "block", fontWeight: 700, fontSize: "0.9rem", color: isDark ? "#fff7ee" : "#1a1410", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  sessionMeta: { display: "flex", gap: "0.4rem", flexWrap: "wrap", marginTop: "0.25rem", alignItems: "center" },
+  sessionTitle: { display: "block", fontWeight: 700, fontSize: "0.95rem", color: isDark ? "#fff7ee" : "#1a1410", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  sessionMeta: { display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.15rem", alignItems: "center" },
   sessionType: { fontSize: "0.72rem", padding: "0.2rem 0.55rem", borderRadius: "999px", background: isDark ? "rgba(255,148,66,0.16)" : "rgba(255, 143, 72, 0.15)", color: isDark ? "#ffd8b2" : "#c85a2d", fontWeight: 700 },
   sessionCount: { fontSize: "0.72rem", color: isDark ? "#9aa0b8" : "#7b6f6a" },
   sessionDate: { fontSize: "0.72rem", color: isDark ? "#9aa0b8" : "#7b6f6a" },
@@ -858,7 +936,7 @@ const getStyles = (isDark) => {
 
   // Input area
   inputArea: { padding: "1.25rem 1.75rem", borderTop: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255, 143, 72, 0.15)", display: "flex", flexDirection: "column", gap: "0.75rem" },
-  modelSelect: { width: "fit-content", padding: "0.6rem 0.9rem", borderRadius: "12px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#f7ede2" : "#3d3530", outline: "none", fontSize: "0.85rem" },
+  modelSelect: { width: "fit-content", padding: "0.6rem 0.9rem", borderRadius: "12px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#f7ede2" : "#3d3530", outline: "none", fontSize: "0.85rem", colorScheme: isDark ? "dark" : "light" },
   inputRow: { display: "flex", gap: "0.75rem", alignItems: "flex-start" },
   inputTextarea: { flex: 1, padding: "0.85rem 1rem", borderRadius: "18px", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(255, 252, 248, 0.80)", color: isDark ? "#f8f5ef" : "#1a1410", outline: "none", resize: "none", fontSize: "0.95rem", lineHeight: 1.6 },
   btnSend: { minWidth: "90px", height: "52px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: isDark ? "#111827" : "#fefdfb", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" },
@@ -908,7 +986,7 @@ const getStyles = (isDark) => {
   typeDesc: { fontSize: "0.78rem", color: isDark ? "#c8bfb0" : "#7b6f6a", lineHeight: 1.4 },
   modalField: { display: "flex", flexDirection: "column", gap: "0.5rem" },
   modalFieldLabel: { fontSize: "0.88rem", fontWeight: 600, color: isDark ? "#e6d8ca" : "#3d3530" },
-  modalInput: { width: "100%", padding: "0.85rem 1rem", borderRadius: "16px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255, 252, 248, 0.80)", color: isDark ? "#f7f1e8" : "#1a1410", outline: "none", fontSize: "0.95rem", fontFamily: "inherit", boxSizing: "border-box" },
+  modalInput: { width: "100%", padding: "0.85rem 1rem", borderRadius: "14px", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.04)" : "rgba(252, 248, 243, 0.90)", color: isDark ? "#f8f9ff" : "#1a1410", outline: "none", fontSize: "0.95rem", colorScheme: isDark ? "dark" : "light", fontFamily: "inherit", boxSizing: "border-box" },
   modalActions: { display: "flex", gap: "0.75rem", marginTop: "0.25rem" },
   btnCreate: { flex: 1, minHeight: "50px", borderRadius: "18px", border: "none", background: "linear-gradient(135deg, #ffb56e, #ff8f48)", color: isDark ? "#111827" : "#fefdfb", fontWeight: 800, cursor: "pointer", fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" },
   btnCancelModal: { minHeight: "50px", borderRadius: "18px", border: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255, 143, 72, 0.20)", background: isDark ? "rgba(255,255,255,0.08)" : "rgba(255, 143, 72, 0.08)", color: isDark ? "#f7ece1" : "#3d3530", padding: "0 1.4rem", cursor: "pointer", fontWeight: 700 },

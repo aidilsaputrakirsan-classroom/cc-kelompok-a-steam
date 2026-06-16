@@ -15,6 +15,7 @@
 :root {
   color-scheme: dark;
   /* Dark mode tokens (default) */
+  --autofill-bg: #161e30;
   --bg-app: #060913;
   --bg-app-gradient: radial-gradient(circle at top left, rgba(136, 115, 255, 0.16), transparent 24%),
                      radial-gradient(circle at bottom right, rgba(255, 184, 130, 0.18), transparent 24%),
@@ -43,6 +44,7 @@
 /* Light mode — activated by html.light class */
 html.light {
   color-scheme: light;
+  --autofill-bg: #fcf8f3;
   --bg-app: #f5ede4;
   --bg-app-gradient: radial-gradient(circle at top left, rgba(255, 159, 64, 0.18), transparent 24%),
                      radial-gradient(circle at bottom right, rgba(255, 193, 105, 0.16), transparent 24%),
@@ -103,8 +105,9 @@ button:focus-visible {
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus, 
-input:-webkit-autofill:active{
-  transition: background-color 5000s ease-in-out 0s;
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px var(--autofill-bg) inset !important;
+  caret-color: var(--text-primary);
   -webkit-text-fill-color: var(--text-primary) !important;
 }
 
