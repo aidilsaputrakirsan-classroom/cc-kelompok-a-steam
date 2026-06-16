@@ -128,6 +128,8 @@ services:
       args:
         VITE_API_URL: http://localhost
     container_name: intirupa-frontend
+    ports:
+      - "3000:80"
     environment:
       VITE_API_URL: http://localhost
     networks:
