@@ -5,6 +5,7 @@ import LoginPage from "./components/LoginPage"
 import Toast from "./components/Toast"
 import SuccessModal from "./components/SuccessModal"
 import LogoutModal from "./components/LogoutModal"
+import AuthErrorModal from "./components/AuthErrorModal"
 import ErrorBoundaryWrapper from "./components/ErrorBoundary"
 import { DegradedModeBanner } from "./components/DegradedModeBanner"
 
@@ -37,6 +38,9 @@ function AppContent() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authModalMessage, setAuthModalMessage] = useState("")
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  
+  // Auth Error Modal state
+  const [authErrorModal, setAuthErrorModal] = useState({ isOpen: false, title: "", message: "" })
 
   // ==================== APP STATE ====================
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem("inti_active_tab") || "about-us")
@@ -110,9 +114,17 @@ function AppContent() {
     } catch (err) {
       // Handle service unavailable error
       if (err.type === "SERVICE_UNAVAILABLE") {
-        showToast("Auth service is temporarily unavailable. Please try again later.", "error")
+        setAuthErrorModal({
+          isOpen: true,
+          title: "Layanan Tidak Tersedia",
+          message: "Auth service is temporarily unavailable. Please try again later."
+        })
       } else {
-        showToast("Login gagal: " + err.message, "error")
+        setAuthErrorModal({
+          isOpen: true,
+          title: "Login Gagal",
+          message: err.message || "Email atau password yang Anda masukkan salah."
+        })
       }
     }
   }
@@ -133,9 +145,17 @@ function AppContent() {
       }, 2000)
     } catch (err) {
       if (err.type === "SERVICE_UNAVAILABLE") {
-        showToast("Auth service is temporarily unavailable. Please try again later.", "error")
+        setAuthErrorModal({
+          isOpen: true,
+          title: "Layanan Tidak Tersedia",
+          message: "Auth service is temporarily unavailable. Please try again later."
+        })
       } else {
-        showToast("Registrasi gagal: " + err.message, "error")
+        setAuthErrorModal({
+          isOpen: true,
+          title: "Registrasi Gagal",
+          message: err.message || "Terjadi kesalahan saat pendaftaran. Mungkin email/username sudah digunakan."
+        })
       }
     }
   }
@@ -161,8 +181,21 @@ function AppContent() {
   if (!isAuthenticated) {
     return (
       <>
-        <LoginPage onLogin={handleLogin} onRegister={handleRegister} showToast={showToast} />
+        <LoginPage 
+          onLogin={handleLogin} 
+          onRegister={handleRegister} 
+          showToast={showToast} 
+          isDark={isDark}
+          toggleTheme={toggleDark}
+        />
         <SuccessModal isOpen={showAuthModal} message={authModalMessage} />
+        <AuthErrorModal 
+          isOpen={authErrorModal.isOpen} 
+          title={authErrorModal.title} 
+          message={authErrorModal.message}
+          onClose={() => setAuthErrorModal(prev => ({ ...prev, isOpen: false }))} 
+          isDark={isDark}
+        />
         {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
       </>
     )
