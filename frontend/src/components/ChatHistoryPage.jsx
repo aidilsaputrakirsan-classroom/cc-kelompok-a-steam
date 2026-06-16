@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { Edit2, Trash2 } from "lucide-react"
+import { Edit2, Trash2, Search } from "lucide-react"
 import Spinner from "./Spinner"
 import {
   getChatSessions,
@@ -152,6 +152,14 @@ export default function ChatHistoryPage({ showToast, isDark }) {
 
   const messagesEndRef = useRef(null)
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredSessions = useMemo(() => {
+    if (!searchQuery.trim()) return sessions
+    return sessions.filter(session => session.title.toLowerCase().includes(searchQuery.toLowerCase()))
+  }, [sessions, searchQuery])
+
   // Helper untuk membaca file ke base64
   const handleFileSelect = (e, setBase64, setFile = null) => {
     const file = e.target.files[0]
@@ -279,7 +287,7 @@ export default function ChatHistoryPage({ showToast, isDark }) {
       setNewTitle("")
       setNewMessage("")
       setNewImageBase64(null)
-      await loadSessions()
+      setSessions(prev => [created, ...prev])
       setActiveSession(created)
       showToast("Sesi baru berhasil dibuat!", "success")
     } catch (err) {
@@ -439,16 +447,41 @@ export default function ChatHistoryPage({ showToast, isDark }) {
             <button style={s.btnNew} onClick={() => setShowNewModal(true)}>+ Baru</button>
           </div>
 
+          <div style={{ padding: "0 1.25rem 1rem" }}>
+            <div style={{ position: "relative" }}>
+              <Search size={16} color={isDark ? "#9aa0b8" : "#8b7355"} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
+              <input 
+                type="text" 
+                placeholder="Cari sesi..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.6rem 1rem 0.6rem 2.2rem",
+                  borderRadius: "10px",
+                  border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255, 140, 66, 0.22)",
+                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(252, 248, 243, 0.85)",
+                  color: isDark ? "#f8f9ff" : "#3d2817",
+                  fontSize: "0.85rem",
+                  outline: "none",
+                  transition: "all 0.2s ease"
+                }}
+              />
+            </div>
+          </div>
+
           {loadingSessions ? (
             <div style={s.centered}><Spinner size={28} color="#ffb26c" /></div>
-          ) : sessions.length === 0 ? (
+          ) : filteredSessions.length === 0 ? (
             <div style={s.emptyList}>
               <span style={s.emptyListIcon}></span>
-              <p style={s.emptyListText}>Belum ada sesi.<br />Klik "+ Baru" untuk mulai berkarya.</p>
+              <p style={s.emptyListText}>
+                {sessions.length === 0 ? "Belum ada sesi.\nKlik \"+ Baru\" untuk mulai berkarya." : "Pencarian tidak ditemukan."}
+              </p>
             </div>
           ) : (
             <ul style={s.sessionList}>
-              {sessions.map(session => (
+              {filteredSessions.map(session => (
                 <li
                   key={session.id}
                   style={{

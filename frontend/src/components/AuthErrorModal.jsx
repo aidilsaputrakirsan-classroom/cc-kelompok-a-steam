@@ -83,7 +83,7 @@ const getStyles = (isDark) => ({
       ? "1px solid rgba(239, 68, 68, 0.3)"
       : "1px solid rgba(239, 68, 68, 0.4)",
     borderRadius: "24px",
-    padding: "2.5rem 2rem",
+    padding: "3rem 2rem",
     width: "90%",
     maxWidth: "400px",
     textAlign: "center",

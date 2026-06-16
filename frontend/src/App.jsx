@@ -123,7 +123,9 @@ function AppContent() {
         setAuthErrorModal({
           isOpen: true,
           title: "Login Gagal",
-          message: err.message || "Email atau password yang Anda masukkan salah."
+          message: err.message?.includes("UNAUTHORIZED") 
+            ? "Password atau email yang Anda masukkan salah." 
+            : (err.message || "Email atau password yang Anda masukkan salah.")
         })
       }
     }
@@ -188,7 +190,7 @@ function AppContent() {
           isDark={isDark}
           toggleTheme={toggleDark}
         />
-        <SuccessModal isOpen={showAuthModal} message={authModalMessage} />
+        <SuccessModal isOpen={showAuthModal} message={authModalMessage} isDark={isDark} />
         <AuthErrorModal 
           isOpen={authErrorModal.isOpen} 
           title={authErrorModal.title} 

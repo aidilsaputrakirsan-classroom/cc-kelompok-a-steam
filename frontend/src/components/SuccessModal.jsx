@@ -1,7 +1,9 @@
 import React from "react"
 
-function SuccessModal({ isOpen, message }) {
+function SuccessModal({ isOpen, message, isDark = true }) {
   if (!isOpen) return null
+
+  const styles = getStyles(isDark)
 
   return (
     <div style={styles.overlay}>
@@ -32,14 +34,14 @@ function SuccessModal({ isOpen, message }) {
   )
 }
 
-const styles = {
+const getStyles = (isDark) => ({
   overlay: {
     position: "fixed",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(8, 9, 20, 0.8)",
+    backgroundColor: isDark ? "rgba(8, 9, 20, 0.8)" : "rgba(255, 255, 255, 0.6)",
     backdropFilter: "blur(8px)",
     display: "flex",
     alignItems: "center",
@@ -48,14 +50,20 @@ const styles = {
     animation: "fadeIn 0.3s ease-out forwards",
   },
   modal: {
-    background: "linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(25, 39, 76, 0.95))",
-    border: "1px solid rgba(255, 164, 82, 0.2)",
+    background: isDark 
+      ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(25, 39, 76, 0.95))"
+      : "linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(252, 248, 243, 0.98))",
+    border: isDark 
+      ? "1px solid rgba(255, 164, 82, 0.2)"
+      : "1px solid rgba(255, 143, 72, 0.3)",
     borderRadius: "24px",
     padding: "3rem 2rem",
     width: "90%",
     maxWidth: "400px",
     textAlign: "center",
-    boxShadow: "0 24px 80px rgba(0, 0, 0, 0.4)",
+    boxShadow: isDark 
+      ? "0 24px 80px rgba(0, 0, 0, 0.4)"
+      : "0 24px 80px rgba(255, 143, 72, 0.15)",
     animation: "scaleUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
   },
   iconContainer: {
@@ -78,7 +86,7 @@ const styles = {
     strokeDashoffset: 166,
     strokeWidth: 4,
     strokeMiterlimit: 10,
-    stroke: "rgba(255, 181, 127, 0.3)",
+    stroke: isDark ? "rgba(255, 181, 127, 0.3)" : "rgba(255, 143, 72, 0.3)",
     fill: "none",
     animation: "stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards",
   },
@@ -91,15 +99,15 @@ const styles = {
   title: {
     margin: "0 0 0.5rem",
     fontSize: "1.8rem",
-    color: "#fff",
+    color: isDark ? "#fff" : "#1a1410",
     fontWeight: "bold",
   },
   message: {
     margin: 0,
-    color: "#a1a6b3",
+    color: isDark ? "#a1a6b3" : "#8b7355",
     fontSize: "1.05rem",
     lineHeight: 1.5,
   },
-}
+})
 
 export default SuccessModal
