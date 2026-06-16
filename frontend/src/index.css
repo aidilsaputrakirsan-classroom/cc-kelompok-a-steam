@@ -52,8 +52,8 @@ html.light {
   --text-primary: #3d2817;
   --text-muted: #8b7355;
   --text-body: #52372a;
-  --toggle-bg: rgba(255, 140, 66, 0.12);
-  --toggle-border: rgba(255, 140, 66, 0.30);
+  --toggle-bg: rgba(255, 255, 255, 0.65);
+  --toggle-border: rgba(255, 140, 66, 0.40);
 }
 
 a {
@@ -95,6 +95,15 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* ===== BROWSER AUTOFILL FIX ===== */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-text-fill-color: var(--text-primary) !important;
 }
 
 /* ===== DARK MODE TOGGLE BUTTON ===== */
@@ -283,4 +292,24 @@ html.light .dark-mode-toggle:hover {
   .markdown-body pre {
     font-size: 0.8rem;
   }
+}
+
+/* Custom Scrollbar for Modal to prevent border-radius clipping */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  background-color: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 24px; /* Offset to not clip modal corners */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
 }

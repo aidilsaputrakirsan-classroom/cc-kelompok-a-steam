@@ -52,12 +52,13 @@ function Header({ user, onLogout, isDark, onToggleDark }) {
             gap: '0.5rem',
             alignItems: 'center',
             cursor: 'pointer',
-            backgroundColor: 'rgba(100, 116, 139, 0.2)',
-            border: '1px solid rgba(148, 163, 184, 0.3)',
+            backgroundColor: isDark ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.12)',
+            border: isDark ? '1px solid rgba(148, 163, 184, 0.3)' : '1px solid rgba(148, 163, 184, 0.4)',
+            color: isDark ? '#ffd8b2' : '#a1580d',
             transition: 'all 0.2s ease',
           }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(100, 116, 139, 0.3)'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(100, 116, 139, 0.2)'}
+          onMouseEnter={(e) => e.target.style.backgroundColor = isDark ? 'rgba(100, 116, 139, 0.3)' : 'rgba(100, 116, 139, 0.2)'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = isDark ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.12)'}
           title="View system status"
         >
           {getStatusIcon() && <span>{getStatusIcon()}</span>}
@@ -78,7 +79,7 @@ function Header({ user, onLogout, isDark, onToggleDark }) {
 
         {user && (
           <div style={styles.user}>
-            <span style={styles.userName}>{user.full_name || user.email}</span>
+            <span style={{...styles.userName, color: "var(--text-primary)"}}>{user.full_name || user.email}</span>
             <button onClick={onLogout} style={styles.btnLogout}>
               Logout
             </button>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import Spinner from "./Spinner"
@@ -28,7 +28,8 @@ function formatTime(iso) {
   return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
 }
 
-export default function ChatHistoryPage({ showToast }) {
+export default function ChatHistoryPage({ showToast, isDark }) {
+  const s = useMemo(() => getStyles(isDark), [isDark])
   const [sessions, setSessions] = useState([])
   const [activeSession, setActiveSession] = useState(null)
   const [loadingSessions, setLoadingSessions] = useState(true)
@@ -321,6 +322,19 @@ export default function ChatHistoryPage({ showToast }) {
         .animate-slide-up {
           animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: ${isDark ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.15)"};
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background-color: ${isDark ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.25)"};
+        }
       `}</style>
       {/* HERO */}
       <div style={s.hero}>
@@ -410,7 +424,7 @@ export default function ChatHistoryPage({ showToast }) {
             <div style={s.centered}><Spinner size={40} color="#ffb26c" /></div>
           ) : !activeSession ? (
             <div style={s.emptyChat}>
-              <div style={s.emptyIcon}></div>
+
               <h3 style={s.emptyTitle}>Mulai berkarya di Inti Studio</h3>
               <p style={s.emptyText}>
                 Pilih sesi dari daftar kiri, atau klik tombol "+ Baru" untuk memulai sesi generate gambar atau rangkum teks baru.
@@ -614,7 +628,7 @@ export default function ChatHistoryPage({ showToast }) {
       {/* ── NEW SESSION MODAL ── */}
       {showNewModal && (
         <div style={s.modalOverlay} onClick={() => !creatingSession && setShowNewModal(false)}>
-          <div style={s.modal} onClick={e => e.stopPropagation()}>
+          <div className="custom-scrollbar" style={s.modal} onClick={e => e.stopPropagation()}>
             <div style={s.modalHeader}>
               <div>
                 <p style={s.modalLabel}>Buat Sesi Baru di Inti Studio</p>
@@ -683,12 +697,12 @@ export default function ChatHistoryPage({ showToast }) {
                       id="btn-modal-mode-plain"
                       style={{ ...s.modeToggleBtn, ...(newMsgInputMode === "plain" ? s.modeToggleBtnActive : {}) }}
                       onClick={() => { setNewMsgInputMode("plain"); setNewMsgShowPreview(false) }}
-                    >✏️ Plain</button>
+                    >Plain</button>
                     <button
                       id="btn-modal-mode-markdown"
                       style={{ ...s.modeToggleBtn, ...(newMsgInputMode === "markdown" ? s.modeToggleBtnActive : {}) }}
                       onClick={() => setNewMsgInputMode("markdown")}
-                    >📝 Markdown</button>
+                    >Markdown</button>
                   </div>
                 )}
               </div>
@@ -775,11 +789,8 @@ export default function ChatHistoryPage({ showToast }) {
 }
 
 // ─── STYLES ──────────────────────────────────────────────
-const isDarkMode = () => document.documentElement.classList.contains('light') === false
 
-const getStyles = () => {
-  const isDark = isDarkMode()
-  
+const getStyles = (isDark) => {
   return {
   pageWrapper: {
     width: "100%", minHeight: "100%", display: "flex", flexDirection: "column",
@@ -905,5 +916,3 @@ const getStyles = () => {
   btnUpload: { cursor: "pointer", background: isDark ? "rgba(255,255,255,0.08)" : "rgba(255, 143, 72, 0.10)", border: isDark ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255, 143, 72, 0.20)", borderRadius: "18px", padding: "0 1rem", color: isDark ? "#f3e7d7" : "#3d3530", fontSize: "0.85rem", display: "grid", placeItems: "center", minHeight: "52px", fontWeight: 600, whiteSpace: "nowrap" }
 }
 }
-
-const s = getStyles()
