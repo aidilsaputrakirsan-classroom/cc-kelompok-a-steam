@@ -1,3 +1,4 @@
+"""Pydantic schemas with validation rules for AI Service."""
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import datetime

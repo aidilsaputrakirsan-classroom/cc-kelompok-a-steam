@@ -1,3 +1,4 @@
+"""Database CRUD operations for AI Service."""
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from models import ChatSession, ChatMessage, ImageGeneration, TextSummarization, ImageCaption

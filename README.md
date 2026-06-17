@@ -1,316 +1,186 @@
-## Cloud App - STEAM
+# 🎨 Inti Rupa — Cloud-Native GenAI Platform
 
-![CI Pipeline](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-a-steam/actions/workflows/ci.yml/badge.svg)
+[![CI Pipeline Status](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-a-steam/actions/workflows/ci.yml/badge.svg)](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-a-steam/actions)
+[![Production Release](https://img.shields.io/badge/release-v3.0.0-blue.svg)](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-a-steam/releases)
+[![Tech Stack](https://img.shields.io/badge/stack-FastAPI%20%7C%20React%20%7C%20Docker-green.svg)](#tech-stack)
 
-### 📖 Deskripsi Proyek
+**Inti Rupa** adalah aplikasi web asisten cerdas berbasis cloud yang membantu Anda meringkas teks dan menghasilkan gambar secara otomatis. Aplikasi ini memisahkan layanan autentikasi pengguna dan pemrosesan AI ke dalam sistem microservices agar kinerjanya lebih cepat dan stabil.
 
-**Inti Rupa** adalah platform asisten cerdas berbasis cloud yang dirancang untuk membantu pengguna mengolah informasi secara lebih efisien. Aplikasi ini menggabungkan kekuatan **Analisis Teks** dan **Kreativitas Visual** dalam satu platform terintegrasi.
-
-Dengan fitur **Summarizer**, pengguna dapat mengekstrak _"Inti"_ dari artikel panjang maupun foto dokumen hanya dalam hitungan detik. Didukung fitur **Generator**, pengguna juga dapat menciptakan _"Rupa"_ visual baru cukup dengan memberikan perintah teks sederhana.
-
-**Inti Rupa** hadir sebagai solusi _all-in-one_ bagi siapa saja yang ingin **memahami informasi lebih cepat** dan **berkreasi tanpa batas**.
-
-#### ✨ Fitur Utama
-
-| Fitur                        | Deskripsi                                                                                                         |
-| :--------------------------- | :---------------------------------------------------------------------------------------------------------------- |
-| 🌐 Web Scraper & Summarizer  | Mengambil teks dari URL artikel yang diberikan                                                                    |
-| 🖼️ Visual-to-Text Summarizer | Melakukan OCR pada gambar yang diunggah untuk mengekstrak teks, kemudian merangkum isinya                         |
-| 🗂️ History & Cache           | Menyimpan riwayat ringkasan di database agar pengguna bisa melihat kembali hasil sebelumnya tanpa memproses ulang |
-| 🎨 AI Image Generator ⭐     | Generate gambar secara otomatis berdasarkan deskripsi atau prompt yang diberikan pengguna                         |
+Melalui fitur **Summarizer & OCR**, pengguna dapat mengambil teks dari artikel web atau gambar dokumen lalu merangkum isinya dengan mudah. Selain itu, dengan fitur **Visual Generator**, pengguna bisa membuat gambar kreatif baru hanya dengan mengetikkan deskripsi teks sederhana.
 
 ---
 
-### 🏗️ Architecture Overview
+## 🏗️ Architecture Design
 
-Sistem **Inti Rupa** menggunakan arsitektur **client-server** berbasis cloud. Frontend (React) berjalan di browser dan berkomunikasi dengan Backend (FastAPI) melalui HTTP request. Backend bertugas memproses setiap permintaan: scraping URL, OCR gambar, atau generate gambar sebelum diteruskan ke **Hugging Face API** sebagai AI nya. Setiap hasil diproses melalui **Cache Checker** terlebih dahulu untuk menghemat penggunaan API, lalu disimpan di **PostgreSQL Database** sebagai riwayat.
+Sistem **Inti Rupa** dirancang dengan arsitektur microservices terdesentralisasi yang terisolasi dan mandiri.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        USER BROWSER                         │
-│                      (React Frontend)                       │
-└────────────────────────────┬────────────────────────────────┘
-                             │ HTTP Request
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    BACKEND (FastAPI)                        │
-│                                                             │
-│  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌─────────┐   │
-│  │   Web     │  │   OCR     │  │  History  │  │  Image  │   │
-│  │ Scraper   │  │  Module   │  │  Endpoint │  │  Gen    │   │
-│  │ Endpoint  │  │ Endpoint  │  │           │  │Endpoint │   │
-│  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬───┘   │
-│        └──────────────┼──────────────┘              │       │
-│                       │        ┌────────────────────┘       │
-│              ┌────────┴────────┐                            │
-│              │  Cache Checker  │                            │
-│              └────────┬────────┘                            │
-└───────────────────────┼─────────────────────────────────────┘
-            ┌───────────┴───────────┐
-            │                       │
-            ▼                       ▼
-┌──────────────────────┐  ┌────────────────────────┐
-│  Hugging Face API    │  │  PostgreSQL Database   │
-│  - Summarizer        │  │  (History & Cache)     │
-│  - Image Generator   │  │                        │
-└──────────────────────┘  └────────────────────────┘
-```
+```mermaid
+graph TD
+    %% Nodes
+    User([👤 User Browser / React UI])
+    
+    subgraph "API Gateway (Port 80)"
+        Gateway["🚪 Nginx Gateway<br/>(Reverse Proxy & Rate Limiter)"]
+    end
+    
+    subgraph "Frontend Static Server"
+        Frontend["🎨 Frontend SPA<br/>(React Static / Port 80)"]
+    end
+    
+    subgraph "Microservices Layer"
+        AuthService["🔐 Auth Service<br/>(FastAPI / Port 8001)"]
+        AIService["🤖 AI Service<br/>(FastAPI / Port 8002)"]
+    end
+    
+    subgraph "Databases Layer (Database per Service)"
+        AuthDB[("🗄️ Auth DB<br/>PostgreSQL<br/>Port: 5433 (External)")]
+        AIDB[("🗄️ AI DB<br/>PostgreSQL<br/>Port: 5435 (External)")]
+    end
+    
+    subgraph "External Integration"
+        GeminiSDK["Google Gemini API<br/>(Text Summary & OCR)"]
+        HFClient["HuggingFace Hub API<br/>(Flux Image Generation)"]
+    end
 
----
+    %% Connections
+    User -->|HTTP Requests| Gateway
+    Gateway -->|Route: /| Frontend
+    Gateway -->|Route: /auth/*| AuthService
+    Gateway -->|Route: /chat/* atau /stats| AIService
+    
+    AuthService -->|Read/Write| AuthDB
+    AIService -->|Read/Write| AIDB
+    
+    %% Inter-service
+    AIService -->|1. Stateless Token Verification| SharedSecret["Shared SECRET_KEY"]
+    AIService -->|"2. Asynchronous Call<br/>PUT /auth/users/me/increment-api<br/>(Circuit Breaker)"| AuthService
+    
+    %% External Calls
+    AIService -->|SDK API Call| GeminiSDK
+    AIService -->|Inference Call| HFClient
 
-### 👥 Team Member
-
-| Nama                              | NIM      | Peran               |
-| :-------------------------------- | :------- | :------------------ |
-| Irfan Zaki Riyanto                | 10231045 | Lead Backend        |
-| Incha Raghil                      | 10231043 | Lead Frontend       |
-| Jonathan Cristopher Jetro         | 10231047 | Lead DevOps         |
-| Jonathan Joseph Yudita Tampubolon | 10231048 | Lead Lead QA & Docs |
-
-### 🛠️ Tech Stack
-
-| Teknologi        | Fungsi                                       |
-| :--------------- | :------------------------------------------- |
-| FastAPI          | Backend REST API                             |
-| React            | Frontend SPA                                 |
-| PostgreSQL       | Database                                     |
-| Docker           | Containerization                             |
-| GitHub Actions   | GitHub Actions                               |
-| Railway/Render   | Cloud Deployment                             |
-| Hugging Face API | Generative AI (Summarizer & Image Generator) |
-
----
-
-### ⚙️ Development Workflow (Makefile)
-
-Untuk mempermudah workflow pengembangan dan CI/CD, Anda dapat menggunakan perintah `make` berikut:
-
-| Perintah        | Deskripsi                                                                                                                           |
-| :-------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
-| `make lint`     | Menjalankan linter untuk menjaga kualitas kode (backend & frontend).                                                                |
-| `make test`     | Menjalankan _automated tests_ (unit test, dll).                                                                                     |
-| `make pr-check` | Menjalankan semua pengujian (`lint` & `test`) lalu melakukan _build_ image Docker. Digunakan untuk verifikasi sebelum Pull Request. |
-
----
-
-### 📅 Roadmap
-
-| Minggu | Target                 | Status |
-| :----- | :--------------------- | :----: |
-| 1      | Setup & Hello World    |   ✅   |
-| 2      | REST API + Database    |   ✅   |
-| 3      | React Frontend         |   ✅   |
-| 4      | Full-Stack Integration |   ✅   |
-| 5-7    | Docker & Compose       |   ✅   |
-| 8      | UTS Demo               |   ✅   |
-| 9-11   | CI/CD Pipeline         |   ✅   |
-| 12-14  | Microservices          |   ✅   |
-| 13     | Reliability Testing    |   ✅   |
-| 14     | Operations & Monitoring|   ✅   |
-| 15     | Final QA & Security    |   ✅   |
-
-### 🔐 Security & Rate Limiting
-
-Untuk melindungi API dari abuse dan brute force attacks:
-
-- **Rate Limiting**: Nginx gateway membatasi request rate per IP address
-  - Auth endpoints: 5 req/s (login protection)
-  - API endpoints: 20 req/s (general CRUD)
-  - Frontend: 30 req/s (general traffic)
-- **Input Validation**: Semua input divalidasi menggunakan Pydantic
-  - Email format validation
-  - Password strength (min 8 chars, 1 uppercase, 1 digit)
-  - Numeric fields (price, quantity) tidak boleh negatif
-- **Secrets Management**: Semua credentials disimpan di environment variables
-  - `.env` tidak di-commit ke Git (ada di `.gitignore`)
-  - Lihat `.env.example` untuk template lengkap
-- **CORS Configuration**: Diatur per environment (development vs production)
-
----
-
-### 📊 Monitoring & Observability (Module 14)
-
-Sistem ini dilengkapi dengan monitoring production-ready:
-
-**Structured Logging (JSON Format)**
-
-- Setiap request di-log dengan format JSON untuk mudah di-parse
-- Includes: timestamp, service name, correlation ID, latency, status code
-- Auto-exclude health checks dan metrics endpoint untuk reduce noise
-
-```bash
-# View logs semua services
-docker compose logs -f auth-service ai-service
-
-# Filter logs by correlation ID untuk track satu request across services
-docker compose logs | grep "a1b2c3d4"
+    %% Styling
+    style User fill:#e1f5ff,stroke:#03a9f4,stroke-width:2px,color:#111
+    style Gateway fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#111
+    style Frontend fill:#f3e5f5,stroke:#9c27b0,stroke-width:1px,color:#111
+    style AuthService fill:#e8f5e9,stroke:#4caf50,stroke-width:2px,color:#111
+    style AIService fill:#e8f5e9,stroke:#4caf50,stroke-width:2px,color:#111
+    style AuthDB fill:#ffebee,stroke:#e91e63,stroke-width:1px,color:#111
+    style AIDB fill:#ffebee,stroke:#e91e63,stroke-width:1px,color:#111
+    style SharedSecret fill:#eceff1,stroke:#607d8b,stroke-width:1px,color:#111
 ```
 
-**Metrics Endpoint**
-
-- Setiap service expose `/metrics` endpoint dengan statistics
-- Metrics yang ditrack: total requests, error rate, latency percentiles (p50/p95/p99)
-- Useful untuk monitoring dan alerting
-
-```bash
-# Check Auth Service metrics
-curl http://localhost/auth/metrics | python3 -m json.tool
-
-# Check AI Service metrics
-curl http://localhost/items/metrics | python3 -m json.tool
-```
-
-**Health Dashboard**
-
-- Real-time system status page di `http://localhost/status`
-- Shows health dan metrics dari semua services
-- Auto-refresh every 10 seconds
-- Responsive design untuk mobile & desktop
-
-**Correlation ID Tracing**
-
-- Setiap request diberi unique ID yang diteruskan ke semua internal services
-- Allows tracking request journey: Frontend → Gateway → Auth/AI Service
-- Useful untuk debugging request flows di production
+### Desain Arsitektur Sistem:
+1.  **API Gateway (Nginx):** Berperan sebagai pintu masuk utama untuk mengarahkan lalu lintas data, mengatur CORS, dan membatasi jumlah request agar server terhindar dari beban berlebih.
+2.  **Database Terpisah (Database per Service):** Layanan autentikasi pengguna (`auth-service`) dan pemrosesan AI (`ai-service`) menggunakan database PostgreSQL terisolasi masing-masing (`auth_db` dan `ai_db`) agar data lebih aman dan mandiri.
+3.  **Autentikasi JWT Stateless:** Layanan AI dapat langsung memverifikasi token masuk secara mandiri menggunakan kunci rahasia bersama (Shared Secret Key) tanpa perlu bertanya ke layanan Auth setiap saat. Hal ini membuat proses loading menjadi jauh lebih cepat.
+4.  **Ketahanan Layanan (Circuit Breaker):** Hubungan antar layanan dilindungi oleh mekanisme Circuit Breaker. Jika layanan autentikasi sedang tidak tersedia, layanan AI akan tetap berjalan melayani pengguna yang sudah login secara normal.
 
 ---
 
-### 🚀 Quick Start
+## 👥 Tim Pengembang (Kelompok Steam)
 
-#### Prerequisites
-
-- Docker & Docker Compose (v2+)
-- Git
-
-#### Run with Docker Compose
-
-```bash
-# 1. Clone repository
-git clone https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-a-steam.git
-cd cc-kelompok-a-steam
-
-# 2. Setup environment (copy template)
-cp .env.example .env
-# Edit .env jika perlu custom values, default sudah aman untuk development
-
-# 3. Start all services
-docker compose up -d
-
-# 4. Verify services running
-docker compose ps
-
-# 5. Open in browser
-# Frontend: http://localhost
-# API Docs: http://localhost/auth/docs
-# Status Page: http://localhost/status
-```
-
-#### Troubleshooting
-
-```bash
-# Check service health
-curl http://localhost/health
-
-# View real-time logs
-docker compose logs -f
-
-# Restart specific service
-docker compose restart auth-service
-
-# Full reset
-docker compose down -v
-docker compose up -d
-```
+| Peran | Nama | NIM | Tanggung Jawab Utama |
+| :--- | :--- | :--- | :--- |
+| **Lead Backend** | Irfan Zaki Riyanto | 10231045 | REST API Desain, Database Per-Service, Skema Pydantic, & JWT Auth |
+| **Lead Frontend** | Incha Raghil | 10231043 | SPA React UI, State Management, Integrasi API, & Dynamic UX |
+| **Lead DevOps** | Jonathan Cristopher Jetro | 10231047 | CI/CD GitHub Actions, Docker Compose, Gateway Nginx, & Monitoring |
+| **Lead QA & Docs** | Jonathan Joseph Y. T. | 10231048 | Automated API Testing, Reliability Skenario, & API Contract Specs |
 
 ---
 
-### 📝 Documentation
+## 🛠️ Tech Stack
 
-| Document                                            | Purpose                                         |
-| --------------------------------------------------- | ----------------------------------------------- |
-| [Architecture & API Contract](docs/architecture.md) | Microservices diagram, port mapping, API specs |
-| [API Documentation](docs/api-documentation.md)     | Complete API endpoints reference                |
-| [Reliability Testing](docs/reliability-testing.md) | Sistem keandalan & error handling validation    |
-| [Operations Guide](docs/operations-guide.md)       | Troubleshooting & monitoring production         |
-| [Final Checklist](docs/final-checklist.md)         | Security audit & quality gate final             |
-| [Deployment Guide](docs/deployment-guide.md)       | How to deploy to Railway (production)           |
-| [Database Schema](docs/database-schema.md)         | ER diagram & table definitions                  |
-| [CI/CD Pipeline](docs/cicd.md)                     | GitHub Actions workflow explanation             |
-| [Git Workflow](docs/git-workflow.md)               | Team collaboration guidelines                   |
+*   **Frontend:** React (SPA), Vite, Vanilla CSS (Premium Custom Theme, Glassmorphism, Responsive Grid)
+*   **Backend Framework:** FastAPI (Python 3.11/3.12, ASGI Asynchronous Engine)
+*   **Database:** PostgreSQL 16 (Alpine-based Container)
+*   **Gateway & Security:** Nginx (Reverse Proxy, Rate Limiter)
+*   **AI Engine Integrations:**
+    *   **Google Gemini 1.5 Flash:** OCR (Visual-to-Text) dan Text Summarization
+    *   **HuggingFace Inference API (FLUX.1 Schnell):** Text-to-Image Generation
+*   **Monitoring & Observability:** Structured JSON Logging, Custom Performance Metrics Endpoint (`/metrics`), Correlation ID Tracing, dan Real-time Health Dashboard.
 
 ---
 
-### 📊 Architecture Evolution
+## 🔐 Security Hardening & Rate Limiting
 
-| Phase                | Weeks | Key Changes                                          |
-| -------------------- | ----- | ---------------------------------------------------- |
-| **Foundation**       | 1-4   | Monolith: Single FastAPI + PostgreSQL + React        |
-| **Containerization** | 5-7   | Docker Compose: 3 containers (frontend, backend, db) |
-| **CI/CD**            | 9-11  | GitHub Actions + Railway deployment                  |
-| **Microservices**    | 12-14 | Decomposed: Auth Service + AI Service + Gateway      |
-| **Monitoring**       | 14    | Structured logging + metrics + health dashboard      |
-| **Final Polish**     | 15    | Security hardening + documentation                   |
+Untuk melindungi sistem dari penyalahgunaan dan serangan keamanan di lingkungan production:
+*   **Strict Nginx Rate Limiting:**
+    *   `auth_limit` (Endpoint Pendaftaran/Login): **5 request/detik** per IP address (mencegah brute force).
+    *   `api_limit` (Endpoint AI Chat/Image Gen): **20 request/detik** per IP address.
+    *   `general_limit` (Statik Frontend & Aset): **30 request/detik** per IP address.
+*   **Strict Input Validation:** Schema `UserCreate` di `auth-service` diperkuat dengan validasi panjang password maksimal 128 karakter, sanitasi spasi nama lengkap, enkripsi kata sandi menggunakan `passlib` bcrypt, dan validasi format alamat email standar RFC.
+*   **Secrets Isolation:** Kredensial sensitif diisolasi ke dalam `.env` dan tidak pernah masuk ke version control (diamankan melalui `.gitignore`). Template variabel pengembang didokumentasikan pada `.env.example`.
 
 ---
 
-### 🎓 Laporan Pengujian setiap minggu
+## 🚀 Panduan Memulai Cepat (Quick Start)
 
-**⚙️ Modul 2: Backend REST API (FastAPI)**
-_[Hasil Pengujian API Terintegrasi via Swagger](docs/api-test-results.md)_
+### Prasyarat System:
+*   Docker & Docker Compose (v2.0+)
+*   Git
 
-- Testing endpoints: auth/login, generate/image, authorize, generate/summarize
-- Dokumentasi API responses dengan screenshot
+### Langkah-langkah Menjalankan Sistem Secara Lokal:
 
-**💻 Modul 3: Frontend Development (React UI)**
-_[Hasil Pengujian Antarmuka (UI)](docs/ui-test-results.md)_
+1.  **Clone Repository:**
+    ```bash
+    git clone https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-a-steam.git
+    cd cc-kelompok-a-steam
+    ```
 
-- Testing: API Connection, Data Rendering, POST/PUT/DELETE operations
-- Search filtering, confirmation dialogs
-- 8 test cases dengan screenshot
+2.  **Konfigurasi Environment:**
+    Salin file template `.env.example` menjadi `.env`:
+    ```bash
+    cp .env.example .env
+    ```
+    Buka file `.env` baru dan masukkan API Key Anda untuk provider AI:
+    ```env
+    GEMINI_API_KEY=AIzaSy_masukkan_gemini_key_anda
+    HUGGINGFACE_API_KEY=hf_masukkan_huggingface_key_anda
+    SECRET_KEY=masukkan_32_karakter_acak_untuk_keamanan_jwt
+    ```
 
-**🔐 Modul 4: Integrasi Full-Stack & Autentikasi**
+3.  **Jalankan Microservices Container:**
+    ```bash
+    docker compose up -d --build
+    ```
 
-- [Alur Otentikasi & Otorisasi](docs/auth-test-results.md)
-- 8 test cases: Register, Login, Get Profile, Token validation
-- Testing unauthorized access, expired tokens
+4.  **Verifikasi Status Kontainer:**
+    Pastikan seluruh service berstatus `healthy`:
+    ```bash
+    docker compose ps
+    ```
 
-**📦 Modul 5 & 6: Docker Containerization & Orchestration**
-_[ Containerization & Orchestration](docs/cicd.md)_
+5.  **Akses Aplikasi:**
+    *   **Frontend Client:** [http://localhost](http://localhost) (Port 80)
+    *   **Real-time Health Dashboard:** [http://localhost/status](http://localhost/status)
+    *   **Auth Service API Swagger Docs:** [http://localhost/auth/docs](http://localhost/auth/docs)
+    *   **AI Service API Swagger Docs:** [http://localhost/chat/docs](http://localhost/chat/docs)
 
-- GitHub Actions workflow
-- Automated testing pada Docker build
-- Backend (17 tests) + Frontend (12 tests)
+---
 
-**🚀 Modul 11: Cloud Deployment & CI/CD Pipeline (Railway)**
-_[Deployment & Rollback Guide](docs/deployment-guide.md)_
+## 📈 Pemantauan Sistem (Observability)
 
-- Pipeline CI/CD otomatis terintegrasi penuh ke cloud Railway.
-- Dilengkapi dengan **Automated Health Check** (pengujian `/health` backend & `200 OK` frontend pada proses deploy).
-- Dilengkapi dengan instruksi **Rollback Manual** untuk memitigasi kegagalan sistem di production.
-- Production URL:
-  - **Frontend:** [https://cc-kelompok-a-steam-production-51bf.up.railway.app](https://cc-kelompok-a-steam-production-51bf.up.railway.app)
-  - **Backend:** [https://cc-kelompok-a-steam-production.up.railway.app](https://cc-kelompok-a-steam-production.up.railway.app)
+Sistem ini dilengkapi pemantauan performa agar tim pengembang dapat melacak masalah dengan mudah:
+*   **Correlation ID Tracing:** Setiap permintaan dari browser diberi ID unik. ID ini diteruskan ke semua layanan terkait sehingga tim pengembang bisa melacak jalannya proses jika terjadi kendala.
+*   **Structured JSON Logging:** Catatan aktivitas server (logs) ditulis dalam format JSON standar agar mudah dibaca dan dianalisis secara terpusat.
+*   **Metrik Layanan (Metrics):** Setiap layanan menyediakan data performa seperti jumlah request yang masuk, persentase error, dan waktu respon server (latency) melalui endpoint `/metrics`.
 
-**🧪 Modul 13: Reliability Testing & Error Handling**
-_[Panduan & Laporan Pengujian Keandalan Sistem](docs/reliability-testing.md)_
+---
 
-- Pengujian manual keandalan sistem dengan 8 skenario (RT-01 hingga RT-08)
-- Validasi penanganan error timeout ketika kontainer autentikasi sengaja dimatikan
-- Bukti sistem tetap responsif dan memberikan error handling yang tepat
-- Laporan lengkap dengan bukti penolakan permintaan ilegal
+## 📝 Dokumentasi Teknis Tambahan
 
-**⚙️ Modul 14: Operations Guide & Troubleshooting**
-_[Panduan Operasional untuk Tim Production](docs/operations-guide.md)_
+Seluruh dokumentasi detail dan laporan pengujian berkala proyek Inti Rupa dapat diakses pada tautan berikut:
 
-- Instruksi taktis untuk troubleshooting di lingkungan produksi
-- Pelacakan urutan request menggunakan **Correlation ID** via PowerShell
-- Panduan debugging untuk mengidentifikasi masalah jaringan
-- Log tracing untuk monitoring request flow across microservices
+1.  **[API Contract & Specifications](docs/api-contract.md)** — Kontrak payload & format endpoint backend.
+2.  **[Operations & Troubleshooting Guide](docs/operations-guide.md)** — Buku panduan penanganan insiden dan pembacaan metrik.
+3.  **[Reliability Testing Report](docs/reliability-testing.md)** — Laporan ketahanan sistem saat disimulasikan error/down.
+4.  **[Deployment & Release Notes](docs/release-notes-m3.md)** — Catatan rilis v3.0.0 dan riwayat evolusi arsitektur.
 
-**✅ Modul 15: Final Quality Gate & Security Audit**
-_[Checklist Pemeriksaan Kualitas Akhir](docs/final-checklist.md)_
+---
 
-- Gerbang pemeriksaan kualitas final sebelum rilis produk
-- Audit forensik keamanan: verifikasi `.env` file terisolasi di `.gitignore`
-- Laporan keberhasilan security testing: 30 serangan login ilegal ditolak dengan status `401 Unauthorized`
-- Sertifikasi sistem siap untuk production deployment
+## 🌐 Production Deployment (Railway)
+
+Aplikasi kami telah di-deploy secara penuh di Railway Cloud dengan integrasi pipeline CI/CD otomatis pada branch `main`:
+*   **Production Frontend Client:** [https://cc-kelompok-a-steam-production-51bf.up.railway.app](https://cc-kelompok-a-steam-production-51bf.up.railway.app)
+*   **Production API Gateway:** [https://cc-kelompok-a-steam-production.up.railway.app](https://cc-kelompok-a-steam-production.up.railway.app)

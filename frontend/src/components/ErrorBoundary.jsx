@@ -78,25 +78,25 @@ function ErrorFallback({ error, errorType, onReset }) {
     switch (errorType) {
       case 'service_unavailable':
         return {
-          title: '⚠️ Service Temporarily Unavailable',
+          title: 'Service Temporarily Unavailable',
           message: 'The service is currently experiencing issues. Please try again in a few moments.',
-          icon: '🔴',
+          icon: '',
           color: 'bg-red-900/20 border-red-800',
           buttonColor: 'bg-red-600 hover:bg-red-700',
         }
       case 'unauthorized':
         return {
-          title: '🔐 Authentication Required',
+          title: 'Authentication Required',
           message: 'Your session has expired. Please log in again.',
-          icon: '🔑',
+          icon: '',
           color: 'bg-yellow-900/20 border-yellow-800',
           buttonColor: 'bg-yellow-600 hover:bg-yellow-700',
         }
       default:
         return {
-          title: '❌ Something Went Wrong',
+          title: 'Something Went Wrong',
           message: 'An unexpected error occurred. Please try again or contact support.',
-          icon: '⚠️',
+          icon: '',
           color: 'bg-gray-900/20 border-gray-800',
           buttonColor: 'bg-gray-600 hover:bg-gray-700',
         }

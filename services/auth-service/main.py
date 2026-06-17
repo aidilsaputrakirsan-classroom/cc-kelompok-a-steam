@@ -1,3 +1,4 @@
+"""Main FastAPI application for Auth Service."""
 import os
 import logging
 from fastapi import FastAPI, Depends, HTTPException, Header

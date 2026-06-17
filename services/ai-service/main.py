@@ -1,3 +1,4 @@
+"""Main FastAPI application for AI Service."""
 import os
 import io
 import base64
@@ -55,7 +56,7 @@ app.add_middleware(
 app.add_middleware(RequestLoggingMiddleware)
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health_check(db: Session = Depends(get_db)):
     """
     Aggregated health check — menampilkan status semua dependency.

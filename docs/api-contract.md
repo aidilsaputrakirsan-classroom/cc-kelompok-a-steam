@@ -1,571 +1,344 @@
-# API Contract Documentation
+# Dokumentasi Kontrak API (API Contract)
 
-## Overview
-
-This document defines the complete API contract for the Cloud App microservices architecture.
-
-**Base URLs:**
-
-- Development: `http://localhost`
-- Production: `https://cc-kelompok-a-steam-production-51bf.up.railway.app`
+Dokumen ini mendefinisikan kontrak API lengkap untuk arsitektur mikroservis **Inti Rupa**. Seluruh request eksternal diarahkan melalui API Gateway (Nginx).
 
 ---
 
-## Authentication
+## 1. Informasi Umum
 
-### JWT Bearer Token
+### Base URLs
+*   **Development:** `http://localhost` (Port 80 via Gateway)
+*   **Production:** `https://cc-kelompok-a-steam-production.up.railway.app`
 
-All protected endpoints require JWT token in Authorization header:
-
-```
+### Keamanan & Autentikasi
+Seluruh endpoint terproteksi memerlukan token JWT (JSON Web Token) yang dikirimkan melalui HTTP header:
+```http
 Authorization: Bearer <access_token>
 ```
-
-**Token Acquisition:**
-
-```bash
-POST /auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "Password123"
-}
-
-Response 200:
-{
-  "access_token": "eyJhbGc...",
-  "token_type": "bearer"
-}
-```
-
-**Token Properties:**
-
-- Issued by: Auth Service
-- Algorithm: HS256
-- Expiry: 30 minutes (configurable via TOKEN_EXPIRE_MINUTES)
-- Stored client-side: localStorage under key `access_token`
+Properti Token JWT:
+*   **Algoritma:** HS256
+*   **Masa Berlaku:** 30 Menit (dapat dikonfigurasi melalui `ACCESS_TOKEN_EXPIRE_MINUTES`)
 
 ---
 
-## Error Response Format
+## 2. Format Respon Error
 
-All errors use consistent JSON format:
-
+Semua error response dari backend menggunakan format JSON standar:
 ```json
 {
-  "detail": "Human-readable error message"
+  "detail": "Pesan error detail yang human-readable"
 }
 ```
 
-### Status Codes
-
-| Code | Meaning                           | When to Retry      |
-| ---- | --------------------------------- | ------------------ |
-| 200  | OK                                | N/A                |
-| 201  | Created                           | N/A                |
-| 204  | No Content (Deleted)              | N/A                |
-| 400  | Bad Request (validation)          | No                 |
-| 401  | Unauthorized / Invalid Token      | Refresh token      |
-| 404  | Not Found                         | No                 |
-| 422  | Unprocessable Entity (validation) | No                 |
-| 429  | Rate Limited                      | Yes (after delay)  |
-| 500  | Internal Server Error             | Yes (with backoff) |
-| 502  | Bad Gateway                       | Yes                |
-| 503  | Service Unavailable               | Yes                |
-| 504  | Gateway Timeout                   | Yes                |
+### HTTP Status Codes
+*   **200 OK:** Request sukses.
+*   **201 Created:** Sesi baru atau data baru berhasil dibuat.
+*   **204 No Content:** Penghapusan sukses (tidak mengembalikan body).
+*   **400 Bad Request:** Validasi input gagal atau request salah format.
+*   **401 Unauthorized:** Token JWT tidak disertakan, tidak valid, atau kadaluarsa.
+*   **404 Not Found:** Resource yang diminta tidak ditemukan di database.
+*   **429 Too Many Requests:** Terkena limitasi rate limiting Nginx Gateway.
+*   **502 Bad Gateway / 503 Service Unavailable:** Service dependency down atau gagal terhubung.
 
 ---
 
-## API Endpoints
+## 3. Endpoint Auth Service (`/auth/*`)
 
-### Auth Service (`/auth/*`)
+Seluruh rute ini dipetakan oleh Gateway ke port internal `8001` milik `auth-service`.
 
-#### POST /auth/register
-
-Register new user account.
-
-**Request:**
-
-```bash
-POST /auth/register
-Content-Type: application/json
-
-{
-  "email": "newuser@example.com",
-  "password": "SecurePass123",
-  "name": "John Doe"
-}
-```
-
-**Validation Rules:**
-
-- `email`: Valid email format, unique
-- `password`: Min 8 chars, at least 1 uppercase + 1 digit
-- `name`: 2-200 characters
-
-**Response 201:**
-
-```json
-{
-  "id": 1,
-  "email": "newuser@example.com",
-  "name": "John Doe"
-}
-```
-
-**Response 400:**
-
-```json
-{
-  "detail": "Email already registered"
-}
-```
-
----
-
-#### POST /auth/login
-
-User login and get JWT token.
-
-**Request:**
-
-```bash
-POST /auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "Password123"
-}
-```
-
-**Response 200:**
-
-```json
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer"
-}
-```
-
-**Response 401:**
-
-```json
-{
-  "detail": "Invalid email or password"
-}
-```
-
----
-
-#### GET /auth/verify
-
-Internal endpoint (called by gateway). Verify JWT token validity.
-
-**Request:**
-
-```bash
-GET /auth/verify
-Authorization: Bearer <token>
-X-Correlation-ID: abc-123-def
-```
-
-**Response 200:**
-
-```json
-{
-  "user_id": 1,
-  "email": "user@example.com",
-  "name": "John Doe"
-}
-```
-
-**Response 401:**
-
-```json
-{
-  "detail": "Invalid or expired token"
-}
-```
-
----
-
-#### GET /auth/health
-
-Health check endpoint (no auth required).
-
-**Response 200:**
-
-```json
-{
-  "status": "healthy",
-  "service": "auth-service"
-}
-```
-
----
-
-#### GET /auth/metrics
-
-Retrieve service metrics (no auth required).
-
-**Response 200:**
-
-```json
-{
-  "service": "auth-service",
-  "uptime_seconds": 1234.56,
-  "total_requests": 150,
-  "total_errors": 3,
-  "error_rate_percent": 2.0,
-  "status_codes": {
-    "200": 145,
-    "401": 3,
-    "500": 2
-  },
-  "latency": {
-    "p50_ms": 15.2,
-    "p95_ms": 45.8,
-    "p99_ms": 120.3,
-    "avg_ms": 25.1
-  },
-  "endpoints": {
-    "POST /register": {
-      "count": 5,
-      "errors": 0,
-      "avg_latency_ms": 120.5
-    },
-    "POST /login": {
-      "count": 15,
-      "errors": 3,
-      "avg_latency_ms": 45.2
+### POST /auth/register
+Mendaftarkan akun pengguna baru.
+*   **Autentikasi:** Tidak
+*   **Payload Request:**
+    ```json
+    {
+      "email": "user@example.com",
+      "password": "SecurePassword123",
+      "full_name": "Nama Pengguna"
     }
-  }
-}
-```
-
----
-
-### AI Service (`/items/*` or `/chat/*`)
-
-#### GET /items
-
-List items (requires authentication).
-
-**Request:**
-
-```bash
-GET /items?search=&skip=0&limit=20
-Authorization: Bearer <token>
-X-Correlation-ID: abc-123-def
-```
-
-**Query Parameters:**
-
-- `search` (optional): Search by name
-- `skip` (optional): Pagination offset (default: 0)
-- `limit` (optional): Page size (default: 20, max: 100)
-
-**Response 200:**
-
-```json
-{
-  "total": 45,
-  "items": [
+    ```
+*   **Aturan Validasi:**
+    *   `email`: Format email valid, bersifat unik.
+    *   `password`: Panjang 8 - 128 karakter, minimal 1 huruf besar dan 1 angka.
+    *   `full_name`: Panjang 2 - 100 karakter, whitespace akan dibersihkan secara otomatis.
+*   **Respon Sukses (201 Created):**
+    ```json
     {
       "id": 1,
-      "name": "Item A",
-      "description": "Description of item",
-      "price": 50000.0,
-      "quantity": 10,
-      "owner_id": 1,
-      "created_at": "2026-02-15T10:30:00Z"
+      "email": "user@example.com",
+      "full_name": "Nama Pengguna",
+      "api_used": 0,
+      "created_at": "2026-06-14T12:00:00Z"
     }
-  ]
-}
-```
+    ```
 
 ---
 
-#### POST /items
-
-Create new item (requires authentication).
-
-**Request:**
-
-```bash
-POST /items
-Authorization: Bearer <token>
-Content-Type: application/json
-X-Correlation-ID: abc-123-def
-
-{
-  "name": "New Item",
-  "description": "Item description",
-  "price": 75000.00,
-  "quantity": 5
-}
-```
-
-**Validation Rules:**
-
-- `name`: 1-300 characters, required
-- `description`: Max 2000 characters, optional
-- `price`: Positive number, max 999,999,999
-- `quantity`: Non-negative integer, optional
-
-**Response 201:**
-
-```json
-{
-  "id": 46,
-  "name": "New Item",
-  "description": "Item description",
-  "price": 75000.0,
-  "quantity": 5,
-  "owner_id": 1,
-  "created_at": "2026-02-15T11:00:00Z"
-}
-```
+### POST /auth/login
+Melakukan autentikasi pengguna dan mengembalikan token JWT.
+*   **Autentikasi:** Tidak
+*   **Payload Request:**
+    ```json
+    {
+      "username": "user@example.com",
+      "password": "SecurePassword123"
+    }
+    ```
+*   **Respon Sukses (200 OK):**
+    ```json
+    {
+      "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "token_type": "bearer"
+    }
+    ```
+*   **Respon Gagal (401 Unauthorized):**
+    ```json
+    {
+      "detail": "Email/Username atau password salah"
+    }
+    ```
 
 ---
 
-#### GET /items/{id}
-
-Get single item by ID (requires authentication).
-
-**Request:**
-
-```bash
-GET /items/46
-Authorization: Bearer <token>
-```
-
-**Response 200:**
-
-```json
-{
-  "id": 46,
-  "name": "New Item",
-  "price": 75000.0,
-  "quantity": 5,
-  "owner_id": 1
-}
-```
-
-**Response 404:**
-
-```json
-{
-  "detail": "Item not found"
-}
-```
+### GET /auth/users/me
+Mendapatkan profil dan statistik kuota API pengguna aktif.
+*   **Autentikasi:** Ya (Bearer Token)
+*   **Respon Sukses (200 OK):**
+    ```json
+    {
+      "id": 1,
+      "email": "user@example.com",
+      "full_name": "Nama Pengguna",
+      "api_used": 12,
+      "created_at": "2026-06-14T12:00:00Z"
+    }
+    ```
 
 ---
 
-#### PUT /items/{id}
+## 4. Endpoint AI Service (`/chat/*`)
 
-Update item (requires authentication, owner only).
+Seluruh rute ini dipetakan oleh Gateway ke port internal `8002` milik `ai-service`.
 
-**Request:**
-
-```bash
-PUT /items/46
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "name": "Updated Item",
-  "price": 80000.00
-}
-```
-
-**Response 200:**
-
-```json
-{
-  "id": 46,
-  "name": "Updated Item",
-  "price": 80000.0,
-  "quantity": 5
-}
-```
-
-**Response 403:**
-
-```json
-{
-  "detail": "Not authorized to update this item"
-}
-```
-
----
-
-#### DELETE /items/{id}
-
-Delete item (requires authentication, owner only).
-
-**Request:**
-
-```bash
-DELETE /items/46
-Authorization: Bearer <token>
-```
-
-**Response 204:**
-(No content)
-
----
-
-#### GET /items/health
-
-Health check (no auth required).
-
-**Response 200:**
-
-```json
-{
-  "status": "healthy",
-  "service": "ai-service"
-}
-```
+### POST /chat/sessions
+Membuat sesi interaksi AI baru (bisa berupa teks, gambar, atau OCR).
+*   **Autentikasi:** Ya (Bearer Token)
+*   **Payload Request:**
+    ```json
+    {
+      "title": "Analisis Dokumen Penting",
+      "session_type": "summarize",
+      "first_message": "Tolong rangkum teks berikut...",
+      "model": "gemini-3.1-flash-lite-preview",
+      "negative_prompt": "noise, blur",
+      "image_data": "data:image/jpeg;base64,..."
+    }
+    ```
+*   **Aturan Validasi:**
+    *   `session_type`: Harus bernilai `"summarize"`, `"image"`, atau `"ocr"`.
+    *   `image_data`: Wajib dikirim dalam format Base64 jika `session_type` adalah `"ocr"`.
+*   **Respon Sukses (201 Created):**
+    ```json
+    {
+      "id": 5,
+      "title": "Analisis Dokumen Penting",
+      "session_type": "summarize",
+      "user_id": 1,
+      "created_at": "2026-06-14T12:05:00Z",
+      "messages": [
+        {
+          "id": 10,
+          "role": "user",
+          "content": "Tolong rangkum teks berikut...",
+          "content_type": "text",
+          "created_at": "2026-06-14T12:05:00Z"
+        },
+        {
+          "id": 11,
+          "role": "assistant",
+          "content": "Hasil rangkuman dokumen...",
+          "content_type": "text",
+          "created_at": "2026-06-14T12:05:02Z",
+          "metadata": {
+            "model": "gemini-3.1-flash-lite-preview",
+            "processing_time": 1.45
+          }
+        }
+      ]
+    }
+    ```
 
 ---
 
-#### GET /items/metrics
-
-Retrieve service metrics (no auth required).
-
-**Response 200:**
-(Same format as Auth Service metrics)
-
----
-
-### API Gateway
-
-#### GET /health
-
-Gateway health check (no auth required).
-
-**Response 200:**
-
-```json
-{
-  "status": "healthy",
-  "service": "gateway"
-}
-```
+### POST /chat/sessions/{session_id}/continue
+Melanjutkan interaksi (mengirimkan prompt lanjutan) pada sesi yang sudah ada.
+*   **Autentikasi:** Ya (Bearer Token)
+*   **Payload Request:**
+    ```json
+    {
+      "message": "Apa kesimpulan dari poin kedua?",
+      "model": "gemini-3.1-flash-lite-preview",
+      "negative_prompt": null,
+      "image_data": null
+    }
+    ```
+*   **Respon Sukses (200 OK):**
+    Mengembalikan data sesi lengkap (`ChatSessionResponse`) yang telah diperbarui dengan pesan baru dari user dan assistant.
 
 ---
 
-#### GET /status
-
-System status dashboard (frontend route).
-
-Returns HTML page with real-time service status and metrics.
-
----
-
-## Rate Limiting
-
-Requests are rate-limited per IP address:
-
-| Endpoint       | Rate     | Burst | Status |
-| -------------- | -------- | ----- | ------ |
-| `/auth/*`      | 5 req/s  | 10    | 429    |
-| `/items/*`     | 20 req/s | 30    | 429    |
-| `/` (frontend) | 30 req/s | 50    | 429    |
-
-**When Rate Limited:**
-
-```
-HTTP 429 Too Many Requests
-Content-Type: application/json
-
-{
-  "error": "Too many requests. Please try again later.",
-  "retry_after": 60
-}
-```
+### GET /chat/sessions
+Mendapatkan semua daftar sesi interaksi milik user aktif.
+*   **Autentikasi:** Ya (Bearer Token)
+*   **Query Parameters:**
+    *   `session_type` (opsional): Filter tipe sesi (`"summarize"`, `"image"`, atau `"ocr"`).
+    *   `skip` (opsional): Offset paginasi (default `0`).
+    *   `limit` (opsional): Jumlah data yang diambil (default `20`).
+*   **Respon Sukses (200 OK):**
+    ```json
+    [
+      {
+        "id": 5,
+        "title": "Analisis Dokumen Penting",
+        "session_type": "summarize",
+        "created_at": "2026-06-14T12:05:00Z"
+      }
+    ]
+    ```
 
 ---
 
-## Headers
-
-### Recommended Headers
-
-```
-X-Correlation-ID: <unique-request-id>  # Tracked across services
-User-Agent: <your-app>                  # Identify clients
-Content-Type: application/json          # For POST/PUT
-```
-
-### Response Headers
-
-```
-X-Correlation-ID: <request-id>         # Echoed back for tracking
-Content-Type: application/json
-```
+### PATCH /chat/sessions/{session_id}
+Mengubah judul sesi interaksi AI.
+*   **Autentikasi:** Ya (Bearer Token)
+*   **Payload Request:**
+    ```json
+    {
+      "title": "Judul Baru Sesi Rangkuman"
+    }
+    ```
+*   **Respon Sukses (200 OK):**
+    Mengembalikan data sesi lengkap yang telah diubah judulnya.
 
 ---
 
-## Pagination
-
-List endpoints support cursor-based pagination:
-
-```bash
-# First page
-GET /items?skip=0&limit=20
-
-# Next page
-GET /items?skip=20&limit=20
-```
-
-Response includes total count:
-
-```json
-{
-  "total": 100,
-  "items": [...]
-}
-```
+### DELETE /chat/sessions/{session_id}
+Menghapus satu sesi interaksi beserta seluruh pesan di dalamnya.
+*   **Autentikasi:** Ya (Bearer Token)
+*   **Respon Sukses (204 No Content):**
+    (Tidak mengembalikan body data)
 
 ---
 
-## Versioning
-
-Current API version: **v1** (implicit, no version prefix)
-
-Future versions will use path prefix: `/v2/...`
-
----
-
-## CORS Policy
-
-Development:
-
-- Allowed origins: `http://localhost*`
-- Methods: GET, POST, PUT, DELETE, OPTIONS
-- Headers: Content-Type, Authorization
-
-Production:
-
-- Allowed origins: `https://cc-kelompok-a-steam-production-51bf.up.railway.app`
-- Methods: GET, POST, PUT, DELETE, OPTIONS
-- Headers: Content-Type, Authorization
+### GET /stats
+Mendapatkan statistik detail penggunaan AI milik user aktif yang sedang login.
+*   **Autentikasi:** Ya (Bearer Token)
+*   **Respon Sukses (200 OK):**
+    ```json
+    {
+      "user": {
+        "user_id": 1,
+        "email": "user@example.com"
+      },
+      "usage": {
+        "total_image_generations": 5,
+        "total_text_summarizations": 7,
+        "total_image_captions": 0,
+        "total_api_calls": 12
+      }
+    }
+    ```
 
 ---
 
-## Backward Compatibility
+## 5. Endpoints Publik & Monitoring
 
-All endpoints maintain backward compatibility. Breaking changes will:
-
-1. Be announced with deprecation period (2 weeks minimum)
-2. Include `/v2/*` path prefix for new versions
-3. Support both old and new versions during transition
+### GET /stats/public
+Mendapatkan statistik agregat seluruh penggunaan platform (tanpa autentikasi).
+*   **Autentikasi:** Tidak
+*   **Respon Sukses (200 OK):**
+    ```json
+    {
+      "platform": "Intirupa AI",
+      "message": "Statistik penggunaan platform secara publik.",
+      "stats": {
+        "total_image_generations": 45,
+        "total_text_summarizations": 82,
+        "total_image_captions": 14,
+        "total_chat_sessions": 30,
+        "total_api_calls": 141,
+        "total_users_served": 15
+      }
+    }
+    ```
 
 ---
 
-**Last Updated:** February 2026  
-**API Version:** 1.0
+### GET /health
+Menampilkan status kesehatan gateway.
+*   **Respon Sukses (200 OK):**
+    ```json
+    {
+      "status": "healthy",
+      "service": "gateway"
+    }
+    ```
+
+---
+
+### GET /auth/health
+Menampilkan status kesehatan dari `auth-service` dan koneksi database user.
+*   **Respon Sukses (200 OK):**
+    ```json
+    {
+      "status": "healthy",
+      "service": "auth-service"
+    }
+    ```
+
+---
+
+### GET /chat/health
+Menampilkan status kesehatan dari `ai-service`, database AI, dan status sirkuit breaker ke auth service.
+*   **Respon Sukses (200 OK):**
+    ```json
+    {
+      "status": "healthy",
+      "service": "ai-service",
+      "version": "2.1.0",
+      "dependencies": {
+        "auth-service": {
+          "status": "available",
+          "circuit_breaker": {
+            "state": "CLOSED",
+            "failure_count": 0
+          }
+        },
+        "database": {
+          "status": "connected"
+        }
+      }
+    }
+    ```
+
+---
+
+### GET /auth/metrics dan GET /chat/metrics
+Menyediakan metrik operasional aplikasi (uptime, request count, error count, dan latensi p50/p95/p99).
+*   **Autentikasi:** Tidak
+*   **Respon Sukses (200 OK):**
+    ```json
+    {
+      "service": "ai-service",
+      "uptime_seconds": 3600.0,
+      "total_requests": 250,
+      "total_errors": 2,
+      "error_rate_percent": 0.8,
+      "latency": {
+        "p50_ms": 12.5,
+        "p95_ms": 85.0,
+        "p99_ms": 340.2,
+        "avg_ms": 22.1
+      }
+    }
+    ```

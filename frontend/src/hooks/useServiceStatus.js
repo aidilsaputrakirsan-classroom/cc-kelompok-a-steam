@@ -84,14 +84,14 @@ export function useServiceStatus(refreshInterval = 10000) {
 export function getStatusDisplay(status) {
   switch (status) {
     case 'healthy':
-      return { color: 'bg-green-100 text-green-800', icon: '🟢', label: 'Healthy' }
+      return { color: 'bg-green-100 text-green-800', icon: '', label: 'Healthy' }
     case 'degraded':
-      return { color: 'bg-yellow-100 text-yellow-800', icon: '🟡', label: 'Degraded' }
+      return { color: 'bg-yellow-100 text-yellow-800', icon: '', label: 'Degraded' }
     case 'unhealthy':
     case 'error':
-      return { color: 'bg-red-100 text-red-800', icon: '🔴', label: 'Offline' }
+      return { color: 'bg-red-100 text-red-800', icon: '', label: 'Offline' }
     default:
-      return { color: 'bg-gray-100 text-gray-800', icon: '⚪', label: 'Unknown' }
+      return { color: 'bg-gray-100 text-gray-800', icon: '', label: 'Unknown' }
   }
 }
 

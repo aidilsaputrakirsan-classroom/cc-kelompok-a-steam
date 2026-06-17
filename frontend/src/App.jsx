@@ -5,6 +5,7 @@ import LoginPage from "./components/LoginPage"
 import Toast from "./components/Toast"
 import SuccessModal from "./components/SuccessModal"
 import LogoutModal from "./components/LogoutModal"
+import AuthErrorModal from "./components/AuthErrorModal"
 import ErrorBoundaryWrapper from "./components/ErrorBoundary"
 import { DegradedModeBanner } from "./components/DegradedModeBanner"
 
@@ -37,6 +38,9 @@ function AppContent() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authModalMessage, setAuthModalMessage] = useState("")
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  
+  // Auth Error Modal state
+  const [authErrorModal, setAuthErrorModal] = useState({ isOpen: false, title: "", message: "" })
 
   // ==================== APP STATE ====================
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem("inti_active_tab") || "about-us")
@@ -99,7 +103,7 @@ function AppContent() {
       await login(email, password)
       const userData = await getMe()
       setUser(userData)
-      setAuthModalMessage("Login berhasil! Selamat datang di Inti Studio! ✨")
+      setAuthModalMessage("Login berhasil! Selamat datang di Inti Studio!")
       setShowAuthModal(true)
       
       setTimeout(() => {
@@ -110,9 +114,19 @@ function AppContent() {
     } catch (err) {
       // Handle service unavailable error
       if (err.type === "SERVICE_UNAVAILABLE") {
-        showToast("Auth service is temporarily unavailable. Please try again later.", "error")
+        setAuthErrorModal({
+          isOpen: true,
+          title: "Layanan Tidak Tersedia",
+          message: "Auth service is temporarily unavailable. Please try again later."
+        })
       } else {
-        showToast("Login gagal: " + err.message, "error")
+        setAuthErrorModal({
+          isOpen: true,
+          title: "Login Gagal",
+          message: err.message?.includes("UNAUTHORIZED") 
+            ? "Password atau email yang Anda masukkan salah." 
+            : (err.message || "Email atau password yang Anda masukkan salah.")
+        })
       }
     }
   }
@@ -133,9 +147,17 @@ function AppContent() {
       }, 2000)
     } catch (err) {
       if (err.type === "SERVICE_UNAVAILABLE") {
-        showToast("Auth service is temporarily unavailable. Please try again later.", "error")
+        setAuthErrorModal({
+          isOpen: true,
+          title: "Layanan Tidak Tersedia",
+          message: "Auth service is temporarily unavailable. Please try again later."
+        })
       } else {
-        showToast("Registrasi gagal: " + err.message, "error")
+        setAuthErrorModal({
+          isOpen: true,
+          title: "Registrasi Gagal",
+          message: err.message || "Terjadi kesalahan saat pendaftaran. Mungkin email/username sudah digunakan."
+        })
       }
     }
   }
@@ -161,8 +183,21 @@ function AppContent() {
   if (!isAuthenticated) {
     return (
       <>
-        <LoginPage onLogin={handleLogin} onRegister={handleRegister} showToast={showToast} />
-        <SuccessModal isOpen={showAuthModal} message={authModalMessage} />
+        <LoginPage 
+          onLogin={handleLogin} 
+          onRegister={handleRegister} 
+          showToast={showToast} 
+          isDark={isDark}
+          toggleTheme={toggleDark}
+        />
+        <SuccessModal isOpen={showAuthModal} message={authModalMessage} isDark={isDark} />
+        <AuthErrorModal 
+          isOpen={authErrorModal.isOpen} 
+          title={authErrorModal.title} 
+          message={authErrorModal.message}
+          onClose={() => setAuthErrorModal(prev => ({ ...prev, isOpen: false }))} 
+          isDark={isDark}
+        />
         {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
       </>
     )
@@ -174,14 +209,12 @@ function AppContent() {
       <DegradedModeBanner />
       
       <div style={styles.container}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-          <Header
-            user={user}
-            onLogout={handleLogout}
-            isDark={isDark}
-            onToggleDark={toggleDark}
-          />
-        </div>
+        <Header
+          user={user}
+          onLogout={handleLogout}
+          isDark={isDark}
+          onToggleDark={toggleDark}
+        />
 
         <div className="flex gap-3 flex-wrap mb-6">
           <button
@@ -189,43 +222,41 @@ function AppContent() {
             className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
               activeTab === "about-us"
                 ? isDark 
-                  ? "bg-linear-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105"
-                  : "bg-linear-to-r from-inti-orange to-inti-orange-light text-white shadow-[0_10px_25px_-5px_rgba(255,143,72,0.5)] scale-105"
+                  ? "bg-linear-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105 border-none outline-none focus:outline-none focus:ring-0"
+                  : "bg-linear-to-r from-inti-orange to-inti-orange-light text-white shadow-[0_10px_25px_-5px_rgba(255,143,72,0.5)] scale-105 border-none outline-none focus:outline-none focus:ring-0"
                 : isDark
                   ? "bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30"
-                  : "bg-orange-100/30 border border-orange-200/50 text-orange-700 hover:bg-orange-100/50 hover:text-orange-900 hover:border-orange-300"
+                  : "bg-white/60 border border-orange-200/50 text-orange-600 hover:bg-white hover:text-orange-800 hover:border-orange-300"
             }`}
           >
-            ℹ️ About Us
+            About Us
           </button>
           <button
             onClick={() => setActiveTab("chat-history")}
             className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
               activeTab === "chat-history"
                 ? isDark 
-                  ? "bg-linear-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105"
-                  : "bg-linear-to-r from-inti-orange to-inti-orange-light text-white shadow-[0_10px_25px_-5px_rgba(255,143,72,0.5)] scale-105"
+                  ? "bg-linear-to-r from-inti-orange to-inti-orange-light text-inti-dark shadow-[0_10px_25px_-5px_rgba(255,143,72,0.4)] scale-105 border-none outline-none focus:outline-none focus:ring-0"
+                  : "bg-linear-to-r from-inti-orange to-inti-orange-light text-white shadow-[0_10px_25px_-5px_rgba(255,143,72,0.5)] scale-105 border-none outline-none focus:outline-none focus:ring-0"
                 : isDark
                   ? "bg-white/10 border border-white/10 text-inti-text-muted hover:bg-white/20 hover:text-white hover:border-white/30"
-                  : "bg-orange-100/30 border border-orange-200/50 text-orange-700 hover:bg-orange-100/50 hover:text-orange-900 hover:border-orange-300"
+                  : "bg-white/60 border border-orange-200/50 text-orange-600 hover:bg-white hover:text-orange-800 hover:border-orange-300"
             }`}
           >
-            💬 Chat History
+            Chat History
           </button>
         </div>
 
         <ErrorBoundaryWrapper>
-          {activeTab === "chat-history" ? (
-            <ChatHistoryPage showToast={showToast} />
-          ) : (
-            <AboutUs />
-          )}
+          {activeTab === "about-us" && <AboutUs isDark={isDark} />}
+          {activeTab === "chat-history" && <ChatHistoryPage showToast={showToast} isDark={isDark} />}
         </ErrorBoundaryWrapper>
       </div>
       <LogoutModal 
         isOpen={showLogoutModal} 
         onConfirm={performLogout} 
         onCancel={() => setShowLogoutModal(false)} 
+        isDark={isDark}
       />
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>

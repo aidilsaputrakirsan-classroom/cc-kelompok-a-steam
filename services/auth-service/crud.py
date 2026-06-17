@@ -1,3 +1,4 @@
+"""Database CRUD operations for Auth Service."""
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from models import User
