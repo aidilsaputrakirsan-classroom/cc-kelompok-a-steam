@@ -3,7 +3,7 @@ import React from 'react';
 const AboutUs = ({ isDark }) => {
   const features = [
     {
-      title: "AI Image Generator",
+      title: "AI Image Generators",
       description: "Transform text into images automatically with state-of-the-art AI technology. Unleash your visual creativity with just a few words.",
       color: "from-orange-500/20 to-transparent"
     },
