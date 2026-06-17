@@ -9,7 +9,7 @@ const AboutUs = ({ isDark }) => {
     },
     {
       title: "AI Summarizer",
-      description: "Convert long texts into clear and concise summaries in seconds. Save time and understand complex information faster.",
+      description: "Convert long texts into clear and concise summaries in seconds. Save time and understand complex information fasters.",
       color: "from-blue-500/20 to-transparent"
     },
   ];
